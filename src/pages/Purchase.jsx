@@ -1,0 +1,567 @@
+import { useEffect, useState, useMemo } from 'react'
+import { toast } from 'react-toastify'
+import { Card, Field, PageShell, SectionHeader, TableState } from '../components/layout/PageShell.jsx'
+import axiosInstance from '../services/axiosInstance'
+
+const sectionStyles = {
+  teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
+}
+
+function SectionCard({ title, children }) {
+  const style = sectionStyles.teal
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
+      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
+        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function ArchiveBoxIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+    </svg>
+  )
+}
+
+function TrashIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  )
+}
+
+function PlusIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+  )
+}
+
+function generateGRN() {
+  const d = new Date()
+  const yyyymmdd = d.toISOString().slice(0,10).replace(/-/g, '')
+  const rand = Math.floor(1000 + Math.random() * 9000)
+  return `GRN-${yyyymmdd}-${rand}`
+}
+
+function createEmptyRow() {
+  return { id: Date.now() + Math.random(), category_id: '', item_id: '', purchase_price: '', sale_price: '', quantity: 1, total: 0 }
+}
+
+export default function PurchasePage() {
+  const [suppliers, setSuppliers] = useState([])
+  const [categories, setCategories] = useState([])
+  const [items, setItems] = useState([])
+  const [purchasesRecord, setPurchasesRecord] = useState([])
+  
+  const [submitting, setSubmitting] = useState(false)
+
+  // Form State
+  const [grnNo, setGrnNo] = useState(generateGRN())
+  const [grnDate, setGrnDate] = useState('')
+  const [supplierId, setSupplierId] = useState('')
+  const [invoiceNo, setInvoiceNo] = useState('')
+  const [purchaseItems, setPurchaseItems] = useState([createEmptyRow()])
+  
+  // Payment State
+  const [discountPercent, setDiscountPercent] = useState('')
+  const [discountAmount, setDiscountAmount] = useState('')
+  const [givenAmount, setGivenAmount] = useState('')
+
+  useEffect(() => {
+    fetchInitialData()
+    fetchPurchases()
+    // Default Date to today
+    setGrnDate(new Date().toISOString().slice(0, 10))
+  }, [])
+
+  async function fetchInitialData() {
+    try {
+      const [supRes, catRes, itmRes] = await Promise.all([
+        axiosInstance.get('/suppliers').catch(() => null),
+        axiosInstance.get('/categories').catch(() => null),
+        axiosInstance.get('/item-details').catch(() => null)
+      ])
+      if (supRes?.data) {
+        const d = supRes.data
+        setSuppliers(Array.isArray(d) ? d : d.data || [])
+      }
+      if (catRes?.data) {
+        const d = catRes.data
+        setCategories(Array.isArray(d) ? d : d.data || [])
+      }
+      if (itmRes?.data) {
+        const d = itmRes.data
+        setItems(Array.isArray(d) ? d : d.data || [])
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to load initial data')
+    }
+  }
+
+  async function fetchPurchases() {
+    try {
+      const response = await axiosInstance.get('/purchases')
+      if (response?.data) {
+        const data = response.data
+        setPurchasesRecord(Array.isArray(data) ? data : data.data || [])
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // --- Calculations ---
+  const subTotal = useMemo(() => {
+    return purchaseItems.reduce((sum, row) => sum + (Number(row.total) || 0), 0)
+  }, [purchaseItems])
+
+  // Handle cross-updating of discount % and amount
+  useEffect(() => {
+    if (discountPercent !== '' && Number(discountPercent) >= 0) {
+      const calcAmt = (subTotal * (Number(discountPercent) / 100)).toFixed(2)
+      setDiscountAmount(calcAmt)
+    }
+  }, [discountPercent, subTotal])
+
+  const payable = useMemo(() => {
+    const disc = Number(discountAmount) || 0
+    return Math.max(0, subTotal - disc)
+  }, [subTotal, discountAmount])
+
+  const remaining = useMemo(() => {
+    const given = Number(givenAmount) || 0
+    return Math.max(0, payable - given)
+  }, [payable, givenAmount])
+
+  const isAllPaid = payable > 0 && givenAmount >= payable
+
+  // --- Handlers ---
+  const addRow = () => setPurchaseItems([...purchaseItems, createEmptyRow()])
+  
+  const removeRow = (id) => {
+    if (purchaseItems.length > 1) setPurchaseItems(purchaseItems.filter(r => r.id !== id))
+  }
+
+  const clearAllRows = () => {
+    setPurchaseItems([createEmptyRow()])
+  }
+
+  const updateRow = (id, field, value) => {
+    setPurchaseItems(prev => prev.map(row => {
+      if (row.id === id) {
+        const newRow = { ...row, [field]: value }
+        
+        // Auto-fill price behavior logic if selected
+        if (field === 'item_id' && value) {
+          const selectedItem = items.find(i => String(i.id) === String(value))
+          if (selectedItem) {
+            newRow.purchase_price = selectedItem.purchase_price || 0
+            newRow.sale_price = selectedItem.sale_price || 0
+          }
+        }
+        
+        if (field === 'category_id') {
+          newRow.item_id = ''
+          newRow.purchase_price = ''
+          newRow.sale_price = ''
+        }
+
+        const p = Number(newRow.purchase_price) || 0
+        const q = Number(newRow.quantity) || 0
+        newRow.total = p * q
+        return newRow
+      }
+      return row
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!supplierId) {
+      toast.error('Supplier selection is required.')
+      return
+    }
+    
+    const validItems = purchaseItems.filter(r => r.item_id && r.quantity > 0)
+    if (validItems.length === 0) {
+      toast.error('Add at least one item.')
+      return
+    }
+
+    setSubmitting(true)
+
+    const payload = {
+      grn_no: grnNo,
+      grn_date: grnDate,
+      supplier_id: supplierId,
+      invoice_number: invoiceNo,
+      sub_total: subTotal,
+      discount_percent: Number(discountPercent) || 0,
+      discount_amount: Number(discountAmount) || 0,
+      payable: payable,
+      paid_amount: Number(givenAmount) || 0,
+      items: validItems.map(r => ({
+        item_id: r.item_id,
+        purchase_price: r.purchase_price,
+        sale_price: r.sale_price,
+        quantity: r.quantity,
+        total: r.total
+      }))
+    }
+
+    try {
+      await axiosInstance.post('/purchases', payload)
+      
+      toast.success('Purchase Order saved successfully!')
+      setGrnNo(generateGRN())
+      setSupplierId('')
+      setInvoiceNo('')
+      setPurchaseItems([createEmptyRow()])
+      setDiscountPercent('')
+      setDiscountAmount('')
+      setGivenAmount('')
+      fetchPurchases()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to save purchase.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <PageShell
+      title="Purchase Entry"
+      description="Record stock intake and supplier invoices."
+      accent="from-teal-600 via-emerald-600 to-cyan-700"
+    >
+      <div className="space-y-6">
+        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4">
+          <SectionHeader
+            title="New Purchase Entry"
+            description="Log Goods Received Note (GRN) into inventory."
+            icon={<ArchiveBoxIcon className="h-6 w-6" />}
+          />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Purchase Details Section */}
+            <SectionCard title="Receipt Details">
+              <div className="flex flex-wrap gap-5 items-start">
+                <Field label="GRN No">
+                  <input
+                    type="text"
+                    value={grnNo}
+                    readOnly
+                    className="h-8 w-44 rounded-md border border-slate-300 bg-slate-50 px-2.5 text-[12px] font-mono outline-none text-slate-500"
+                  />
+                </Field>
+                <Field label="GRN Date" required>
+                  <input
+                    type="date"
+                    value={grnDate}
+                    onChange={(e) => setGrnDate(e.target.value)}
+                    className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  />
+                </Field>
+                <Field label="Supplier" required>
+                  <select
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className="h-8 w-60 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  >
+                    <option value="">Select Supplier</option>
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.id}>{s.supplier_name}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Invoice Number">
+                  <input
+                    type="text"
+                    value={invoiceNo}
+                    onChange={(e) => setInvoiceNo(e.target.value)}
+                    placeholder="Enter Invoice #"
+                    className="h-8 w-44 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  />
+                </Field>
+              </div>
+            </SectionCard>
+
+            {/* Items Section */}
+            <SectionCard title="Invoice Items">
+              <div className="space-y-3">
+                <div className="hidden grid-cols-[160px_1fr_90px_90px_70px_100px_40px] gap-3 px-1 sm:grid">
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Item Name</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Purch. Price</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Sale Price</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
+                  <div></div>
+                </div>
+
+                {purchaseItems.map((row) => {
+                  const availableItemsForCat = items.filter(i => String(i.category_id) === String(row.category_id))
+                  return (
+                    <div key={row.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[160px_1fr_90px_90px_70px_100px_40px] items-center bg-slate-50 p-2 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
+                      <div className="col-span-2 sm:col-span-1">
+                        <select
+                          value={row.category_id}
+                          onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                        >
+                          <option value="">Category</option>
+                          {categories.map(c => (
+                            <option key={c.id} value={c.id}>{c.category_name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 sm:col-span-1">
+                        <select
+                          value={row.item_id}
+                          onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
+                          disabled={!row.category_id}
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
+                        >
+                          <option value="">Select Item</option>
+                          {availableItemsForCat.map(i => (
+                            <option key={i.id} value={i.id}>{i.item_name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-1">
+                        <input
+                          type="number"
+                          value={row.purchase_price}
+                          onChange={(e) => updateRow(row.id, 'purchase_price', e.target.value)}
+                          placeholder="P. Price"
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                        />
+                      </div>
+                      
+                      <div className="col-span-1">
+                        <input
+                          type="number"
+                          value={row.sale_price}
+                          onChange={(e) => updateRow(row.id, 'sale_price', e.target.value)}
+                          placeholder="S. Price"
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                        />
+                      </div>
+
+                      <div className="col-span-1">
+                         <input
+                          type="number"
+                          min="1"
+                          value={row.quantity}
+                          onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
+                          placeholder="Qty"
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                        />
+                      </div>
+
+                      <div className="col-span-1 bg-white border border-slate-200 h-8 flex items-center px-2.5 rounded-md font-medium text-slate-700 text-[12px]">
+                        PKR {Number(row.total || 0).toFixed(2)}
+                      </div>
+
+                      <div className="col-span-1 flex justify-end sm:justify-center">
+                        <button
+                          type="button"
+                          onClick={() => removeRow(row.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={addRow}
+                    className="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-[12px] font-semibold text-teal-700 hover:bg-teal-100 transition"
+                  >
+                    <PlusIcon className="h-4 w-4" /> Add Item
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearAllRows}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* Order Summary */}
+            <SectionCard title="Order Summary">
+              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between p-2">
+                
+                <div className="flex bg-slate-50 p-4 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-3 min-w-[320px]">
+                  <div className="flex justify-between items-center text-[13px]">
+                    <span className="text-slate-500">Subtotal:</span>
+                    <span className="font-semibold text-slate-800">PKR {subTotal.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-[13px] gap-2">
+                    <span className="text-slate-500">Discount:</span>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={discountPercent}
+                          onChange={(e) => setDiscountPercent(e.target.value)}
+                          placeholder="%"
+                          className="h-7 w-16 rounded border border-slate-300 px-1.5 text-[12px] outline-none focus:border-teal-400 text-center"
+                        />
+                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-[10px] text-slate-400">%</span>
+                      </div>
+                      <span className="text-slate-300">-</span>
+                      <div className="relative">
+                        <span className="absolute top-1/2 left-2 -translate-y-1/2 text-[10px] text-slate-400">PKR</span>
+                        <input
+                          type="number"
+                          value={discountAmount}
+                          onChange={(e) => {
+                            setDiscountAmount(e.target.value)
+                            setDiscountPercent('') // manual override flat amounts cancel %
+                          }}
+                          placeholder="Amount"
+                          className="h-7 w-24 rounded border border-slate-300 pl-7 pr-1.5 text-[12px] text-right outline-none focus:border-teal-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-slate-200 my-1 w-full" />
+                  <div className="flex justify-between items-center text-[15px]">
+                    <span className="font-bold text-slate-700">Payable:</span>
+                    <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col w-full md:w-auto gap-3 flex-1 md:max-w-[400px]">
+                  <div className="flex bg-white border border-slate-200 p-2 rounded-xl">
+                    <div className="flex-1 px-2">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Company Paid</p>
+                      <input
+                        type="number"
+                        value={givenAmount}
+                        onChange={(e) => setGivenAmount(e.target.value)}
+                        placeholder="Amount Tendered"
+                        className="h-8 w-full text-base font-bold text-slate-800 outline-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  {givenAmount > 0 && (
+                    <div className={`p-3 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                      <span className={`text-[13px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {isAllPaid ? 'ALL PAID' : 'TO BE PAID'}
+                      </span>
+                      {isAllPaid ? (
+                        <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                          <span>Change: PKR {(givenAmount - payable).toFixed(2)}</span>
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                      ) : (
+                        <span className="font-bold text-rose-600 font-mono">PKR {remaining.toFixed(2)}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting || payable === 0}
+                  className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
+                >
+                  <ArchiveBoxIcon className="h-5 w-5" />
+                  {submitting ? 'Saving...' : 'Save Purchase'}
+                </button>
+              </div>
+
+            </SectionCard>
+          </form>
+        </Card>
+
+        {/* Saved Purchases Table */}
+        <Card className="mx-auto max-w-5xl">
+          <SectionHeader
+            title="Recent Purchases"
+            description="Log of recent stock arrivals and supplier GRNs."
+            action={
+              <button
+                type="button"
+                onClick={fetchPurchases}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Refresh
+              </button>
+            }
+          />
+
+          {purchasesRecord.length === 0 ? (
+            <TableState message="No purchase records found." />
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-slate-100">
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full divide-y divide-slate-100 text-left">
+                  <thead className="bg-slate-50">
+                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      <th className="px-4 py-4 w-32">GRN No</th>
+                      <th className="px-4 py-4">Supplier</th>
+                      <th className="px-4 py-4">Invoice No</th>
+                      <th className="px-4 py-4">Date</th>
+                      <th className="px-4 py-4 text-right">Total</th>
+                      <th className="px-4 py-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {purchasesRecord.map((s, idx) => (
+                      <tr key={s.id || idx} className="text-sm border-t border-slate-50 transition hover:bg-slate-50/50">
+                        <td className="px-4 py-3.5 font-medium text-slate-900 font-mono text-xs">{s.grn_no}</td>
+                        <td className="px-4 py-3.5 text-slate-600 font-semibold">
+                          {(() => {
+                            const sup = suppliers.find(su => String(su.id) === String(s.supplier_id))
+                            return sup ? sup.supplier_name : s.supplier_id
+                          })()}
+                        </td>
+                        <td className="px-4 py-3.5 text-slate-600">{s.invoice_no || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-600">{s.grn_date}</td>
+                        <td className="px-4 py-3.5 text-right font-bold text-slate-800">PKR {Number(s.payable || s.total_amount || 0).toFixed(2)}</td>
+                        <td className="px-4 py-3.5 text-center">
+                           <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            (s.paid_amount >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                           }`}>
+                             {(s.paid_amount >= s.payable) ? 'PAID' : 'PENDING'}
+                           </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+    </PageShell>
+  )
+}
