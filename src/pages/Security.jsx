@@ -125,7 +125,7 @@ export default function Security() {
 
   return (
     <PageShell 
-      title={pageTitle} // Forces the Top Header to say "Security Modules"
+      title={pageTitle} 
       description="Manage system access, user groups, and organizational security." 
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
