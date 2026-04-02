@@ -7,7 +7,7 @@ import {
   MdWarehouse, MdAddBox, MdRemoveCircle, MdRefresh,
   MdCategory, MdBusiness, MdLabel, MdQrCode2, MdLocationOn,
   MdReceipt, MdAccountBalance, MdAssessment,
-  MdLocalOffer, MdCalendarToday, MdPerson
+  MdLocalOffer, MdCalendarToday, MdPerson, MdSecurity
 } from 'react-icons/md';
 import { logout } from '../../features/auth/authSlice';
 
@@ -121,6 +121,7 @@ const Sidebar = () => {
 
         <SidebarItem to="/customers" label="Customers" icon={MdPeople} />
         <SidebarItem to="/booking-customers" label="Bookings" icon={MdCalendarToday} />
+        <SidebarItem to="/security" label="Security" icon={MdSecurity} />
       </div>
       <div className="border-t border-gray-200 p-3">
         <button

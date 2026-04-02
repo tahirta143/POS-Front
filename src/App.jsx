@@ -25,6 +25,7 @@ import ItemBarcode from './pages/setup/ItemBarcode';
 import ExpiryTagsPage from './pages/ExpiryTags';
 import ReOrderStock from './pages/stock/ReOrderStock';
 import ClosingStock from './pages/stock/ClosingStock';
+import Security from './pages/Security';
 
 // Placeholder standard component for empty routes
 const Placeholder = ({ title }) => (
@@ -65,6 +66,7 @@ const App = () => {
         <Route path="/sale" element={<Sales />} />
         <Route path="/customers" element={<CustomerList />} />
         <Route path="/booking-customers" element={<Bookings />} />
+        <Route path="/security" element={<Security />} />
         <Route path="/expiry-tags" element={<ExpiryTagsPage />} />
 
         {/* Other Setup Routes */}
