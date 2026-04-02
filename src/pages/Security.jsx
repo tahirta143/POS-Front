@@ -21,7 +21,7 @@ const MODULE_DATA = [
   { id: 'group-rights', category: 'Access Control', title: 'Group Rights', desc: 'Set group permissions', icon: <MdSecurity /> },
   { id: 'user-access', category: 'Access Control', title: 'Users Module Access', desc: 'Manage user access', icon: <MdVpnKey /> },
   { id: 'group-mgmt', category: 'User Management', title: 'Group Management', desc: 'Create user groups', icon: <MdPeople /> },
-  { id: 'empty-module', category: 'Draft', title: 'Empty Page', desc: 'New module placeholder', icon: <MdLayersClear /> },
+  
 ];
 
 // --- 2. SUB-COMPONENTS ---

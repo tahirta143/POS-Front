@@ -122,7 +122,7 @@ const Sidebar = () => {
         <SidebarItem to="/customers" label="Customers" icon={MdPeople} />
         <SidebarItem to="/booking-customers" label="Bookings" icon={MdCalendarToday} />
         <SidebarItem to="/security" label="Security" icon={MdSecurity} />
-        <SidebarItem to="/anas" label="anas" icon={MdSecurity} />
+        
       </div>
       <div className="border-t border-gray-200 p-3">
         <button
