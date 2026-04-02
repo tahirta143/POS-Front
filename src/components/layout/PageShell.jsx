@@ -8,7 +8,7 @@ export function PageShell({ children }) {
     </section>
   )
 }
-                    // demyyyyy//////////////////
+
 export function Card({ children, className = '' }) {
   return (
     <div

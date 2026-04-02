@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { 
-  MdDashboard, MdSettings, MdInventory, MdMonetizationOn, 
-  MdPeople, MdShoppingCart, MdEventAvailable, MdExpandMore, MdExpandLess, MdLogout,
+import {
+  MdDashboard, MdSettings, MdInventory, MdMonetizationOn,
+  MdPeople, MdShoppingCart, MdExpandMore, MdExpandLess, MdLogout,
   MdWarehouse, MdAddBox, MdRemoveCircle, MdRefresh,
   MdCategory, MdBusiness, MdLabel, MdQrCode2, MdLocationOn,
   MdReceipt, MdAccountBalance, MdAssessment,
-  MdLocalOffer, MdCalendarToday, MdPerson, MdSecurity
+  MdLocalOffer, MdCalendarToday, MdSecurity
 } from 'react-icons/md';
 import { logout } from '../../features/auth/authSlice';
 
@@ -21,9 +21,8 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
       <div className="mb-1">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md transition-colors ${
-            isActive ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-          }`}
+          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md transition-colors ${isActive ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className="text-xl" />}
@@ -38,8 +37,7 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
                 key={idx}
                 to={child.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
-                    isActive ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                  `flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${isActive ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                   }`
                 }
               >
@@ -57,8 +55,7 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-2.5 rounded-md mb-1 transition-colors ${
-          isActive ? 'bg-teal-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        `flex items-center gap-3 px-4 py-2.5 rounded-md mb-1 transition-colors ${isActive ? 'bg-teal-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`
       }
     >
@@ -84,7 +81,7 @@ const Sidebar = () => {
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
         <SidebarItem to="/dashboard" label="Dashboard" icon={MdDashboard} />
-        
+
         <SidebarItem to="/items" label="Item Details" icon={MdInventory} />
         <SidebarItem to="/stock" label="Stock" icon={MdWarehouse}>
           {[
@@ -96,6 +93,8 @@ const Sidebar = () => {
 
         <SidebarItem to="/purchase" label="Purchase" icon={MdShoppingCart} />
         <SidebarItem to="/sale" label="Sales Invoice" icon={MdReceipt} />
+        <SidebarItem to="/customers" label="Customers" icon={MdPeople} />
+        <SidebarItem to="/booking-customers" label="Bookings" icon={MdCalendarToday} />
         <SidebarItem to="/expiry-tags" label="Expiry Tags" icon={MdLocalOffer} />
 
         <SidebarItem to="/setup" label="Setup" icon={MdSettings}>
@@ -118,11 +117,7 @@ const Sidebar = () => {
             { to: '/expense/report', label: 'Expense Report', icon: MdAssessment }
           ]}
         </SidebarItem>
-
-        <SidebarItem to="/customers" label="Customers" icon={MdPeople} />
-        <SidebarItem to="/booking-customers" label="Bookings" icon={MdCalendarToday} />
         <SidebarItem to="/security" label="Security" icon={MdSecurity} />
-        
       </div>
       <div className="border-t border-gray-200 p-3">
         <button

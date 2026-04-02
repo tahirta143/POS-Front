@@ -28,6 +28,7 @@ const pageTitles = {
   '/expense/report': 'Expense Report',
   '/customers': 'Customers',
   '/booking-customers': 'Bookings',
+  '/security': 'Security Modules',
 };
 
 const Navbar = () => {
