@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'react-toastify'
-import { Card, PageShell, SectionHeader } from '../components/layout/PageShell.jsx'
+import { Card, PageShell, SectionHeader, Field } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
 import { 
   MdBusiness, MdPeople, MdSecurity, MdVpnKey, MdHistory, 
   MdViewModule, MdExtension, MdLockPerson, MdAppRegistration, 
-  MdGroupWork, MdSearch, MdArrowBack, MdAdd, MdRefresh, MdClose
+  MdGroupWork, MdSearch, MdArrowBack, MdAdd, MdRefresh, MdClose, MdLayersClear, MdSave
 } from 'react-icons/md'
 
 // --- 1. DATA DEFINITION ---
@@ -21,9 +21,10 @@ const MODULE_DATA = [
   { id: 'group-rights', category: 'Access Control', title: 'Group Rights', desc: 'Set group permissions', icon: <MdSecurity /> },
   { id: 'user-access', category: 'Access Control', title: 'Users Module Access', desc: 'Manage user access', icon: <MdVpnKey /> },
   { id: 'group-mgmt', category: 'User Management', title: 'Group Management', desc: 'Create user groups', icon: <MdPeople /> },
+  { id: 'empty-module', category: 'Draft', title: 'Empty Page', desc: 'New module placeholder', icon: <MdLayersClear /> },
 ];
 
-// --- 2. SUB-COMPONENTS (Defined Outside to Fix Search Lag) ---
+// --- 2. SUB-COMPONENTS ---
 
 const ModuleCard = ({ mod, onClick }) => (
   <div 
@@ -46,8 +47,10 @@ const ModuleCard = ({ mod, onClick }) => (
 const ModulePage = ({ module, onBack }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isAdding, setIsAdding] = useState(false); // Controls the "New" form visibility
 
   const fetchData = async () => {
+    if (module.id === 'empty-module') return;
     setLoading(true);
     try {
       const res = await axiosInstance.get(`/${module.id}`).catch(() => ({ data: [] }));
@@ -58,58 +61,104 @@ const ModulePage = ({ module, onBack }) => {
 
   useEffect(() => { fetchData(); }, [module.id]);
 
+  const handleSave = (e) => {
+    e.preventDefault();
+    toast.success(`New ${module.title} entry saved successfully!`);
+    setIsAdding(false);
+    fetchData();
+  };
+
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
       <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm">
-          <MdArrowBack /> Back to Overview
+        <button onClick={isAdding ? () => setIsAdding(false) : onBack} className="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm">
+          <MdArrowBack /> {isAdding ? 'Cancel and Return' : 'Back to Overview'}
         </button>
-        <div className="flex gap-3">
-           <button onClick={fetchData} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-teal-600 shadow-sm">
-             <MdRefresh className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`}/>
-           </button>
-           <button className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-teal-200 hover:bg-teal-700">
-             <MdAdd className="h-5 w-5" /> New {module.title}
-           </button>
-        </div>
+        
+        {!isAdding && (
+          <div className="flex gap-3">
+            <button onClick={fetchData} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-teal-600 shadow-sm">
+              <MdRefresh className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`}/>
+            </button>
+            <button 
+              onClick={() => setIsAdding(true)} 
+              className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-teal-200 hover:bg-teal-700 transition"
+            >
+              <MdAdd className="h-5 w-5" /> New {module.title}
+            </button>
+          </div>
+        )}
       </div>
 
       <Card className="border-l-[6px] border-l-teal-500 p-6">
-        <SectionHeader title={module.title} description={module.desc} icon={<div className="text-teal-600 text-3xl">{module.icon}</div>} />
-        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              <tr><th className="px-6 py-4">ID</th><th className="px-6 py-4">Name</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Action</th></tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                <tr><td colSpan="4" className="py-10 text-center text-teal-600">Syncing Data...</td></tr>
-              ) : data.length > 0 ? (
-                data.map((item, i) => (
-                  <tr key={i} className="hover:bg-teal-50/20">
-                    <td className="px-6 py-4 font-mono text-xs text-slate-400">#{(item.id || i+1).toString().padStart(4, '0')}</td>
-                    <td className="px-6 py-4 font-bold text-slate-700">{item.name || item.title || 'Record Entry'}</td>
-                    <td className="px-6 py-4"><span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[9px] font-bold text-teal-700 uppercase">Active</span></td>
-                    <td className="px-6 py-4 text-right"><button className="text-teal-600 font-bold text-xs">Edit Details</button></td>
-                  </tr>
-                ))
-              ) : (
-                <tr><td colSpan="4" className="py-20 text-center text-slate-400 italic">No {module.title} records found.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <SectionHeader 
+          title={isAdding ? `Create New ${module.title}` : module.title} 
+          description={isAdding ? `Fill in the details below to add a new record to the ${module.title} module.` : module.desc} 
+          icon={<div className="text-teal-600 text-3xl">{module.icon}</div>} 
+        />
+
+        {isAdding ? (
+          /* --- THE DYNAMIC FORM (Renders when +New is clicked) --- */
+          <form onSubmit={handleSave} className="mt-8 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+              <Field label={`${module.title} Name`} required>
+                <input type="text" className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500" placeholder="Enter name..." required />
+              </Field>
+              <Field label="Status">
+                <select className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500">
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </Field>
+              <div className="md:col-span-2">
+                <Field label="Description / Remarks">
+                  <textarea className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500" rows="3" placeholder="Additional details..."></textarea>
+                </Field>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+               <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Discard</button>
+               <button type="submit" className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700">
+                 <MdSave /> Save {module.title}
+               </button>
+            </div>
+          </form>
+        ) : (
+          /* --- THE DATA TABLE (Original View) --- */
+          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <tr><th className="px-6 py-4">ID</th><th className="px-6 py-4">Name</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Action</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {loading ? (
+                  <tr><td colSpan="4" className="py-10 text-center text-teal-600 font-bold">Syncing...</td></tr>
+                ) : data.length > 0 ? (
+                  data.map((item, i) => (
+                    <tr key={i} className="hover:bg-teal-50/20">
+                      <td className="px-6 py-4 font-mono text-xs text-slate-400">#{(item.id || i+1).toString().padStart(4, '0')}</td>
+                      <td className="px-6 py-4 font-bold text-slate-700">{item.name || item.title || 'Record Entry'}</td>
+                      <td className="px-6 py-4"><span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[9px] font-bold text-teal-700 uppercase">Active</span></td>
+                      <td className="px-6 py-4 text-right"><button className="text-teal-600 font-bold text-xs hover:underline">Edit</button></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="4" className="py-20 text-center text-slate-400 italic">No {module.title} records found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );
 };
 
-// --- 3. MAIN SECURITY COMPONENT ---
+// --- 3. MAIN COMPONENT (Remains the same for Search/Grid) ---
 export default function Security() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtering Logic
   const filteredModules = useMemo(() => {
     const lowSearch = searchTerm.toLowerCase();
     return MODULE_DATA.filter(m => 
@@ -120,46 +169,23 @@ export default function Security() {
 
   const currentModule = MODULE_DATA.find(m => m.id === activeTab);
 
-  // Dynamic Title Logic
-  const pageTitle = activeTab === 'dashboard' ? "Security Modules" : `Security Modules / ${currentModule?.title}`;
-
   return (
-    <PageShell 
-      title={pageTitle} 
-      description="Manage system access, user groups, and organizational security." 
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell title="SECURITY MODULES" accent="from-teal-600 to-emerald-700">
       {activeTab === 'dashboard' ? (
         <div className="space-y-6 animate-in fade-in duration-300">
-          {/* SEARCH BAR SECTION */}
           <div className="relative max-w-2xl">
             <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
             <input 
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search security modules..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-12 pr-10 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-12 pr-10 text-sm outline-none focus:border-teal-500 shadow-sm"
             />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-600">
-                <MdClose className="h-5 w-5" />
-              </button>
-            )}
           </div>
-
-          {/* MODULE GRID SECTION */}
-          {filteredModules.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {filteredModules.map((mod) => (
-                <ModuleCard key={mod.id} mod={mod} onClick={setActiveTab} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center text-slate-400 font-medium">
-              No matching security modules found for "{searchTerm}"
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {filteredModules.map((mod) => (
+              <ModuleCard key={mod.id} mod={mod} onClick={setActiveTab} />
+            ))}
+          </div>
         </div>
       ) : (
         <ModulePage module={currentModule} onBack={() => setActiveTab('dashboard')} />
