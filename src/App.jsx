@@ -26,14 +26,18 @@ import ExpiryTagsPage from './pages/ExpiryTags';
 import ReOrderStock from './pages/stock/ReOrderStock';
 import ClosingStock from './pages/stock/ClosingStock';
 import Security from './pages/Security';
+import UserModule from './pages/security/UserModule';
+import GroupRights from './pages/security/GroupRights';
+import ModuleFunctions from './pages/security/ModuleFunctions';
+import ModulesInfo from './pages/security/ModulesInfo';
+import SecurityLog from './pages/security/SecurityLog';
+import GroupUsers from './pages/security/GroupUsers';
+import Company from './pages/security/Company';
+import Employee from './pages/security/Employee';
+import User from './pages/security/User';
+import SoftwareGroup from './pages/security/Software';
+import UserToGroup from './pages/security/UserToGroup';
 
-// Placeholder standard component for empty routes
-const Placeholder = ({ title }) => (
-  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-    <h2 className="text-xl font-semibold mb-4 text-teal-700">{title}</h2>
-    <p className="text-gray-500">This module is under construction.</p>
-  </div>
-);
 
 
 const App = () => {
@@ -83,9 +87,23 @@ const App = () => {
         <Route path="/expense/head" element={<ExpenseHead />} />
         <Route path="/expense/voucher" element={<ExpenseVoucher />} />
         <Route path="/expense/report" element={<ExpenseReport />} />
+
+        {/* Security Routes */}
+        <Route path="/security/user-module" element={<UserModule />} />
+        <Route path="/security/group-rights" element={<GroupRights />} />
+        <Route path="/security/module-functions" element={<ModuleFunctions />} />
+        <Route path="/security/module-info" element={<ModulesInfo />} />
+        <Route path="/security/security-log" element={<SecurityLog />} />
+        <Route path="/security/group-users" element={<GroupUsers />} />
+        <Route path="/security/company" element={<Company />} />
+        <Route path="/security/employee" element={<Employee />} />
+        <Route path="/security/user" element={<User />} />
+        <Route path="/security/software-group" element={<SoftwareGroup />} />
+        <Route path="/security/user-to-group" element={<UserToGroup />} />
       </Route>
     </Routes>
   );
+
 };
 
 export default App;

@@ -1,195 +1,93 @@
-import { useEffect, useState, useMemo } from 'react'
-import { toast } from 'react-toastify'
-import { Card, PageShell, SectionHeader, Field } from '../components/layout/PageShell.jsx'
-import axiosInstance from '../services/axiosInstance'
-import { 
-  MdBusiness, MdPeople, MdSecurity, MdVpnKey, MdHistory, 
-  MdViewModule, MdExtension, MdLockPerson, MdAppRegistration, 
-  MdGroupWork, MdSearch, MdArrowBack, MdAdd, MdRefresh, MdClose, MdLayersClear, MdSave
+import { useMemo, useState } from 'react'
+import { NavLink } from 'react-router-dom'
+import { PageShell } from '../components/layout/PageShell.jsx'
+import {
+  MdBusiness, MdPeople, MdSecurity, MdVpnKey, MdHistory,
+  MdViewModule, MdExtension, MdLockPerson, MdAppRegistration,
+  MdGroupWork, MdSearch,
 } from 'react-icons/md'
 
-// --- 1. DATA DEFINITION ---
+// Route paths match App.jsx exactly
 const MODULE_DATA = [
-  { id: 'company', category: 'Organization', title: 'Company', desc: 'Manage company information', icon: <MdBusiness /> },
-  { id: 'employee', category: 'Organization', title: 'Employee', desc: 'Manage employee records', icon: <MdPeople /> },
-  { id: 'software-group', category: 'Access Control', title: 'Software Group', desc: 'Configure software groups', icon: <MdGroupWork /> },
-  { id: 'users', category: 'User Management', title: 'Users', desc: 'Manage user accounts', icon: <MdLockPerson /> },
-  { id: 'group-users', category: 'User Management', title: 'Group Users', desc: 'Assign users to groups', icon: <MdAppRegistration /> },
-  { id: 'security-log', category: 'Monitoring', title: 'Security Log', desc: 'View security activities', icon: <MdHistory /> },
-  { id: 'modules', category: 'System', title: 'Modules', desc: 'Manage system modules', icon: <MdViewModule /> },
-  { id: 'functionalities', category: 'System', title: 'Modules Functionalities', desc: 'Configure functionalities', icon: <MdExtension /> },
-  { id: 'group-rights', category: 'Access Control', title: 'Group Rights', desc: 'Set group permissions', icon: <MdSecurity /> },
-  { id: 'user-access', category: 'Access Control', title: 'Users Module Access', desc: 'Manage user access', icon: <MdVpnKey /> },
-  { id: 'group-mgmt', category: 'User Management', title: 'Group Management', desc: 'Create user groups', icon: <MdPeople /> },
-  
-];
+  { path: '/security/company',          category: 'Organization',    title: 'Company',             desc: 'Manage company information',  icon: <MdBusiness /> },
+  { path: '/security/employee',         category: 'Organization',    title: 'Employee',            desc: 'Manage employee records',      icon: <MdPeople /> },
+  { path: '/security/software-group',   category: 'Access Control',  title: 'Software Group',      desc: 'Configure software groups',   icon: <MdGroupWork /> },
+  { path: '/security/user',             category: 'User Management', title: 'Users',               desc: 'Manage user accounts',         icon: <MdLockPerson /> },
+  { path: '/security/group-users',      category: 'User Management', title: 'Group Users',         desc: 'Assign users to groups',      icon: <MdAppRegistration /> },
+  { path: '/security/user-to-group',    category: 'User Management', title: 'User to Group',       desc: 'Link users to groups',        icon: <MdGroupWork /> },
+  { path: '/security/security-log',     category: 'Monitoring',      title: 'Security Log',        desc: 'View security activities',    icon: <MdHistory /> },
+  { path: '/security/module-info',      category: 'System',          title: 'Modules',             desc: 'Manage system modules',       icon: <MdViewModule /> },
+  { path: '/security/module-functions', category: 'System',          title: 'Module Functions',    desc: 'Configure functionalities',   icon: <MdExtension /> },
+  { path: '/security/group-rights',     category: 'Access Control',  title: 'Group Rights',        desc: 'Set group permissions',       icon: <MdSecurity /> },
+  { path: '/security/user-module',      category: 'Access Control',  title: 'Users Module Access', desc: 'Manage user access',          icon: <MdVpnKey /> },
+]
 
-// --- 2. SUB-COMPONENTS ---
-
-const ModuleCard = ({ mod, onClick }) => (
-  <div 
-    onClick={() => onClick(mod.id)}
-    className="group p-5 rounded-xl border border-slate-100 bg-white transition-all cursor-pointer hover:border-teal-400 hover:shadow-lg hover:-translate-y-1"
-  >
-    <div className="mb-4 flex items-center justify-between">
-      <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-teal-700">{mod.category}</span>
-      <div className="text-2xl text-teal-600 group-hover:scale-110 transition-transform">{mod.icon}</div>
-    </div>
-    <h3 className="text-sm font-bold text-slate-800">{mod.title}</h3>
-    <p className="mt-1 text-[11px] text-slate-500 leading-tight">{mod.desc}</p>
-    <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-teal-600 font-bold text-[11px]">
-      <span>Open Module</span>
-      <span className="group-hover:translate-x-1 transition-transform">→</span>
-    </div>
-  </div>
-);
-
-const ModulePage = ({ module, onBack }) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isAdding, setIsAdding] = useState(false); // Controls the "New" form visibility
-
-  const fetchData = async () => {
-    if (module.id === 'empty-module') return;
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/${module.id}`).catch(() => ({ data: [] }));
-      setData(res.data || []);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchData(); }, [module.id]);
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    toast.success(`New ${module.title} entry saved successfully!`);
-    setIsAdding(false);
-    fetchData();
-  };
-
-  return (
-    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <div className="flex items-center justify-between">
-        <button onClick={isAdding ? () => setIsAdding(false) : onBack} className="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm">
-          <MdArrowBack /> {isAdding ? 'Cancel and Return' : 'Back to Overview'}
-        </button>
-        
-        {!isAdding && (
-          <div className="flex gap-3">
-            <button onClick={fetchData} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-teal-600 shadow-sm">
-              <MdRefresh className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`}/>
-            </button>
-            <button 
-              onClick={() => setIsAdding(true)} 
-              className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-teal-200 hover:bg-teal-700 transition"
-            >
-              <MdAdd className="h-5 w-5" /> New {module.title}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <Card className="border-l-[6px] border-l-teal-500 p-6">
-        <SectionHeader 
-          title={isAdding ? `Create New ${module.title}` : module.title} 
-          description={isAdding ? `Fill in the details below to add a new record to the ${module.title} module.` : module.desc} 
-          icon={<div className="text-teal-600 text-3xl">{module.icon}</div>} 
-        />
-
-        {isAdding ? (
-          /* --- THE DYNAMIC FORM (Renders when +New is clicked) --- */
-          <form onSubmit={handleSave} className="mt-8 space-y-6 animate-in fade-in zoom-in-95 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
-              <Field label={`${module.title} Name`} required>
-                <input type="text" className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500" placeholder="Enter name..." required />
-              </Field>
-              <Field label="Status">
-                <select className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500">
-                  <option>Active</option>
-                  <option>Inactive</option>
-                </select>
-              </Field>
-              <div className="md:col-span-2">
-                <Field label="Description / Remarks">
-                  <textarea className="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-teal-500" rows="3" placeholder="Additional details..."></textarea>
-                </Field>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-               <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Discard</button>
-               <button type="submit" className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700">
-                 <MdSave /> Save {module.title}
-               </button>
-            </div>
-          </form>
-        ) : (
-          /* --- THE DATA TABLE (Original View) --- */
-          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                <tr><th className="px-6 py-4">ID</th><th className="px-6 py-4">Name</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Action</th></tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {loading ? (
-                  <tr><td colSpan="4" className="py-10 text-center text-teal-600 font-bold">Syncing...</td></tr>
-                ) : data.length > 0 ? (
-                  data.map((item, i) => (
-                    <tr key={i} className="hover:bg-teal-50/20">
-                      <td className="px-6 py-4 font-mono text-xs text-slate-400">#{(item.id || i+1).toString().padStart(4, '0')}</td>
-                      <td className="px-6 py-4 font-bold text-slate-700">{item.name || item.title || 'Record Entry'}</td>
-                      <td className="px-6 py-4"><span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[9px] font-bold text-teal-700 uppercase">Active</span></td>
-                      <td className="px-6 py-4 text-right"><button className="text-teal-600 font-bold text-xs hover:underline">Edit</button></td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan="4" className="py-20 text-center text-slate-400 italic">No {module.title} records found.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-// --- 3. MAIN COMPONENT (Remains the same for Search/Grid) ---
 export default function Security() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('')
 
   const filteredModules = useMemo(() => {
-    const lowSearch = searchTerm.toLowerCase();
-    return MODULE_DATA.filter(m => 
-      m.title.toLowerCase().includes(lowSearch) || 
-      m.category.toLowerCase().includes(lowSearch)
-    );
-  }, [searchTerm]);
-
-  const currentModule = MODULE_DATA.find(m => m.id === activeTab);
+    const q = searchTerm.toLowerCase()
+    return MODULE_DATA.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.category.toLowerCase().includes(q)
+    )
+  }, [searchTerm])
 
   return (
     <PageShell title="SECURITY MODULES" accent="from-teal-600 to-emerald-700">
-      {activeTab === 'dashboard' ? (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="relative max-w-2xl">
-            <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-            <input 
-              type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search security modules..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-12 pr-10 text-sm outline-none focus:border-teal-500 shadow-sm"
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {filteredModules.map((mod) => (
-              <ModuleCard key={mod.id} mod={mod} onClick={setActiveTab} />
-            ))}
-          </div>
+      <div className="space-y-6 animate-in fade-in duration-300">
+
+        {/* Search */}
+        <div className="relative max-w-2xl">
+          <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search security modules..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-12 pr-10 text-sm outline-none focus:border-teal-500 shadow-sm"
+          />
         </div>
-      ) : (
-        <ModulePage module={currentModule} onBack={() => setActiveTab('dashboard')} />
-      )}
+
+        {/* Module grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {filteredModules.map((mod) => (
+            <ModuleCard key={mod.path} mod={mod} />
+          ))}
+        </div>
+
+      </div>
     </PageShell>
-  );
+  )
+}
+
+function ModuleCard({ mod }) {
+  return (
+    <NavLink
+      to={mod.path}
+      className={({ isActive }) =>
+        [
+          'group p-5 rounded-xl border bg-white transition-all cursor-pointer',
+          'hover:border-teal-400 hover:shadow-lg hover:-translate-y-1',
+          isActive ? 'border-teal-400 shadow-md' : 'border-slate-100',
+        ].join(' ')
+      }
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-teal-700">
+          {mod.category}
+        </span>
+        <div className="text-2xl text-teal-600 group-hover:scale-110 transition-transform">
+          {mod.icon}
+        </div>
+      </div>
+      <h3 className="text-sm font-bold text-slate-800">{mod.title}</h3>
+      <p className="mt-1 text-[11px] text-slate-500 leading-tight">{mod.desc}</p>
+      <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-teal-600 font-bold text-[11px]">
+        <span>Open Module</span>
+        <span className="group-hover:translate-x-1 transition-transform">→</span>
+      </div>
+    </NavLink>
+  )
 }
