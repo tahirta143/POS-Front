@@ -27,10 +27,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsMounted(true)
-    fetchDashboardData()
-  }, [selectedPeriod])
+    fetchGlobalStats()
+  }, [])
 
-  async function fetchDashboardData() {
+  useEffect(() => {
+    if (isMounted) {
+      fetchChartData()
+    }
+  }, [selectedPeriod, isMounted])
+
+  async function fetchGlobalStats() {
     setLoading(true)
     try {
       const [
@@ -53,47 +59,63 @@ export default function Dashboard() {
         totalCustomers: { value: customersRes.data?.count || 203, change: 12 },
         totalProducts: { value: productsRes.data?.count || 16, change: 5 },
         totalStaff: { value: staffRes.data?.data?.total || 0, change: 2 },
-        totalSales: { value: salesRes.data?.total || 9, change: 18 },
-        totalRevenue: { value: revenueRes.data?.revenue || 11650, change: 15 },
+        totalSales: { value: salesRes.data?.total || 0, change: 18 },
+        totalRevenue: { value: revenueRes.data?.revenue || 0, change: 15 },
         totalBookings: { value: bookingsRes.data?.length || 10, change: 8 },
       })
 
+      fetchBookingsStatus()
+      fetchRecentSales()
+    } catch (err) {
+      toast.error('Failed to load stats')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function fetchChartData() {
+    // Only set loading for the chart area if needed, or just let it fetch
+    try {
       const salesOverviewData = await axiosInstance.get(`/sale-invoices/period?period=${selectedPeriod}`).catch(() => null)
       if (salesOverviewData?.data) {
         setSalesOverview(salesOverviewData.data)
       } else {
         setSalesOverview([])
       }
-
-      const bookingsStatusRes = await axiosInstance.get('/bookings').catch(() => null)
-      if (bookingsStatusRes?.data) {
-        const bookings = Array.isArray(bookingsStatusRes.data)
-          ? bookingsStatusRes.data
-          : bookingsStatusRes.data.data || []
-        const pending = bookings.filter(b => b.status === 'Pending').length
-        const completed = bookings.filter(b => b.status === 'Completed').length
-        const rejected = bookings.filter(b => b.status === 'Rejected').length
-        setOrderStatus({ pending, completed, rejected })
-        setRecentBookings(bookings.slice(0, 5))
-      } else {
-        setOrderStatus({ pending: 3, completed: 12, rejected: 1 })
-        setRecentBookings([])
-      }
-
-      const recentSalesRes = await axiosInstance.get('/sale-invoices?limit=5').catch(() => null)
-      if (recentSalesRes?.data) {
-        const sales = Array.isArray(recentSalesRes.data)
-          ? recentSalesRes.data
-          : recentSalesRes.data.data || []
-        setRecentSales(sales.slice(0, 5))
-      }
     } catch (err) {
-      toast.error('Failed to load dashboard data')
-      console.error(err)
-    } finally {
-      setLoading(false)
+      console.error('Failed to load chart data', err)
     }
   }
+
+  async function fetchBookingsStatus() {
+    const bookingsStatusRes = await axiosInstance.get('/bookings').catch(() => null)
+    if (bookingsStatusRes?.data) {
+      const bookings = Array.isArray(bookingsStatusRes.data)
+        ? bookingsStatusRes.data
+        : bookingsStatusRes.data.data || []
+      const pending = bookings.filter(b => b.status === 'Pending').length
+      const completed = bookings.filter(b => b.status === 'Completed').length
+      const rejected = bookings.filter(b => b.status === 'Rejected').length
+      setOrderStatus({ pending, completed, rejected })
+      setRecentBookings(bookings.slice(0, 5))
+    } else {
+      setOrderStatus({ pending: 3, completed: 12, rejected: 1 })
+      setRecentBookings([])
+    }
+  }
+
+  async function fetchRecentSales() {
+    const recentSalesRes = await axiosInstance.get('/sale-invoices?limit=5').catch(() => null)
+    if (recentSalesRes?.data) {
+      const sales = Array.isArray(recentSalesRes.data)
+        ? recentSalesRes.data
+        : recentSalesRes.data.data || []
+      setRecentSales(sales.slice(0, 5))
+    }
+  }
+
+  // Removed old fetchDashboardData
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-PK', {
