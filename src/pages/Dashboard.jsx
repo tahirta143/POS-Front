@@ -16,10 +16,11 @@ export default function Dashboard() {
     totalBookings: { value: 0, change: 0 },
   })
   const [salesOverview, setSalesOverview] = useState([])
+  const [selectedPeriod, setSelectedPeriod] = useState('weekly')
   const [orderStatus, setOrderStatus] = useState({
     pending: 0,
     completed: 0,
-    cancelled: 0,
+    rejected: 0,
   })
   const [recentBookings, setRecentBookings] = useState([])
   const [recentSales, setRecentSales] = useState([])
@@ -27,7 +28,7 @@ export default function Dashboard() {
   useEffect(() => {
     setIsMounted(true)
     fetchDashboardData()
-  }, [])
+  }, [selectedPeriod])
 
   async function fetchDashboardData() {
     setLoading(true)
@@ -57,19 +58,11 @@ export default function Dashboard() {
         totalBookings: { value: bookingsRes.data?.length || 10, change: 8 },
       })
 
-      const salesOverviewData = await axiosInstance.get('/sale-invoices/period?period=daily').catch(() => null)
+      const salesOverviewData = await axiosInstance.get(`/sale-invoices/period?period=${selectedPeriod}`).catch(() => null)
       if (salesOverviewData?.data) {
-        setSalesOverview(salesOverviewData.data.slice(-7))
+        setSalesOverview(salesOverviewData.data)
       } else {
-        setSalesOverview([
-          { date: '2024-01-01', amount: 1500 },
-          { date: '2024-01-02', amount: 2300 },
-          { date: '2024-01-03', amount: 1800 },
-          { date: '2024-01-04', amount: 3200 },
-          { date: '2024-01-05', amount: 2100 },
-          { date: '2024-01-06', amount: 2800 },
-          { date: '2024-01-07', amount: 3500 },
-        ])
+        setSalesOverview([])
       }
 
       const bookingsStatusRes = await axiosInstance.get('/bookings').catch(() => null)
@@ -79,11 +72,11 @@ export default function Dashboard() {
           : bookingsStatusRes.data.data || []
         const pending = bookings.filter(b => b.status === 'Pending').length
         const completed = bookings.filter(b => b.status === 'Completed').length
-        const cancelled = bookings.filter(b => b.status === 'Cancelled').length
-        setOrderStatus({ pending, completed, cancelled })
+        const rejected = bookings.filter(b => b.status === 'Rejected').length
+        setOrderStatus({ pending, completed, rejected })
         setRecentBookings(bookings.slice(0, 5))
       } else {
-        setOrderStatus({ pending: 3, completed: 12, cancelled: 1 })
+        setOrderStatus({ pending: 3, completed: 12, rejected: 1 })
         setRecentBookings([])
       }
 
@@ -127,18 +120,19 @@ export default function Dashboard() {
     })
   }
 
-  const salesChartData = salesOverview.map(day => ({
-    name: formatDate(day.period_label || day.date),
-    amount: day.totalAmount || day.amount || 0
+  const salesChartData = salesOverview.map(item => ({
+    name: item.period_label,
+    Sales: item.sales || 0,
+    Expenses: item.expenses || 0
   }))
 
   const orderStatusData = [
     { name: 'Pending', value: orderStatus.pending, color: '#f59e0b' },
     { name: 'Completed', value: orderStatus.completed, color: '#10b981' },
-    { name: 'Cancelled', value: orderStatus.cancelled, color: '#f43f5e' }
+    { name: 'Rejected', value: orderStatus.rejected, color: '#f43f5e' }
   ].filter(item => item.value > 0)
 
-  const totalOrders = orderStatus.pending + orderStatus.completed + orderStatus.cancelled
+  const totalOrders = orderStatus.pending + orderStatus.completed + orderStatus.rejected
 
   return (
     <PageShell
@@ -204,9 +198,26 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sales Overview Chart */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="p-4 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-800">Sales Overview</h3>
-              <p className="text-sm text-slate-500">Last 7 days sales performance</p>
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800">Sales Overview</h3>
+                <p className="text-sm text-slate-500">Sales vs Expenses performance</p>
+              </div>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                {['weekly', 'monthly', 'yearly'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setSelectedPeriod(period)}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                        selectedPeriod === period 
+                        ? 'bg-white text-teal-600 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {period.charAt(0).toUpperCase() + period.slice(1)}
+                    </button>
+                ))}
+              </div>
             </div>
             <div className="p-4">
               {loading || !isMounted ? (
@@ -241,13 +252,18 @@ export default function Dashboard() {
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
-                      formatter={(value) => [formatCurrency(value), 'Sales']}
+                      formatter={(value, name) => [formatCurrency(value), name]}
                     />
+                    <Legend verticalAlign="top" align="right" height={36}/>
                     <Bar
-                      dataKey="amount"
+                      dataKey="Sales"
                       fill="#14b8a6"
                       radius={[4, 4, 0, 0]}
-                      name="Sales Amount"
+                    />
+                    <Bar
+                      dataKey="Expenses"
+                      fill="#f43f5e"
+                      radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -318,8 +334,8 @@ export default function Dashboard() {
                   <p className="text-lg font-bold text-emerald-700">{orderStatus.completed}</p>
                 </div>
                 <div className="bg-rose-50 rounded-lg p-2">
-                  <p className="text-xs text-rose-600 font-medium">Cancelled</p>
-                  <p className="text-lg font-bold text-rose-700">{orderStatus.cancelled}</p>
+                  <p className="text-xs text-rose-600 font-medium">Rejected</p>
+                  <p className="text-lg font-bold text-rose-700">{orderStatus.rejected}</p>
                 </div>
               </div>
             </div>
