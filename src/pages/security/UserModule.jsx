@@ -1,13 +1,16 @@
 import { Card, SectionHeader, Field } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdVpnKey, MdSave } from 'react-icons/md'
-
+import { useNavigate } from 'react-router-dom'
 export default function UserModule({ onBack }) {
+  const navigate = useNavigate()
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <button onClick={onBack} className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm">
-        <MdArrowBack /> Back
+       <button
+        onClick={() => navigate('/security')}
+        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
+      >
+        <MdArrowBack /> Back to Overview
       </button>
-
       <Card className="border-l-[6px] border-l-teal-500 p-6">
         <SectionHeader title="User Module Access" description="Grant direct module access to individual system users." icon={<MdVpnKey className="text-teal-600 text-3xl"/>} />
         <form className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">

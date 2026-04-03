@@ -1,7 +1,8 @@
 import { Card, SectionHeader, Field } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdSave, MdViewModule, MdRefresh } from 'react-icons/md'
-
+import { useNavigate } from 'react-router-dom'
 export default function SoftwareGroup({ onBack }) {
+  const navigate = useNavigate()
   const handleSave = (e) => {
     e.preventDefault();
     // Save logic
@@ -9,9 +10,9 @@ export default function SoftwareGroup({ onBack }) {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <button 
-        onClick={onBack} 
-        className="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm"
+       <button
+        onClick={() => navigate('/security')}
+        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
       >
         <MdArrowBack /> Back to Overview
       </button>
@@ -44,7 +45,7 @@ export default function SoftwareGroup({ onBack }) {
             </Field>
           </div>
 
-          <div className="flex justify-end pt-6 border-t border-slate-100">
+          <div className="flex justify-end pt-6 border-slate-100">
             <button 
               type="submit" 
               className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition"

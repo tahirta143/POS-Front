@@ -1,7 +1,9 @@
 import { Card, SectionHeader, Field } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdSave, MdGroupWork, MdRefresh } from 'react-icons/md'
+import { useNavigate } from 'react-router-dom'
 
 export default function GroupUsers({ onBack }) {
+  const navigate = useNavigate()
   const handleSave = (e) => {
     e.preventDefault();
     // Logic for saving group would go here
@@ -9,9 +11,9 @@ export default function GroupUsers({ onBack }) {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <button 
-        onClick={onBack} 
-        className="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition shadow-sm"
+       <button
+        onClick={() => navigate('/security')}
+        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
       >
         <MdArrowBack /> Back to Overview
       </button>
@@ -44,7 +46,7 @@ export default function GroupUsers({ onBack }) {
             </Field>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
+          <div className="flex justify-end gap-3  border-slate-100 pt-6">
             <button 
               type="button" 
               onClick={onBack} 
