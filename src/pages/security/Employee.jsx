@@ -23,6 +23,16 @@ export default function Employee({ onBack }) {
             </Field>
             <Field label="Employee Name" required><input type="text" className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none" /></Field>
             <Field label="Email Address" required><input type="email" className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none" /></Field>
+
+            <Field label="Company">
+              <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">
+                <option>Select Company</option>
+                <option>IT Support</option>
+                <option>Finance</option>
+                <option>Human Resources</option>
+              </select>
+            </Field>
+
             
             <Field label="Department">
               <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">

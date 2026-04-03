@@ -37,6 +37,8 @@ import Employee from './pages/security/Employee';
 import User from './pages/security/User';
 import SoftwareGroup from './pages/security/Software';
 import UserToGroup from './pages/security/UserToGroup';
+import Department from './pages/setup/Department';
+import Designation from './pages/setup/Designation';
 
 
 
@@ -82,6 +84,8 @@ const App = () => {
         <Route path="/setup/item-unit" element={<ItemUnit />} />
         <Route path="/setup/shelve-location" element={<ItemShelve />} />
         <Route path="/setup/item-barcode" element={<ItemBarcode />} />
+        <Route path="/setup/department" element={<Department />} />
+        <Route path="/setup/designation" element={<Designation />} />
 
         {/* Other Expense Routes */}
         <Route path="/expense/head" element={<ExpenseHead />} />
