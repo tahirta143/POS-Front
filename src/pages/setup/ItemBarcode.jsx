@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
@@ -10,10 +10,10 @@ const sectionStyles = {
 function SectionCard({ color = 'teal', title, children }) {
   const style = sectionStyles[color]
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
-      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -41,14 +41,12 @@ export default function ItemBarcodePage() {
   const [loading, setLoading] = useState(false)
   const [barcodes, setBarcodes] = useState([])
   
-  // Dropdown data
   const [categories, setCategories] = useState([])
   const [manufacturers, setManufacturers] = useState([])
   const [suppliers, setSuppliers] = useState([])
   const [items, setItems] = useState([])
   const [units, setUnits] = useState([])
 
-  // Form state
   const [form, setForm] = useState({
     code: '',
     category_id: '',
@@ -112,7 +110,6 @@ export default function ItemBarcodePage() {
         setBarcodes(data)
       }
     } catch {
-      // Fallback - barcodes will be empty
       setBarcodes([])
     }
   }
@@ -138,7 +135,6 @@ export default function ItemBarcodePage() {
   async function handleSubmit(event) {
     event.preventDefault()
 
-    // Validation
     if (!form.code.trim()) {
       toast.error('Barcode Code is required.')
       return
@@ -229,25 +225,24 @@ export default function ItemBarcodePage() {
       description="Create and manage item barcodes with stock details."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6">
-        {/* Registration Form */}
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4">
+      <div className="space-y-4">
+        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
             title="New Barcode Registration"
             description="Enter barcode details and stock information."
-            icon={<BarcodeIcon className="h-6 w-6" />}
+            icon={<BarcodeIcon className="h-5 w-5" />}
           />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <SectionCard title="Barcode Information">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="Code" required>
                   <input
                     type="text"
                     value={form.code}
                     onChange={(e) => updateField('code', e.target.value)}
                     placeholder="Enter barcode code"
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
 
@@ -255,7 +250,7 @@ export default function ItemBarcodePage() {
                   <select
                     value={form.category_id}
                     onChange={(e) => updateField('category_id', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Category</option>
                     {categories.map((c) => (
@@ -268,7 +263,7 @@ export default function ItemBarcodePage() {
                   <select
                     value={form.manufacturer_id}
                     onChange={(e) => updateField('manufacturer_id', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Manufacturer</option>
                     {manufacturers.map((m) => (
@@ -281,7 +276,7 @@ export default function ItemBarcodePage() {
                   <select
                     value={form.supplier_id}
                     onChange={(e) => updateField('supplier_id', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Supplier (Optional)</option>
                     {suppliers.map((s) => (
@@ -294,7 +289,7 @@ export default function ItemBarcodePage() {
                   <select
                     value={form.item_id}
                     onChange={(e) => updateField('item_id', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Item</option>
                     {items.map((i) => (
@@ -307,7 +302,7 @@ export default function ItemBarcodePage() {
                   <select
                     value={form.unit_id}
                     onChange={(e) => updateField('unit_id', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Unit</option>
                     {units.map((u) => (
@@ -319,7 +314,7 @@ export default function ItemBarcodePage() {
             </SectionCard>
 
             <SectionCard title="Stock & Pricing">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="Stock" required>
                   <input
                     type="number"
@@ -327,7 +322,7 @@ export default function ItemBarcodePage() {
                     value={form.stock}
                     onChange={(e) => updateField('stock', e.target.value)}
                     placeholder="Enter stock quantity"
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
 
@@ -338,13 +333,13 @@ export default function ItemBarcodePage() {
                     value={form.reorder_level}
                     onChange={(e) => updateField('reorder_level', e.target.value)}
                     placeholder="Enter reorder level"
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
 
                 <Field label="Sale Price" required>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[12px]">Rs</span>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">Rs</span>
                     <input
                       type="number"
                       min="0"
@@ -352,25 +347,25 @@ export default function ItemBarcodePage() {
                       value={form.sale_price}
                       onChange={(e) => updateField('sale_price', e.target.value)}
                       placeholder="Enter sale price"
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white pl-8 pr-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                      className="h-7 w-full rounded-md border border-slate-300 bg-white pl-7 pr-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                   </div>
                 </Field>
               </div>
             </SectionCard>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-lg bg-teal-600 px-6 py-2 text-[13px] font-semibold text-white hover:bg-teal-700 transition disabled:opacity-50"
+                className="rounded-lg bg-teal-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 transition disabled:opacity-50"
               >
                 {submitting ? 'Saving...' : 'Save Barcode'}
               </button>
@@ -378,18 +373,17 @@ export default function ItemBarcodePage() {
           </form>
         </Card>
 
-        {/* Barcodes List */}
-        <Card className="mx-auto max-w-5xl">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="mx-auto max-w-5xl p-3">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-lg font-semibold text-slate-800">Registered Barcodes</h3>
-              <p className="text-sm text-slate-500">List of all item barcodes</p>
+              <h3 className="text-[13px] font-semibold text-slate-800">Registered Barcodes</h3>
+              <p className="text-[10px] text-slate-500">List of all item barcodes</p>
             </div>
             <button
               onClick={() => { fetchBarcodes(); fetchDropdownData() }}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 transition"
             >
-              <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
           </div>
@@ -400,37 +394,36 @@ export default function ItemBarcodePage() {
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50">
-                  <tr className="text-[12px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-4 py-3 text-left">Code</th>
-                    <th className="px-4 py-3 text-left">Item</th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                    <th className="px-4 py-3 text-left">Manufacturer</th>
-                    <th className="px-4 py-3 text-right">Stock</th>
-                    <th className="px-4 py-3 text-right">Sale Price</th>
-                    <th className="px-4 py-3 text-center">Actions</th>
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-3 py-2 text-left">Code</th>
+                    <th className="px-3 py-2 text-left">Item</th>
+                    <th className="px-3 py-2 text-left">Category</th>
+                    <th className="px-3 py-2 text-left">Manufacturer</th>
+                    <th className="px-3 py-2 text-right">Stock</th>
+                    <th className="px-3 py-2 text-right">Sale Price</th>
+                    <th className="px-3 py-2 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {barcodes.map((barcode) => (
-                    <tr key={barcode.id} className="text-sm hover:bg-slate-50/50 transition">
-                      <td className="px-4 py-3 font-mono text-slate-700">{barcode.code}</td>
-                      <td className="px-4 py-3 font-medium text-slate-800">{getItemName(barcode.item_detail_id)}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-teal-50 px-2 py-1 text-[11px] font-medium text-teal-700">
+                    <tr key={barcode.id} className="text-[11px] hover:bg-slate-50/50 transition">
+                      <td className="px-3 py-2 font-mono text-slate-700">{barcode.code}</td>
+                      <td className="px-3 py-2 font-medium text-slate-800">{getItemName(barcode.item_detail_id)}</td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center rounded-full bg-teal-50 px-1.5 py-0.5 text-[9px] font-medium text-teal-700">
                           {getCategoryName(barcode.category_id)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{getManufacturerName(barcode.manufacturer_id)}</td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-700">{barcode.stock}</td>
-                      <td className="px-4 py-3 text-right font-medium text-emerald-600">Rs {Number(barcode.sale_price).toFixed(2)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <ActionButton
-                          variant="danger"
+                      <td className="px-3 py-2 text-slate-600 text-[10px]">{getManufacturerName(barcode.manufacturer_id)}</td>
+                      <td className="px-3 py-2 text-right font-medium text-slate-700">{barcode.stock}</td>
+                      <td className="px-3 py-2 text-right font-medium text-emerald-600">Rs {Number(barcode.sale_price).toFixed(2)}</td>
+                      <td className="px-3 py-2 text-center">
+                        <button
                           onClick={() => handleDelete(barcode.id)}
-                          className="h-8 w-8"
+                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 transition"
                         >
-                          <TrashIcon className="h-4 w-4" />
-                        </ActionButton>
+                          <TrashIcon className="h-3.5 w-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))}

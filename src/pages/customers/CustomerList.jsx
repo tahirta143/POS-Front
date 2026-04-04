@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Card, Field, PageShell, SectionHeader, StatusAlert, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
+import { toast } from 'react-toastify'
+import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
+  emerald: { accent: 'bg-emerald-500', header: 'border-emerald-100 bg-emerald-50/80' },
+  cyan: { accent: 'bg-cyan-500', header: 'border-cyan-100 bg-cyan-50/80' },
 }
 
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
-      <div className={`mb-2 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -26,7 +29,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-8 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-7 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((option) => (
@@ -35,8 +38,8 @@ function SelectField({ label, required = false, value, onChange, options, placeh
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -70,8 +73,6 @@ export default function CustomerPage() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     fetchCustomers()
@@ -79,13 +80,12 @@ export default function CustomerPage() {
 
   async function fetchCustomers() {
     setLoading(true)
-    setError('')
     try {
       const response = await axiosInstance.get('/customers')
       const data = response.data
       setCustomers(Array.isArray(data) ? data : data.data || [])
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load customers.')
+      toast.error(err?.response?.data?.message || 'Failed to load customers.')
       setCustomers([])
     } finally {
       setLoading(false)
@@ -96,13 +96,11 @@ export default function CustomerPage() {
     event.preventDefault()
 
     if (!form.customerName.trim()) {
-      setError('Customer name is required.')
+      toast.error('Customer name is required.')
       return
     }
 
     setSubmitting(true)
-    setError('')
-    setSuccess('')
 
     try {
       const payload = {
@@ -116,15 +114,16 @@ export default function CustomerPage() {
 
       if (editId) {
         await axiosInstance.put(`/customers/${editId}`, payload)
+        toast.success('Customer updated successfully.')
       } else {
         await axiosInstance.post('/customers', payload)
+        toast.success('Customer created successfully.')
       }
 
-      setSuccess(editId ? 'Customer updated successfully.' : 'Customer created successfully.')
       resetForm()
       fetchCustomers()
     } catch (err) {
-      setError(err?.response?.data?.message || 'Unable to save the customer.')
+      toast.error(err?.response?.data?.message || 'Unable to save the customer.')
     } finally {
       setSubmitting(false)
     }
@@ -135,10 +134,10 @@ export default function CustomerPage() {
 
     try {
       await axiosInstance.delete(`/customers/${id}`)
-      setSuccess('Customer deleted successfully.')
+      toast.success('Customer deleted successfully.')
       fetchCustomers()
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to delete customer.')
+      toast.error(err?.response?.data?.message || 'Failed to delete customer.')
     }
   }
 
@@ -152,15 +151,12 @@ export default function CustomerPage() {
       nearby: customer.nearby || '',
       paymentMethod: customer.payment_method || 'Cash',
     })
-    setError('')
-    setSuccess('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {
     setEditId(null)
     setForm(createEmptyForm())
-    setError('')
   }
 
   function updateField(key, value) {
@@ -173,28 +169,25 @@ export default function CustomerPage() {
       description="Register and manage clients for billing"
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-5">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3.5">
+      <div className="space-y-4">
+        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
             title={editId ? 'Edit Customer' : 'Customer Registration'}
             description="Manage client personal and payment details."
-            icon={<UserIcon className="h-6 w-6" />}
+            icon={<UserIcon className="h-5 w-5" />}
           />
-
-          <StatusAlert type="error" message={error} />
-          <StatusAlert type="success" message={success} />
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid gap-3 lg:grid-cols-[1fr_minmax(0,1fr)]">
               <SectionCard color="teal" title="Personal Details">
-                <div className="grid gap-4">
+                <div className="grid gap-3">
                   <Field label="Customer Name" required>
                     <input
                       type="text"
                       value={form.customerName}
                       onChange={(e) => updateField('customerName', e.target.value)}
                       placeholder="Full name"
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                   </Field>
                   <Field label="Mobile No / WhatsApp">
@@ -203,7 +196,7 @@ export default function CustomerPage() {
                       value={form.mobileNumber}
                       onChange={(e) => updateField('mobileNumber', e.target.value)}
                       placeholder="e.g. 0300-1234567"
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                   </Field>
                   <Field label="Address">
@@ -212,7 +205,7 @@ export default function CustomerPage() {
                       value={form.address}
                       onChange={(e) => updateField('address', e.target.value)}
                       placeholder="Home or shipping address"
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                   </Field>
                 </div>
@@ -220,14 +213,14 @@ export default function CustomerPage() {
 
               <div className="flex flex-col gap-3">
                 <SectionCard color="emerald" title="Financial & Location">
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Nearby Landmark / Area">
                       <input
                         type="text"
                         value={form.nearby}
                         onChange={(e) => updateField('nearby', e.target.value)}
                         placeholder="e.g. Main Market"
-                        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                        className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                       />
                     </Field>
                     <SelectField
@@ -249,9 +242,9 @@ export default function CustomerPage() {
                           value={form.previousBalance}
                           onChange={(e) => updateField('previousBalance', e.target.value)}
                           placeholder="0.00"
-                          className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 pr-12 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 pr-10 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         />
-                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-semibold uppercase tracking-wider text-slate-400">
                           PKR
                         </span>
                       </div>
@@ -264,16 +257,16 @@ export default function CustomerPage() {
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="inline-flex min-w-[120px] items-center justify-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
                     >
                       Clear
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex min-w-[140px] items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-w-[120px] items-center justify-center rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {submitting ? 'Saving...' : editId ? 'Update Customer' : 'Save Customer'}
+                      {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
                     </button>
                   </div>
                 </SectionCard>
@@ -283,12 +276,12 @@ export default function CustomerPage() {
         </Card>
 
         {/* Customer List Card */}
-        <Card className="mx-auto max-w-5xl">
+        <Card className="mx-auto max-w-5xl p-3">
           <SectionHeader
             title="Customer Registry"
             description={`${customers.length} registered clients`}
             icon={
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
             }
@@ -296,7 +289,7 @@ export default function CustomerPage() {
               <button
                 type="button"
                 onClick={fetchCustomers}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Refresh
               </button>
@@ -312,28 +305,28 @@ export default function CustomerPage() {
               <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
                 <table className="min-w-full divide-y divide-slate-100 text-left">
                   <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      <th className="px-4 py-4">Name</th>
-                      <th className="px-4 py-4">Mobile Number</th>
-                      <th className="px-4 py-4">Address & Area</th>
-                      <th className="px-4 py-4 text-right">Balance</th>
-                      <th className="px-4 py-4 text-right">Actions</th>
+                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                      <th className="px-3 py-2.5">Name</th>
+                      <th className="px-3 py-2.5">Mobile Number</th>
+                      <th className="px-3 py-2.5">Address & Area</th>
+                      <th className="px-3 py-2.5 text-right">Balance</th>
+                      <th className="px-3 py-2.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {customers.map((c) => (
-                      <tr key={c.id} className="text-sm border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-4 py-3.5 font-medium text-slate-900">{c.customer_name}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{c.mobile_number || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-600">
-                          {c.address ? <div className="max-w-[150px] truncate">{c.address}</div> : '-'}
-                          {c.nearby && <span className="mt-1 block text-[11px] text-teal-600">Near: {c.nearby}</span>}
+                      <tr key={c.id} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
+                        <td className="px-3 py-2 font-medium text-slate-900">{c.customer_name}</td>
+                        <td className="px-3 py-2 text-slate-600">{c.mobile_number || '-'}</td>
+                        <td className="px-3 py-2 text-slate-600">
+                          {c.address ? <div className="max-w-[150px] truncate text-[11px]">{c.address}</div> : '-'}
+                          {c.nearby && <span className="mt-0.5 block text-[9px] text-teal-600">Near: {c.nearby}</span>}
                         </td>
-                        <td className="px-4 py-3.5 text-right font-medium text-slate-700">
+                        <td className="px-3 py-2 text-right font-medium text-slate-700 text-[11px]">
                           {c.previous_balance ? `PKR ${parseFloat(c.previous_balance).toFixed(2)}` : '0.00'}
                         </td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-3 py-2">
+                          <div className="flex justify-end gap-1.5">
                             <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(c)} />
                             <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(c.id)} />
                           </div>
