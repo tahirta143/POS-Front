@@ -41,6 +41,7 @@ import UserToGroup from './pages/security/UserToGroup';
 import Department from './pages/setup/Department';
 import Designation from './pages/setup/Designation';
 import CustomerLedger from './pages/customers/CustomerLedger';
+import Daybook from './pages/expense/Daybook';
 
 
 
@@ -93,7 +94,8 @@ const App = () => {
         <Route path="/setup/department" element={<Department />} />
         <Route path="/setup/designation" element={<Designation />} />
 
-        {/* Other Expense Routes */}
+        {/* Accounts/Expense Routes */}
+        <Route path="/daybook" element={<Daybook />} />
         <Route path="/expense/head" element={<ExpenseHead />} />
         <Route path="/expense/voucher" element={<ExpenseVoucher />} />
         <Route path="/expense/report" element={<ExpenseReport />} />

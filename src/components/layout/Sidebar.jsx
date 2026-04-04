@@ -199,8 +199,9 @@ const Sidebar = () => {
         <SidebarItem to="/booking-customers" label="Bookings"     icon={MdCalendarToday} />
         <SidebarItem to="/expiry-tags"       label="Expiry Tags"  icon={MdLocalOffer} />
 
-        <SidebarItem to="/expense" label="Expense" icon={MdMonetizationOn}>
+        <SidebarItem to="/accounts" label="Accounts" icon={MdMonetizationOn}>
           {[
+            { to: '/daybook',        label: 'Daybook',        icon: MdCalendarToday },
             { to: '/expense/head',    label: 'Expense Head',    icon: MdAccountBalance },
             { to: '/expense/voucher', label: 'Expense Voucher', icon: MdReceipt },
             { to: '/expense/report',  label: 'Expense Report',  icon: MdAssessment },
