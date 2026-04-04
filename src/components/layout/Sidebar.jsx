@@ -193,7 +193,7 @@ const Sidebar = () => {
         <SidebarItem to="/customer" label="Customer" icon={MdPeople}>
           {[
             { to: '/customer/registration',    label: 'Customer Registration',    icon: MdAccountBalance },
-            { to: '/customers/record', label: 'Customers Record', icon: MdReceipt },
+            { to: '/customer/record', label: 'Customer Record', icon: MdReceipt },
           ]}
         </SidebarItem>
         <SidebarItem to="/booking-customers" label="Bookings"     icon={MdCalendarToday} />

@@ -40,6 +40,7 @@ import SoftwareGroup from './pages/security/Software';
 import UserToGroup from './pages/security/UserToGroup';
 import Department from './pages/setup/Department';
 import Designation from './pages/setup/Designation';
+import CustomerLedger from './pages/customers/CustomerLedger';
 
 
 
@@ -69,10 +70,13 @@ const App = () => {
         {/* Items */}
         <Route path="/items" element={<ItemList />} />
 
-        {/* Specific Modules */}
+        {/* Sales & Purchase */}
         <Route path="/purchase" element={<PurchasePage />} />
         <Route path="/sale" element={<Sales />} />
+
+        {/* Customer Routes */}
         <Route path="/customer/registration" element={<CustomerList />} />
+        <Route path="/customer/record" element={<CustomerLedger />} />
         <Route path="/booking-customers" element={<Bookings />} />
         <Route path="/security" element={<Security />} />
         <Route path="/expiry-tags" element={<ExpiryTagsPage />} />

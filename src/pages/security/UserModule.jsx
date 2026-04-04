@@ -27,7 +27,7 @@ export default function UserModule({ onBack }) {
           <Field label="User Dropdown">
             <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">
               <option>Select User</option>
-              <option>Jahangir Ali</option>
+              <option>John Doe</option>
             </select>
           </Field>
           <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-teal-700 transition h-[38px]">
