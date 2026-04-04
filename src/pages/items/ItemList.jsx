@@ -294,7 +294,7 @@ export default function ItemPage() {
                   label="Store location"
                   value={form.store_location}
                   onChange={(value) => updateField('store_location', value)}
-                  options={locations.map((loc) => ({ value: loc.id, label: loc.shelf_name_code }))}
+                  options={locations.map((loc) => ({ value: loc.id, label: `${loc.shelf_name_code} (${loc.description})` }))}
                   placeholder="Select location"
                 />
                 <SelectField
