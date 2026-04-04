@@ -180,16 +180,16 @@ export default function ItemPage() {
       description="A compact item-entry page using the same soft card layout, grouped sections, and dropdown/input rhythm as your example screen."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-3.5">
+      <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-3">
         <SectionHeader
           title="New item registration"
           description="Fill the core item information, pricing, details, image, and status."
-          icon={<ItemFormIcon className="h-6 w-6" />}
+          icon={<ItemFormIcon className="h-5 w-5" />}
         />
 
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-1.5">
           <SectionCard color="#CCFBF1" title="Basic information">
-            <div className="grid gap-2 xl:grid-cols-[1fr_1fr_1.05fr]">
+            <div className="grid gap-1.5 xl:grid-cols-[1fr_1fr_1.05fr]">
               <SelectField
                 label="Item category"
                 required
@@ -219,15 +219,15 @@ export default function ItemPage() {
                   value={form.item_name}
                   onChange={(event) => updateField('item_name', event.target.value)}
                   placeholder="Enter item name"
-                  className="h-10 w-full max-w-lg rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                  className="h-8 w-full max-w-lg rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                 />
               </Field>
             </div>
           </SectionCard>
 
           <SectionCard color="sky" title="Supplier & pricing">
-            <div className="space-y-2">
-              <div className="grid gap-2 xl:grid-cols-[1fr_1fr_148px]">
+            <div className="space-y-1.5">
+              <div className="grid gap-1.5 xl:grid-cols-[1fr_1fr_148px]">
                 <SelectField
                   label="Manufacturer"
                   value={form.manufacturer}
@@ -248,7 +248,7 @@ export default function ItemPage() {
                     value={form.barcode}
                     onChange={(event) => updateField('barcode', event.target.value)}
                     placeholder="Enter barcode"
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
               </div>
@@ -279,15 +279,15 @@ export default function ItemPage() {
           </SectionCard>
 
           <SectionCard color="violet" title="Description & details">
-            <div className="space-y-2">
-              <div className="grid gap-2 xl:grid-cols-[1.15fr_1fr_148px]">
+            <div className="space-y-1.5">
+              <div className="grid gap-1.5 xl:grid-cols-[1.15fr_1fr_148px]">
                 <Field label="Description" className="xl:col-span-2">
                   <textarea
                     rows={2}
                     value={form.description}
                     onChange={(event) => updateField('description', event.target.value)}
                     placeholder="Enter item description..."
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
                 <SelectField
@@ -324,16 +324,16 @@ export default function ItemPage() {
             </div>
           </SectionCard>
 
-          <div className="grid gap-2 xl:grid-cols-[minmax(0,1.1fr)_270px_205px]">
+          <div className="grid gap-1.5 xl:grid-cols-[minmax(0,1.1fr)_270px_205px]">
             <SectionCard color="emerald" title="Product image">
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 transition hover:border-teal-300 hover:bg-teal-50/40">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 py-1.5 transition hover:border-teal-300 hover:bg-teal-50/40">
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm">
-                  <UploadIcon className="h-4 w-4" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm">
+                  <UploadIcon className="h-3.5 w-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-sky-600">Upload image</p>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">{form.image_name || 'PNG, JPG, SVG up to 10MB'}</p>
+                  <p className="text-[12px] font-semibold text-sky-600">Upload image</p>
+                  <p className="mt-0.5 truncate text-[10px] text-slate-500">{form.image_name || 'PNG, JPG, SVG up to 10MB'}</p>
                 </div>
               </label>
             </SectionCard>
@@ -352,14 +352,14 @@ export default function ItemPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? 'Saving...' : 'Save item'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                 >
                   Clear form
                 </button>
@@ -376,10 +376,10 @@ function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.lime
 
   return (
-    <div className="bg-white p-2.5 ">
-      <div className={`mb-2 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+    <div className="bg-white p-2">
+      <div className={`mb-1.5 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -393,7 +393,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
@@ -402,8 +402,8 @@ function SelectField({ label, required = false, value, onChange, options, placeh
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-          <ChevronDownIcon className="h-4 w-4" />
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+          <ChevronDownIcon className="h-3.5 w-3.5" />
         </div>
       </div>
     </Field>
@@ -419,9 +419,9 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 pr-9 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         />
-        <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-medium uppercase tracking-[0.1em] text-slate-400">
           {suffix}
         </span>
       </div>
@@ -431,29 +431,29 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
 
 function ItemStatusToggle({ enabled, onChange, label, description }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
       <div>
-        <p className="text-[13px] font-semibold text-slate-800">{label}</p>
-        <p className="mt-1 text-[11px] text-slate-500">{description}</p>
+        <p className="text-[12px] font-semibold text-slate-800">{label}</p>
+        <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
       </div>
       <button
         type="button"
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
-        className={`inline-flex items-center gap-2.5 rounded-full border px-2 py-1 transition ${enabled
+        className={`inline-flex items-center gap-2 rounded-full border px-1.5 py-0.5 transition ${enabled
           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
           : 'border-slate-200 bg-white text-slate-500'
           }`}
       >
-        <span className="min-w-9 text-[11px] font-semibold uppercase tracking-[0.14em]">
+        <span className="min-w-8 text-[10px] font-semibold uppercase tracking-[0.12em]">
           {enabled ? 'On' : 'Off'}
         </span>
         <span
-          className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${enabled ? 'bg-emerald-500' : 'bg-slate-300'
+          className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${enabled ? 'bg-emerald-500' : 'bg-slate-300'
             }`}
         >
           <span
-            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${enabled ? 'translate-x-6' : 'translate-x-1'
+            className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition ${enabled ? 'translate-x-5' : 'translate-x-0.5'
               }`}
           />
         </span>

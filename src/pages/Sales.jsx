@@ -13,10 +13,10 @@ const sectionStyles = {
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
-      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -30,7 +30,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-7 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((option) => (
@@ -39,8 +39,8 @@ function SelectField({ label, required = false, value, onChange, options, placeh
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -163,7 +163,6 @@ export default function Sales() {
       setCustomerName('')
       setCustomerId(null)
     }
-    // If user starts typing after selecting, clear the linked ID because it's modified
     if (customerId) setCustomerId(null)
   }
 
@@ -207,7 +206,6 @@ export default function Sales() {
       if (row.id === id) {
         const newRow = { ...row, [field]: value }
         
-        // Auto-fill price if item is selected
         if (field === 'item_id' && value) {
           const selectedItem = items.find(i => String(i.id) === String(value))
           if (selectedItem) {
@@ -215,13 +213,11 @@ export default function Sales() {
           }
         }
         
-        // Reset item if category changes
         if (field === 'category_id') {
           newRow.item_id = ''
           newRow.price = ''
         }
 
-        // Recalculate total
         const p = Number(newRow.price) || 0
         const q = Number(newRow.quantity) || 0
         newRow.total = p * q
@@ -262,7 +258,7 @@ export default function Sales() {
     }
 
     try {
-      const res = await axiosInstance.post('/sale-invoices', payload)
+      await axiosInstance.post('/sale-invoices', payload)
       
       toast.success('Invoice saved successfully!')
       // Reset Form
@@ -286,18 +282,18 @@ export default function Sales() {
       description="Create a new sale and print invoice."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4">
+      <div className="space-y-4">
+        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
             title="Create New Invoice"
             description="Process a new customer order."
-            icon={<InvoiceIcon className="h-6 w-6" />}
+            icon={<InvoiceIcon className="h-5 w-5" />}
           />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Customer Search Section */}
             <SectionCard color="teal" title="Customer Details">
-              <div className="flex flex-wrap gap-5 items-start">
+              <div className="flex flex-wrap gap-3 items-end">
                 <Field label="Mobile Number" required>
                   <div className="relative">
                     <input
@@ -307,7 +303,7 @@ export default function Sales() {
                       onFocus={() => { if (mobileNumber.length >= 4) setShowCustomerDropdown(true) }}
                       onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
                       placeholder="e.g. 03001234567"
-                      className="h-8 w-48 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
+                      className="h-7 w-48 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
                     />
                     {showCustomerDropdown && matchingCustomers.length > 0 && (
                       <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
@@ -315,23 +311,23 @@ export default function Sales() {
                           <li
                             key={c.id}
                             onClick={() => handleSelectCustomer(c)}
-                            className="block w-full cursor-pointer px-3 py-2 text-left hover:bg-teal-50 transition"
+                            className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition"
                           >
-                            <p className="text-[13px] font-semibold text-slate-800">{c.customer_name}</p>
-                            <p className="text-[11px] text-slate-500">{c.mobile_number}</p>
+                            <p className="text-[12px] font-semibold text-slate-800">{c.customer_name}</p>
+                            <p className="text-[10px] text-slate-500">{c.mobile_number}</p>
                           </li>
                         ))}
                       </ul>
                     )}
                   </div>
                 </Field>
-                <Field label="Customer Name" required hint={customerId ? "Auto-filled from registry" : "New walk-in customer"}>
+                <Field label="Customer Name" required>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Enter customer name"
-                    className={`h-8 w-72 rounded-md border text-[12px] outline-none transition px-2.5 ${
+                    className={`h-7 w-64 rounded-md border text-[11px] outline-none transition px-2 ${
                       customerId 
                       ? 'border-emerald-300 bg-emerald-50 text-emerald-800' 
                       : 'border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
@@ -343,14 +339,14 @@ export default function Sales() {
 
             {/* Invoice Items Section */}
             <SectionCard color="teal" title="Invoice Items">
-              <div className="space-y-3">
-                {/* Headers (desktop only) */}
-                <div className="hidden grid-cols-[200px_1fr_100px_80px_120px_40px] gap-3 px-1 sm:grid">
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Search Item</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Price</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
+              <div className="space-y-2">
+                {/* Headers */}
+                <div className="hidden grid-cols-[180px_1fr_90px_70px_100px_40px] gap-2 px-1 sm:grid">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Search Item</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Price</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
                   <div></div>
                 </div>
 
@@ -358,12 +354,12 @@ export default function Sales() {
                 {invoiceItems.map((row) => {
                   const availableItemsForCat = items.filter(i => String(i.item_category_id) === String(row.category_id))
                   return (
-                    <div key={row.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[200px_1fr_100px_80px_120px_40px] items-center bg-slate-50 p-2 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
+                    <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_90px_70px_100px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
                       <div className="col-span-2 sm:col-span-1">
                         <select
                           value={row.category_id}
                           onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         >
                           <option value="">Select Category</option>
                           {categories.map(c => (
@@ -377,7 +373,7 @@ export default function Sales() {
                           value={row.item_id}
                           onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
                           disabled={!row.category_id}
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
                         >
                           <option value="">Select Item</option>
                           {availableItemsForCat.map(i => (
@@ -392,7 +388,7 @@ export default function Sales() {
                           value={row.price}
                           onChange={(e) => updateRow(row.id, 'price', e.target.value)}
                           placeholder="Price"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         />
                       </div>
 
@@ -403,11 +399,11 @@ export default function Sales() {
                           value={row.quantity}
                           onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
                           placeholder="Qty"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         />
                       </div>
 
-                      <div className="col-span-1 bg-white border border-slate-200 h-8 flex items-center px-2.5 rounded-md font-medium text-slate-700 text-[12px]">
+                      <div className="col-span-1 bg-white border border-slate-200 h-7 flex items-center px-2 rounded-md font-medium text-slate-700 text-[11px]">
                         PKR {Number(row.total || 0).toFixed(2)}
                       </div>
 
@@ -415,22 +411,22 @@ export default function Sales() {
                         <button
                           type="button"
                           onClick={() => removeRow(row.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
                   )
                 })}
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={addRow}
-                    className="inline-flex items-center gap-2 rounded-lg border border-dashed border-teal-300 bg-teal-50/50 px-4 py-2 text-[13px] font-semibold text-teal-700 hover:bg-teal-50 transition"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50/50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-50 transition"
                   >
-                    <PlusIcon className="h-4 w-4" /> Add Row
+                    <PlusIcon className="h-3.5 w-3.5" /> Add Row
                   </button>
                 </div>
               </div>
@@ -438,56 +434,56 @@ export default function Sales() {
 
             {/* Order Summary */}
             <SectionCard color="teal" title="Order Summary">
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between p-2">
+              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between p-1.5">
                 
-                <div className="flex bg-slate-50 p-4 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-3 min-w-[280px]">
-                  <div className="flex justify-between items-center text-[13px]">
+                <div className="flex bg-slate-50 p-3 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-2 min-w-[260px]">
+                  <div className="flex justify-between items-center text-[12px]">
                     <span className="text-slate-500">Subtotal:</span>
                     <span className="font-semibold text-slate-800">PKR {subTotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[13px] gap-4">
+                  <div className="flex justify-between items-center text-[12px] gap-3">
                     <span className="text-slate-500 shrink-0">Discount:</span>
                     <input
                       type="number"
                       value={discount}
                       onChange={(e) => setDiscount(e.target.value)}
                       placeholder="0.00"
-                      className="h-7 w-20 rounded border border-slate-300 px-1.5 text-[12px] text-right outline-none focus:border-teal-400"
+                      className="h-6 w-20 rounded border border-slate-300 px-1.5 text-[11px] text-right outline-none focus:border-teal-400"
                     />
                   </div>
-                  <div className="h-px bg-slate-200 my-1 w-full" />
-                  <div className="flex justify-between items-center text-[15px]">
+                  <div className="h-px bg-slate-200 my-0.5 w-full" />
+                  <div className="flex justify-between items-center text-[13px]">
                     <span className="font-bold text-slate-700">Payable:</span>
                     <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col w-full md:w-auto gap-3 flex-1 md:max-w-[400px]">
-                  <div className="flex items-center gap-3 bg-white border border-slate-200 p-2 rounded-xl">
-                    <div className="flex-1 px-2">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Customer Given</p>
+                <div className="flex flex-col w-full md:w-auto gap-2 flex-1 md:max-w-[350px]">
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-xl">
+                    <div className="flex-1 px-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Customer Given</p>
                       <input
                         type="number"
                         value={givenAmount}
                         onChange={(e) => setGivenAmount(e.target.value)}
                         placeholder="Amount tendered"
-                        className="h-8 w-full text-base font-bold text-slate-800 outline-none"
+                        className="h-7 w-full text-[13px] font-bold text-slate-800 outline-none"
                       />
                     </div>
                   </div>
                   
                   {givenAmount > 0 && (
-                    <div className={`p-3 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                      <span className={`text-[13px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    <div className={`p-2 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                      <span className={`text-[11px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
                         {isAllPaid ? 'ALL PAID' : 'TO BE PAID'}
                       </span>
                       {isAllPaid ? (
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                        <div className="flex items-center gap-1 text-emerald-600 font-bold text-[11px]">
                           <span>Change: PKR {(givenAmount - payable).toFixed(2)}</span>
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
                       ) : (
-                        <span className="font-bold text-rose-600 font-mono">PKR {remaining.toFixed(2)}</span>
+                        <span className="font-bold text-rose-600 font-mono text-[11px]">PKR {remaining.toFixed(2)}</span>
                       )}
                     </div>
                   )}
@@ -495,13 +491,13 @@ export default function Sales() {
 
               </div>
               
-              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                 <button
                   type="submit"
                   disabled={submitting || payable === 0}
-                  className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
+                  className="inline-flex min-w-[140px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
                 >
-                  <InvoiceIcon className="h-5 w-5" />
+                  <InvoiceIcon className="h-4 w-4" />
                   {submitting ? 'Saving...' : 'Save Invoice'}
                 </button>
               </div>
@@ -511,7 +507,7 @@ export default function Sales() {
         </Card>
 
         {/* Saved Invoices Table */}
-        <Card className="mx-auto max-w-5xl">
+        <Card className="mx-auto max-w-5xl p-3">
           <SectionHeader
             title="Recent Sales"
             description="Log of recent invoices generated today."
@@ -519,7 +515,7 @@ export default function Sales() {
               <button
                 type="button"
                 onClick={fetchSales}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Refresh
               </button>
@@ -533,28 +529,28 @@ export default function Sales() {
               <div className="overflow-x-auto w-full">
                 <table className="min-w-full divide-y divide-slate-100 text-left">
                   <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      <th className="px-4 py-4 w-20">Inv ID</th>
-                      <th className="px-4 py-4">Customer</th>
-                      <th className="px-4 py-4">Mobile</th>
-                      <th className="px-4 py-4 text-right">Total</th>
-                      <th className="px-4 py-4 text-center">Status</th>
+                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                      <th className="px-3 py-2.5 w-20">Inv ID</th>
+                      <th className="px-3 py-2.5">Customer</th>
+                      <th className="px-3 py-2.5">Mobile</th>
+                      <th className="px-3 py-2.5 text-right">Total</th>
+                      <th className="px-3 py-2.5 text-center">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {salesRecord.map((s, idx) => (
-                      <tr key={s.id || idx} className="text-sm border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-4 py-3.5 font-medium text-slate-900">#{(s.id || idx).toString().slice(-4)}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{s.customer_name}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{s.mobile}</td>
-                        <td className="px-4 py-3.5 text-right font-bold text-slate-800">PKR {Number(s.payable || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3.5 text-center">
-                           <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                      <tr key={s.id || idx} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
+                        <td className="px-3 py-2 font-medium text-slate-900">#{(s.id || idx).toString().slice(-4)}</td>
+                        <td className="px-3 py-2 text-slate-600">{s.customer_name}</td>
+                        <td className="px-3 py-2 text-slate-600">{s.mobile}</td>
+                        <td className="px-3 py-2 text-right font-bold text-slate-800">PKR {Number(s.payable || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 text-center">
+                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                             (s.given_amount >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                            }`}>
                              {(s.given_amount >= s.payable) ? 'PAID' : 'PENDING'}
                            </span>
-                        </td>
+                         </td>
                       </tr>
                     ))}
                   </tbody>

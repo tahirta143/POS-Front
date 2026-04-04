@@ -10,10 +10,10 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
-      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -78,7 +78,6 @@ export default function PurchasePage() {
   useEffect(() => {
     fetchInitialData()
     fetchPurchases()
-    // Default Date to today
     setGrnDate(new Date().toISOString().slice(0, 10))
   }, [])
 
@@ -124,7 +123,6 @@ export default function PurchasePage() {
     return purchaseItems.reduce((sum, row) => sum + (Number(row.total) || 0), 0)
   }, [purchaseItems])
 
-  // Handle cross-updating of discount % and amount
   useEffect(() => {
     if (discountPercent !== '' && Number(discountPercent) >= 0) {
       const calcAmt = (subTotal * (Number(discountPercent) / 100)).toFixed(2)
@@ -160,7 +158,6 @@ export default function PurchasePage() {
       if (row.id === id) {
         const newRow = { ...row, [field]: value }
         
-        // Auto-fill price behavior logic if selected
         if (field === 'item_id' && value) {
           const selectedItem = items.find(i => String(i.id) === String(value))
           if (selectedItem) {
@@ -243,24 +240,24 @@ export default function PurchasePage() {
       description="Record stock intake and supplier invoices."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4">
+      <div className="space-y-4">
+        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
             title="New Purchase Entry"
             description="Log Goods Received Note (GRN) into inventory."
-            icon={<ArchiveBoxIcon className="h-6 w-6" />}
+            icon={<ArchiveBoxIcon className="h-5 w-5" />}
           />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Purchase Details Section */}
             <SectionCard title="Receipt Details">
-              <div className="flex flex-wrap gap-5 items-start">
+              <div className="flex flex-wrap gap-3 items-end">
                 <Field label="GRN No">
                   <input
                     type="text"
                     value={grnNo}
                     readOnly
-                    className="h-8 w-44 rounded-md border border-slate-300 bg-slate-50 px-2.5 text-[12px] font-mono outline-none text-slate-500"
+                    className="h-7 w-40 rounded-md border border-slate-300 bg-slate-50 px-2 text-[11px] font-mono outline-none text-slate-500"
                   />
                 </Field>
                 <Field label="GRN Date" required>
@@ -268,14 +265,14 @@ export default function PurchasePage() {
                     type="date"
                     value={grnDate}
                     onChange={(e) => setGrnDate(e.target.value)}
-                    className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    className="h-7 w-32 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
                 <Field label="Supplier" required>
                   <select
                     value={supplierId}
                     onChange={(e) => setSupplierId(e.target.value)}
-                    className="h-8 w-60 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    className="h-7 w-56 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   >
                     <option value="">Select Supplier</option>
                     {suppliers.map(s => (
@@ -289,7 +286,7 @@ export default function PurchasePage() {
                     value={invoiceNo}
                     onChange={(e) => setInvoiceNo(e.target.value)}
                     placeholder="Enter Invoice #"
-                    className="h-8 w-44 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    className="h-7 w-40 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
               </div>
@@ -297,26 +294,26 @@ export default function PurchasePage() {
 
             {/* Items Section */}
             <SectionCard title="Invoice Items">
-              <div className="space-y-3">
-                <div className="hidden grid-cols-[160px_1fr_90px_90px_70px_100px_40px] gap-3 px-1 sm:grid">
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Item Name</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Purch. Price</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Sale Price</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
+              <div className="space-y-2">
+                <div className="hidden grid-cols-[140px_1fr_80px_80px_60px_90px_40px] gap-2 px-1 sm:grid">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Item Name</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Purch.</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Sale</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
                   <div></div>
                 </div>
 
                 {purchaseItems.map((row) => {
                   const availableItemsForCat = items.filter(i => String(i.category_id) === String(row.category_id))
                   return (
-                    <div key={row.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[160px_1fr_90px_90px_70px_100px_40px] items-center bg-slate-50 p-2 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
+                    <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_80px_80px_60px_90px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
                       <div className="col-span-2 sm:col-span-1">
                         <select
                           value={row.category_id}
                           onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         >
                           <option value="">Category</option>
                           {categories.map(c => (
@@ -330,7 +327,7 @@ export default function PurchasePage() {
                           value={row.item_id}
                           onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
                           disabled={!row.category_id}
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
                         >
                           <option value="">Select Item</option>
                           {availableItemsForCat.map(i => (
@@ -344,8 +341,8 @@ export default function PurchasePage() {
                           type="number"
                           value={row.purchase_price}
                           onChange={(e) => updateRow(row.id, 'purchase_price', e.target.value)}
-                          placeholder="P. Price"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          placeholder="Price"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         />
                       </div>
                       
@@ -354,8 +351,8 @@ export default function PurchasePage() {
                           type="number"
                           value={row.sale_price}
                           onChange={(e) => updateRow(row.id, 'sale_price', e.target.value)}
-                          placeholder="S. Price"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          placeholder="Sale"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         />
                       </div>
 
@@ -366,11 +363,11 @@ export default function PurchasePage() {
                           value={row.quantity}
                           onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
                           placeholder="Qty"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400"
+                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
                         />
                       </div>
 
-                      <div className="col-span-1 bg-white border border-slate-200 h-8 flex items-center px-2.5 rounded-md font-medium text-slate-700 text-[12px]">
+                      <div className="col-span-1 bg-white border border-slate-200 h-7 flex items-center px-2 rounded-md font-medium text-slate-700 text-[11px]">
                         PKR {Number(row.total || 0).toFixed(2)}
                       </div>
 
@@ -378,27 +375,27 @@ export default function PurchasePage() {
                         <button
                           type="button"
                           onClick={() => removeRow(row.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
                   )
                 })}
 
-                <div className="pt-2 flex gap-3">
+                <div className="pt-1 flex gap-2">
                   <button
                     type="button"
                     onClick={addRow}
-                    className="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-[12px] font-semibold text-teal-700 hover:bg-teal-100 transition"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
                   >
-                    <PlusIcon className="h-4 w-4" /> Add Item
+                    <PlusIcon className="h-3.5 w-3.5" /> Add Item
                   </button>
                   <button
                     type="button"
                     onClick={clearAllRows}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
                   >
                     Clear All
                   </button>
@@ -408,15 +405,15 @@ export default function PurchasePage() {
 
             {/* Order Summary */}
             <SectionCard title="Order Summary">
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between p-2">
+              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between p-1.5">
                 
-                <div className="flex bg-slate-50 p-4 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-3 min-w-[320px]">
-                  <div className="flex justify-between items-center text-[13px]">
+                <div className="flex bg-slate-50 p-3 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-2 min-w-[280px]">
+                  <div className="flex justify-between items-center text-[12px]">
                     <span className="text-slate-500">Subtotal:</span>
                     <span className="font-semibold text-slate-800">PKR {subTotal.toFixed(2)}</span>
                   </div>
                   
-                  <div className="flex items-center justify-between text-[13px] gap-2">
+                  <div className="flex items-center justify-between text-[12px] gap-2">
                     <span className="text-slate-500">Discount:</span>
                     <div className="flex items-center gap-2">
                       <div className="relative">
@@ -425,60 +422,60 @@ export default function PurchasePage() {
                           value={discountPercent}
                           onChange={(e) => setDiscountPercent(e.target.value)}
                           placeholder="%"
-                          className="h-7 w-16 rounded border border-slate-300 px-1.5 text-[12px] outline-none focus:border-teal-400 text-center"
+                          className="h-6 w-14 rounded border border-slate-300 px-1.5 text-[11px] outline-none focus:border-teal-400 text-center"
                         />
-                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-[10px] text-slate-400">%</span>
+                        <span className="absolute top-1/2 right-1.5 -translate-y-1/2 text-[9px] text-slate-400">%</span>
                       </div>
                       <span className="text-slate-300">-</span>
                       <div className="relative">
-                        <span className="absolute top-1/2 left-2 -translate-y-1/2 text-[10px] text-slate-400">PKR</span>
+                        <span className="absolute top-1/2 left-1.5 -translate-y-1/2 text-[9px] text-slate-400">PKR</span>
                         <input
                           type="number"
                           value={discountAmount}
                           onChange={(e) => {
                             setDiscountAmount(e.target.value)
-                            setDiscountPercent('') // manual override flat amounts cancel %
+                            setDiscountPercent('')
                           }}
                           placeholder="Amount"
-                          className="h-7 w-24 rounded border border-slate-300 pl-7 pr-1.5 text-[12px] text-right outline-none focus:border-teal-400"
+                          className="h-6 w-24 rounded border border-slate-300 pl-7 pr-1.5 text-[11px] text-right outline-none focus:border-teal-400"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="h-px bg-slate-200 my-1 w-full" />
-                  <div className="flex justify-between items-center text-[15px]">
+                  <div className="h-px bg-slate-200 my-0.5 w-full" />
+                  <div className="flex justify-between items-center text-[13px]">
                     <span className="font-bold text-slate-700">Payable:</span>
                     <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col w-full md:w-auto gap-3 flex-1 md:max-w-[400px]">
+                <div className="flex flex-col w-full md:w-auto gap-2 flex-1 md:max-w-[350px]">
                   <div className="flex bg-white border border-slate-200 p-2 rounded-xl">
-                    <div className="flex-1 px-2">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Company Paid</p>
+                    <div className="flex-1 px-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Company Paid</p>
                       <input
                         type="number"
                         value={givenAmount}
                         onChange={(e) => setGivenAmount(e.target.value)}
                         placeholder="Amount Tendered"
-                        className="h-8 w-full text-base font-bold text-slate-800 outline-none"
+                        className="h-7 w-full text-[13px] font-bold text-slate-800 outline-none"
                       />
                     </div>
                   </div>
                   
                   {givenAmount > 0 && (
-                    <div className={`p-3 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                      <span className={`text-[13px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    <div className={`p-2 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                      <span className={`text-[11px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
                         {isAllPaid ? 'ALL PAID' : 'TO BE PAID'}
                       </span>
                       {isAllPaid ? (
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                        <div className="flex items-center gap-1 text-emerald-600 font-bold text-[11px]">
                           <span>Change: PKR {(givenAmount - payable).toFixed(2)}</span>
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
                       ) : (
-                        <span className="font-bold text-rose-600 font-mono">PKR {remaining.toFixed(2)}</span>
+                        <span className="font-bold text-rose-600 font-mono text-[11px]">PKR {remaining.toFixed(2)}</span>
                       )}
                     </div>
                   )}
@@ -486,13 +483,13 @@ export default function PurchasePage() {
 
               </div>
               
-              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                 <button
                   type="submit"
                   disabled={submitting || payable === 0}
-                  className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
+                  className="inline-flex min-w-[150px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
                 >
-                  <ArchiveBoxIcon className="h-5 w-5" />
+                  <ArchiveBoxIcon className="h-4 w-4" />
                   {submitting ? 'Saving...' : 'Save Purchase'}
                 </button>
               </div>
@@ -502,7 +499,7 @@ export default function PurchasePage() {
         </Card>
 
         {/* Saved Purchases Table */}
-        <Card className="mx-auto max-w-5xl">
+        <Card className="mx-auto max-w-5xl p-3">
           <SectionHeader
             title="Recent Purchases"
             description="Log of recent stock arrivals and supplier GRNs."
@@ -510,7 +507,7 @@ export default function PurchasePage() {
               <button
                 type="button"
                 onClick={fetchPurchases}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Refresh
               </button>
@@ -524,30 +521,30 @@ export default function PurchasePage() {
               <div className="overflow-x-auto w-full">
                 <table className="min-w-full divide-y divide-slate-100 text-left">
                   <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      <th className="px-4 py-4 w-32">GRN No</th>
-                      <th className="px-4 py-4">Supplier</th>
-                      <th className="px-4 py-4">Invoice No</th>
-                      <th className="px-4 py-4">Date</th>
-                      <th className="px-4 py-4 text-right">Total</th>
-                      <th className="px-4 py-4 text-center">Status</th>
+                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                      <th className="px-3 py-2.5 w-28">GRN No</th>
+                      <th className="px-3 py-2.5">Supplier</th>
+                      <th className="px-3 py-2.5">Invoice No</th>
+                      <th className="px-3 py-2.5">Date</th>
+                      <th className="px-3 py-2.5 text-right">Total</th>
+                      <th className="px-3 py-2.5 text-center">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {purchasesRecord.map((s, idx) => (
-                      <tr key={s.id || idx} className="text-sm border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-4 py-3.5 font-medium text-slate-900 font-mono text-xs">{s.grn_no}</td>
-                        <td className="px-4 py-3.5 text-slate-600 font-semibold">
+                      <tr key={s.id || idx} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
+                        <td className="px-3 py-2 font-medium text-slate-900 font-mono text-[10px]">{s.grn_no}</td>
+                        <td className="px-3 py-2 text-slate-600 font-semibold text-[12px]">
                           {(() => {
                             const sup = suppliers.find(su => String(su.id) === String(s.supplier_id))
                             return sup ? sup.supplier_name : s.supplier_id
                           })()}
                         </td>
-                        <td className="px-4 py-3.5 text-slate-600">{s.invoice_no || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{s.grn_date}</td>
-                        <td className="px-4 py-3.5 text-right font-bold text-slate-800">PKR {Number(s.payable || s.total_amount || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3.5 text-center">
-                           <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                        <td className="px-3 py-2 text-slate-600 text-[12px]">{s.invoice_no || '-'}</td>
+                        <td className="px-3 py-2 text-slate-600 text-[12px]">{s.grn_date}</td>
+                        <td className="px-3 py-2 text-right font-bold text-slate-800 text-[12px]">PKR {Number(s.payable || s.total_amount || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 text-center">
+                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                             (s.paid_amount >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                            }`}>
                              {(s.paid_amount >= s.payable) ? 'PAID' : 'PENDING'}

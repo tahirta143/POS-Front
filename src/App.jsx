@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import ItemList from './pages/items/ItemList';
 import SupplierList from './pages/setup/SupplierList';
 import CustomerList from './pages/customers/CustomerList';
@@ -58,10 +59,11 @@ const App = () => {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* Stock Routes */}
         <Route path="/stock/opening" element={<OpeningStock />} />
-        <Route path="/stock/closing" element={<ClosingStock/>} />
+        <Route path="/stock/closing" element={<ClosingStock />} />
         <Route path="/stock/reorder" element={<ReOrderStock />} />
 
         {/* Items */}
@@ -70,13 +72,13 @@ const App = () => {
         {/* Specific Modules */}
         <Route path="/purchase" element={<PurchasePage />} />
         <Route path="/sale" element={<Sales />} />
-        <Route path="/customers" element={<CustomerList />} />
+        <Route path="/customer/registration" element={<CustomerList />} />
         <Route path="/booking-customers" element={<Bookings />} />
         <Route path="/security" element={<Security />} />
         <Route path="/expiry-tags" element={<ExpiryTagsPage />} />
 
         {/* Other Setup Routes */}
-        <Route path="/setup/suppliers" element={<SupplierList />}/>
+        <Route path="/setup/suppliers" element={<SupplierList />} />
         <Route path="/setup/manufacturers" element={<Manufacturers />} />
         <Route path="/setup/item-category" element={<ItemCategory />} />
         <Route path="/setup/item-subcategory" element={<SubCategory />} />

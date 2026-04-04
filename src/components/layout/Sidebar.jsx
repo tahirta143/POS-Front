@@ -8,48 +8,55 @@ import {
   MdCategory, MdBusiness, MdLabel, MdQrCode2, MdLocationOn,
   MdReceipt, MdAccountBalance, MdAssessment,
   MdLocalOffer, MdCalendarToday, MdSecurity, MdApartment, MdBadge,
-  MdPerson
+  MdPerson, MdFactory, MdLocalShipping, MdStorefront,
+  MdCorporateFare, MdWorkspaces, MdStyle
 } from 'react-icons/md';
 import { logout } from '../../features/auth/authSlice';
 
-// ── Nested child dropdown (level 2) ─────────────────────────────────────────
-function NestedDropdown({ item, depth = 0 }) {
+// ── Nested child dropdown (level 2) ──────────────────────────────────────────
+function NestedDropdown({ item }) {
   const location = useLocation()
   const isActive = item.children?.some(c => location.pathname.startsWith(c.to))
   const [isOpen, setIsOpen] = useState(isActive)
 
   return (
-    <div>
+    <div className="rounded-md overflow-hidden">
       <button
         onClick={() => setIsOpen(prev => !prev)}
-        className={`w-full flex items-center justify-between px-4 py-2 rounded-md text-sm transition-colors ${
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all duration-150 ${
           isActive
-            ? 'bg-teal-50 text-teal-700'
-            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+            ? 'bg-teal-50 text-teal-700 font-medium'
+            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
         }`}
       >
-        <div className="flex items-center gap-3">
-          {item.icon && <item.icon className="text-lg" />}
-          <span>{item.label}</span>
+        <div className="flex items-center gap-2.5">
+          <span className={`flex items-center justify-center w-6 h-6 rounded-md text-xs ${
+            isActive ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {item.icon && <item.icon className="text-sm" />}
+          </span>
+          <span className="text-[13px]">{item.label}</span>
         </div>
-        {isOpen ? <MdExpandLess className="text-sm" /> : <MdExpandMore className="text-sm" />}
+        <span className={`text-xs transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+          <MdExpandMore />
+        </span>
       </button>
 
       {isOpen && (
-        <div className="ml-4 mt-1 space-y-1 border-l-2 border-teal-100 pl-2">
+        <div className="ml-3 mt-0.5 mb-1 border-l-2 border-teal-100 pl-2 space-y-0.5">
           {item.children.map((child, idx) => (
             <NavLink
               key={idx}
               to={child.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                `flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
                   isActive
-                    ? 'bg-teal-500 text-white'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-teal-500 text-white font-medium shadow-sm shadow-teal-200'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                 }`
               }
             >
-              {child.icon && <child.icon className="text-base" />}
+              {child.icon && <child.icon className="text-sm shrink-0" />}
               {child.label}
             </NavLink>
           ))}
@@ -60,7 +67,7 @@ function NestedDropdown({ item, depth = 0 }) {
 }
 
 // ── Top-level sidebar item (level 1) ─────────────────────────────────────────
-const SidebarItem = ({ to, label, icon: Icon, children }) => {
+const SidebarItem = ({ to, label, icon: Icon, children, color = 'teal' }) => {
   const location = useLocation()
   const isActive = to
     ? location.pathname === to
@@ -73,26 +80,31 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
 
   if (children) {
     return (
-      <div className="mb-1">
+      <div className="mb-0.5">
         <button
           onClick={() => setIsOpen(prev => !prev)}
-          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md transition-colors ${
+          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
             isActive
               ? 'bg-teal-50 text-teal-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
         >
           <div className="flex items-center gap-3">
-            {Icon && <Icon className="text-xl" />}
-            <span className="font-medium text-sm">{label}</span>
+            <span className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm ${
+              isActive ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-500'
+            }`}>
+              {Icon && <Icon />}
+            </span>
+            <span className="font-medium text-[13px]">{label}</span>
           </div>
-          {isOpen ? <MdExpandLess /> : <MdExpandMore />}
+          <span className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+            <MdExpandMore />
+          </span>
         </button>
 
         {isOpen && (
-          <div className="ml-6 mt-1 space-y-1">
+          <div className="ml-3 mt-1 mb-1 space-y-0.5 border-l-2 border-gray-100 pl-2">
             {children.map((child, idx) =>
-              // ── Render nested dropdown if child has children ──
               child.children ? (
                 <NestedDropdown key={idx} item={child} />
               ) : (
@@ -100,14 +112,14 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
                   key={idx}
                   to={child.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
+                    `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
                       isActive
-                        ? 'bg-teal-500 text-white'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-teal-500 text-white font-medium shadow-sm shadow-teal-200'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                     }`
                   }
                 >
-                  {child.icon && <child.icon className="text-lg" />}
+                  {child.icon && <child.icon className="text-base shrink-0" />}
                   {child.label}
                 </NavLink>
               )
@@ -122,35 +134,54 @@ const SidebarItem = ({ to, label, icon: Icon, children }) => {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-2.5 rounded-md mb-1 transition-colors ${
+        `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
           isActive
-            ? 'bg-teal-500 text-white shadow-sm'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            ? 'bg-teal-500 text-white shadow-sm shadow-teal-200'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }`
       }
     >
-      {Icon && <Icon className="text-xl" />}
-      <span className="font-medium text-sm">{label}</span>
+      {({ isActive }) => (
+        <>
+          <span className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm ${
+            isActive ? 'bg-teal-400 text-white' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {Icon && <Icon />}
+          </span>
+          <span className="font-medium text-[13px]">{label}</span>
+        </>
+      )}
     </NavLink>
   )
 }
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 const Sidebar = () => {
   const dispatch = useDispatch()
   const handleLogout = () => dispatch(logout())
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-full flex flex-col shadow-sm hidden md:flex">
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-teal-600 flex items-center gap-2">
-          <MdInventory /> POS System
-        </h1>
+    <aside className="w-64 bg-white border-r border-gray-100 h-full flex flex-col shadow-md hidden md:flex">
+
+      {/* Logo */}
+      <div className="h-16 flex items-center px-5 border-b border-gray-100">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-sm">
+            <MdStorefront className="text-white text-lg" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-gray-800 leading-none">POS System</h1>
+            <p className="text-[10px] text-gray-400 mt-0.5">Management Suite</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
-        <SidebarItem to="/dashboard"          label="Dashboard"  icon={MdDashboard} />
-        <SidebarItem to="/items"              label="Item Details" icon={MdInventory} />
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
+        <SidebarItem to="/dashboard"         label="Dashboard"     icon={MdDashboard} />
+        <SidebarItem to="/items"             label="Item Details"  icon={MdInventory} />
+        <SidebarItem to="/sale"              label="Sales Invoice" icon={MdReceipt} />
+        <SidebarItem to="/purchase"          label="Purchase"      icon={MdShoppingCart} />
 
         <SidebarItem to="/stock" label="Stock" icon={MdWarehouse}>
           {[
@@ -159,36 +190,14 @@ const Sidebar = () => {
             { to: '/stock/reorder', label: 'Reorder Stock', icon: MdRefresh },
           ]}
         </SidebarItem>
-
-        <SidebarItem to="/purchase"           label="Purchase"      icon={MdShoppingCart} />
-        <SidebarItem to="/sale"               label="Sales Invoice" icon={MdReceipt} />
-        <SidebarItem to="/customers"          label="Customers"     icon={MdPeople} />
-        <SidebarItem to="/booking-customers"  label="Bookings"      icon={MdCalendarToday} />
-        <SidebarItem to="/expiry-tags"        label="Expiry Tags"   icon={MdLocalOffer} />
-
-        <SidebarItem to="/setup" label="Setup" icon={MdSettings}>
+        <SidebarItem to="/customer" label="Customer" icon={MdPeople}>
           {[
-            { to: '/setup/suppliers',        label: 'Suppliers',        icon: MdBusiness },
-            { to: '/setup/manufacturers',    label: 'Manufacturers',    icon: MdBusiness },
-            { to: '/setup/item-category',    label: 'Item Category',    icon: MdCategory },
-            { to: '/setup/item-unit',        label: 'Item Unit',        icon: MdLabel },
-            { to: '/setup/item-subcategory', label: 'Item Subcategory', icon: MdCategory },
-            { to: '/setup/item-type',        label: 'Item Type',        icon: MdInventory },
-            { to: '/setup/item-barcode',     label: 'Item Barcode',     icon: MdQrCode2 },
-            // ── Nested: Company ──────────────────────────────────────
-            {
-              label: 'Company',
-              icon: MdBusiness,
-              children: [
-                { to: '/setup/company',      label: 'Company',      icon: MdBusiness },
-                { to: '/setup/department',   label: 'Department',   icon: MdApartment },
-                { to: '/setup/designation',  label: 'Designation',  icon: MdBadge },
-                { to: '/setup/employee',     label: 'Employee',     icon: MdPerson },
-              ],
-            },
-            { to: '/setup/shelve-location',  label: 'Shelve Location', icon: MdLocationOn },
+            { to: '/customer/registration',    label: 'Customer Registration',    icon: MdAccountBalance },
+            { to: '/customers/record', label: 'Customers Record', icon: MdReceipt },
           ]}
         </SidebarItem>
+        <SidebarItem to="/booking-customers" label="Bookings"     icon={MdCalendarToday} />
+        <SidebarItem to="/expiry-tags"       label="Expiry Tags"  icon={MdLocalOffer} />
 
         <SidebarItem to="/expense" label="Expense" icon={MdMonetizationOn}>
           {[
@@ -198,16 +207,51 @@ const Sidebar = () => {
           ]}
         </SidebarItem>
 
+        <SidebarItem to="/setup" label="Setup" icon={MdSettings}>
+          {[
+            { to: '/setup/suppliers',     label: 'Suppliers',     icon: MdLocalShipping },
+            { to: '/setup/manufacturers', label: 'Manufacturers', icon: MdFactory },
+
+            // ── Nested: Item ──
+            {
+              label: 'Item',
+              icon: MdWorkspaces,
+              children: [
+                { to: '/setup/item-category',    label: 'Item Category',    icon: MdCategory },
+                { to: '/setup/item-subcategory', label: 'Item Subcategory', icon: MdStyle },
+                { to: '/setup/item-type',        label: 'Item Type',        icon: MdInventory },
+                { to: '/setup/item-unit',        label: 'Item Unit',        icon: MdLabel },
+                { to: '/setup/item-barcode',     label: 'Item Barcode',     icon: MdQrCode2 },
+                { to: '/setup/shelve-location',  label: 'Shelve Location',  icon: MdLocationOn },
+              ],
+            },
+
+            // ── Nested: Company ──
+            {
+              label: 'Company',
+              icon: MdCorporateFare,
+              children: [
+                { to: '/setup/department',  label: 'Department',  icon: MdApartment },
+                { to: '/setup/designation', label: 'Designation', icon: MdBadge },
+                { to: '/setup/employee',    label: 'Employee',    icon: MdPerson },
+              ],
+            },
+          ]}
+        </SidebarItem>
+
         <SidebarItem to="/security" label="Security" icon={MdSecurity} />
       </div>
 
-      <div className="border-t border-gray-200 p-3">
+      {/* Logout */}
+      <div className="border-t border-gray-100 p-3">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-150 group"
         >
-          <MdLogout className="text-xl" />
-          <span className="font-medium text-sm">Logout</span>
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 text-red-400 group-hover:bg-red-100 transition-colors">
+            <MdLogout className="text-base" />
+          </span>
+          <span className="font-medium text-[13px]">Logout</span>
         </button>
       </div>
     </aside>
