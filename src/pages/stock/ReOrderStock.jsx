@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, memo } from 'react'
 import { toast } from 'react-toastify'
 import { Card, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
@@ -96,19 +96,120 @@ const STATUS_TABS = [
   { id: 'received', label: 'Received' },
 ]
 
+// ----------------------------------------------------
+// Reorder Row Component
+// ----------------------------------------------------
+const ReorderRow = memo(function ReorderRow({ row, idx, onSave, isSaving }) {
+  const [qty, setQty] = useState(row.order_qty)
+  const [status, setStatus] = useState(row.status)
+  const [note, setNote] = useState(row.note)
+
+  useEffect(() => {
+    setQty(row.order_qty)
+    setStatus(row.status)
+    setNote(row.note)
+  }, [row.order_qty, row.status, row.note])
+
+  const stockTone = row.stock <= row.reorder_level ? 'bg-teal-50 text-teal-800 border-teal-100' : 'bg-teal-50 text-teal-800 border-teal-100'
+  const statusTone = 'bg-teal-50 text-teal-700 border-teal-100'
+
+  const isEdited = String(qty) !== String(row.order_qty) || status !== row.status || note !== row.note
+
+  return (
+    <tr className="text-[12px] transition hover:bg-slate-50/50">
+      <td className="px-2 py-2 text-center text-slate-400">{idx + 1}</td>
+      <td className="px-2 py-2">
+        <div className="font-semibold text-slate-800 truncate">{row.item_name}</div>
+      </td>
+      <td className="px-2 py-2 text-slate-600">
+        <span className="inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[11px] font-semibold text-teal-700 truncate">
+          {row.category_name}
+        </span>
+      </td>
+      <td className="px-2 py-2">
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold ${stockTone}`}>
+          {row.stock}
+          <span className="text-[10px] font-semibold text-slate-500">{row.unit}</span>
+        </span>
+      </td>
+      <td className="px-2 py-2 text-center text-slate-600">{row.reorder_level}</td>
+      <td className="px-2 py-2 text-center">
+        <input
+          type="number"
+          min="0"
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          className="h-7 w-14 rounded-md border border-slate-300 bg-white px-1 text-[11px] text-center outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+        />
+      </td>
+      <td className="px-2 py-2 text-center">
+        <div className="relative inline-flex items-center justify-center">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className={`h-7 rounded-full border px-2 text-[11px] font-semibold outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 ${statusTone}`}
+          >
+            <option value="pending">Pending</option>
+            <option value="ordered">Ordered</option>
+            <option value="received">Received</option>
+          </select>
+          <span className="pointer-events-none absolute right-2 text-slate-400">
+            {status === 'ordered' ? <StatusSpinner className="h-3.5 w-3.5 animate-spin text-teal-500" /> : null}
+          </span>
+        </div>
+      </td>
+      <td className="px-2 py-2">
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Add notes..."
+          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+        />
+      </td>
+      <td className="px-2 py-2 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            type="button"
+            onClick={() => onSave(row, qty, status, note)}
+            disabled={isSaving || !isEdited}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition ${isEdited && !isSaving ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-300'}`}
+            title="Save row changes"
+          >
+            {isSaving ? <StatusSpinner className="h-3.5 w-3.5 animate-spin" /> : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setQty(row.order_qty)
+              setStatus(row.status)
+              setNote(row.note)
+            }}
+            disabled={isSaving || !isEdited}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition ${isEdited && !isSaving ? 'text-rose-500 hover:bg-rose-50' : 'text-slate-300'}`}
+            title="Clear row edits"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+})
+
 export default function ReOrderStock() {
   const [reorders, setReorders] = useState([])
   const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [savingId, setSavingId] = useState(null)
 
   const [query, setQuery] = useState('')
-  const [statusTab, setStatusTab] = useState('all')
-
-  // Local editable fields for this screen (demo-ready)
-  const [selectedById, setSelectedById] = useState({})
-  const [orderQtyById, setOrderQtyById] = useState({})
-  const [statusById, setStatusById] = useState({})
-  const [noteById, setNoteById] = useState({})
+  const [statusTab, setStatusTab] = useState('pending')
 
   useEffect(() => {
     fetchData()
@@ -131,52 +232,37 @@ export default function ReOrderStock() {
     }
   }
 
-  async function saveChanges() {
-    const selectedIds = Object.keys(selectedById).filter(id => selectedById[id])
-    if (selectedIds.length === 0) {
-      toast.error('Please select at least one item to save.')
+  async function handleRowSave(row, newQty, newStatusRaw, newNotes) {
+    const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : undefined;
+    const nQty = Number(newQty) || 0;
+    const nStatus = capitalize(newStatusRaw || 'Pending');
+
+    if (!window.confirm(`Are you sure you want to save ${row.item_name} as ${nStatus}?`)) {
       return
     }
 
-    setSaving(true)
+    setSavingId(row.key)
     try {
-      const updates = selectedIds.map(id => ({
-        id,
-        order_qty: Number(orderQtyById[id]) || 0,
-        status: statusById[id] || 'pending',
-        notes: noteById[id] || ''
-      }))
-
-      await axiosInstance.put('/reorders/bulk', { updates })
-      toast.success('Reorder changes saved successfully.')
-      
-      // Clear local edits for saved items
-      setOrderQtyById(prev => {
-        const copy = { ...prev }
-        selectedIds.forEach(id => delete copy[id])
-        return copy
-      })
-      setStatusById(prev => {
-        const copy = { ...prev }
-        selectedIds.forEach(id => delete copy[id])
-        return copy
-      })
-      setNoteById(prev => {
-        const copy = { ...prev }
-        selectedIds.forEach(id => delete copy[id])
-        return copy
-      })
-      setSelectedById(prev => {
-        const copy = { ...prev }
-        selectedIds.forEach(id => delete copy[id])
-        return copy
-      })
-      
+      if (row.original_id) {
+        await axiosInstance.put(`/reorders/${row.original_id}`, {
+          reorder_qty: nQty,
+          status: nStatus,
+          notes: newNotes
+        })
+      } else {
+        await axiosInstance.post('/reorders', [{
+          item_id: row.item_id,
+          reorder_qty: nQty,
+          status: nStatus,
+          notes: newNotes || ''
+        }])
+      }
+      toast.success('Reorder saved successfully.')
       fetchData()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save changes.')
     } finally {
-      setSaving(false)
+      setSavingId(null)
     }
   }
 
@@ -188,7 +274,8 @@ export default function ReOrderStock() {
       const normalizedStatus = String(r.status ?? '').toLowerCase()
       return {
         key,
-        id: key,
+        original_id: r.id, // Actual reorder DB id (null if suggestion)
+        item_id: r.item_id, // Base item DB id
         item_name: r.item_name ?? '-',
         barcode: r.barcode ?? '',
         category_id: r.category_id,
@@ -198,22 +285,21 @@ export default function ReOrderStock() {
         reorder_level: reorderLevel,
         purchase_price: Number(r.purchase_price ?? 0) || 0,
         sale_price: Number(r.sale_price ?? 0) || 0,
-        base_order_qty: Number(r.reorder_qty ?? 0) || 0,
-        order_qty: orderQtyById[key] ?? (Number(r.reorder_qty ?? 0) || 0),
-        status: statusById[key] ?? normalizedStatus,
-        note: noteById[key] ?? (r.notes ?? ''),
+        order_qty: Number(r.reorder_qty ?? 0) || 0,
+        status: normalizedStatus,
+        note: r.notes ?? '',
       }
     })
-  }, [reorders, orderQtyById, statusById, noteById])
+  }, [reorders])
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase()
     return enrichedRows.filter((r) => {
       const matchesQuery =
         !q ||
-        String(r.item_name).toLowerCase().includes(q) ||
-        String(r.category_name).toLowerCase().includes(q) ||
-        String(r.barcode).toLowerCase().includes(q)
+        r.item_name.toLowerCase().includes(q) ||
+        r.category_name.toLowerCase().includes(q) ||
+        r.barcode.toLowerCase().includes(q)
       const matchesStatus = statusTab === 'all' || r.status === statusTab
       return matchesQuery && matchesStatus
     })
@@ -230,12 +316,8 @@ export default function ReOrderStock() {
   }, [enrichedRows])
 
   const totalValue = useMemo(() => {
-    return enrichedRows.reduce((sum, r) => sum + (Number(r.order_qty) || 0) * (Number(r.purchase_price) || 0), 0)
+    return enrichedRows.reduce((sum, r) => sum + r.order_qty * r.purchase_price, 0)
   }, [enrichedRows])
-
-  function toggleSelected(id) {
-    setSelectedById((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
 
   function exportCsv() {
     const rows = [
@@ -253,10 +335,6 @@ export default function ReOrderStock() {
     downloadCsv('reorder-management.csv', rows)
   }
 
-  function printPage() {
-    window.print()
-  }
-
   return (
     <PageShell title="Reorder Management" description="Reorders are auto-created when stock ≤ reorder level." accent="from-teal-600 via-emerald-600 to-cyan-700">
       <div className="space-y-6">
@@ -268,15 +346,6 @@ export default function ReOrderStock() {
           <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
             <button
               type="button"
-              onClick={saveChanges}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50"
-            >
-              <RefreshIcon className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button
-              type="button"
               onClick={exportCsv}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
@@ -285,7 +354,7 @@ export default function ReOrderStock() {
             </button>
             <button
               type="button"
-              onClick={printPage}
+              onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <PrinterIcon className="h-4 w-4" />
@@ -307,7 +376,7 @@ export default function ReOrderStock() {
           <MetricCard title="Pending" value={counts.pending} tone="pending" />
           <MetricCard title="Ordered" value={counts.ordered} tone="teal" />
           <MetricCard title="Received" value={counts.received} tone="received" />
-          <MetricCard title="Total Value" value={`Rs. ${Number(totalValue || 0).toLocaleString()}`} tone="value" />
+          <MetricCard title="Total Value" value={`Rs. ${totalValue.toLocaleString()}`} tone="value" />
         </div>
 
         <Card className="border-l-[6px] border-l-teal-500 p-4">
@@ -338,11 +407,10 @@ export default function ReOrderStock() {
                     key={t.id}
                     type="button"
                     onClick={() => setStatusTab(t.id)}
-                    className={`h-8 rounded-md px-3 text-[12px] font-semibold transition ${
-                      active
+                    className={`h-8 rounded-md px-3 text-[12px] font-semibold transition ${active
                         ? 'bg-teal-600 text-white shadow-sm shadow-teal-200'
                         : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     {label}
                   </button>
@@ -352,142 +420,46 @@ export default function ReOrderStock() {
           </div>
 
           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100">
-              <table className="w-full divide-y divide-slate-100 text-left table-fixed">
-                <thead className="bg-slate-50">
-                  <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-2 py-3 w-[36px]">
-                      <span className="sr-only">Select</span>
-                    </th>
-                    <th className="px-2 py-3 w-[32px] text-center">#</th>
-                    <th className="px-2 py-3">ITEM NAME</th>
-                    <th className="px-2 py-3">CATEGORY</th>
-                    <th className="px-2 py-3 w-[80px]">STOCK</th>
-                    <th className="px-2 py-3 w-[65px] text-center">REORDER LVL</th>
-                    <th className="px-2 py-3 w-[70px] text-center">ORDER QTY</th>
-                    <th className="px-2 py-3 w-[90px] text-center">STATUS</th>
-                    <th className="px-2 py-3">NOTES</th>
-                    <th className="px-2 py-3 w-[70px] text-center">ACTIONS</th>
+            <table className="w-full divide-y divide-slate-100 text-left table-fixed">
+              <thead className="bg-slate-50">
+                <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-2 py-3 w-[32px] text-center">#</th>
+                  <th className="px-2 py-3">ITEM NAME</th>
+                  <th className="px-2 py-3">CATEGORY</th>
+                  <th className="px-2 py-3 w-[80px]">STOCK</th>
+                  <th className="px-2 py-3 w-[65px] text-center">REORDER LVL</th>
+                  <th className="px-2 py-3 w-[70px] text-center">ORDER QTY</th>
+                  <th className="px-2 py-3 w-[90px] text-center">STATUS</th>
+                  <th className="px-2 py-3">NOTES</th>
+                  <th className="px-2 py-3 w-[70px] text-center">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {loading ? (
+                  <tr>
+                    <td colSpan={9} className="p-4">
+                      <TableState message="Loading reorder list..." />
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={10} className="p-4">
-                        <TableState message="Loading reorder list..." />
-                      </td>
-                    </tr>
-                  ) : filteredRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={10} className="p-4">
-                        <TableState message="No rows match the current filters." />
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredRows.map((r, idx) => {
-                      const stockTone =
-                        r.stock <= r.reorder_level ? 'bg-teal-50 text-teal-800 border-teal-100' : 'bg-teal-50 text-teal-800 border-teal-100'
-                      const statusTone =
-                        r.status === 'pending'
-                          ? 'bg-teal-50 text-teal-700 border-teal-100'
-                          : r.status === 'ordered'
-                            ? 'bg-teal-50 text-teal-700 border-teal-100'
-                            : 'bg-teal-50 text-teal-700 border-teal-100'
-
-                      return (
-                        <tr key={r.id ?? idx} className="text-[12px] transition hover:bg-slate-50/50">
-                          <td className="px-2 py-2">
-                            <input
-                              type="checkbox"
-                              checked={!!selectedById[r.id]}
-                              onChange={() => toggleSelected(r.id)}
-                              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-200"
-                            />
-                          </td>
-                          <td className="px-2 py-2 text-center text-slate-400">{idx + 1}</td>
-                          <td className="px-2 py-2">
-                            <div className="font-semibold text-slate-800 truncate">{r.item_name}</div>
-                          </td>
-                          <td className="px-2 py-2 text-slate-600">
-                            <span className="inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[11px] font-semibold text-teal-700 truncate">
-                              {r.category_name}
-                            </span>
-                          </td>
-                          <td className="px-2 py-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold ${stockTone}`}>
-                              {r.stock}
-                              <span className="text-[10px] font-semibold text-slate-500">{r.unit}</span>
-                            </span>
-                          </td>
-                          <td className="px-2 py-2 text-center text-slate-600">{r.reorder_level}</td>
-                          <td className="px-2 py-2 text-center">
-                            <input
-                              type="number"
-                              min="0"
-                              value={r.order_qty}
-                              onChange={(e) => setOrderQtyById((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                              className="h-7 w-14 rounded-md border border-slate-300 bg-white px-1 text-[11px] text-center outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                            />
-                          </td>
-                          <td className="px-2 py-2 text-center">
-                            <div className="relative inline-flex items-center justify-center">
-                              <select
-                                value={r.status}
-                                onChange={(e) => setStatusById((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                                className={`h-7 rounded-full border px-2 text-[11px] font-semibold outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 ${statusTone}`}
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="ordered">Ordered</option>
-                                <option value="received">Received</option>
-                              </select>
-                              <span className="pointer-events-none absolute right-2 text-slate-400">
-                                {r.status === 'ordered' ? <StatusSpinner className="h-3.5 w-3.5 animate-spin text-teal-500" /> : null}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              type="text"
-                              value={r.note}
-                              onChange={(e) => setNoteById((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                              placeholder="Add notes..."
-                              className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                            />
-                          </td>
-                          <td className="px-2 py-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedById((prev) => ({ ...prev, [r.id]: false }))
-                                setOrderQtyById((prev) => {
-                                  const copy = { ...prev }
-                                  delete copy[r.id]
-                                  return copy
-                                })
-                                setStatusById((prev) => {
-                                  const copy = { ...prev }
-                                  delete copy[r.id]
-                                  return copy
-                                })
-                                setNoteById((prev) => {
-                                  const copy = { ...prev }
-                                  delete copy[r.id]
-                                  return copy
-                                })
-                              }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 transition hover:bg-rose-50"
-                              title="Clear row edits"
-                            >
-                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
+                ) : filteredRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="p-4">
+                      <TableState message="No rows match the current filters." />
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRows.map((r, idx) => (
+                    <ReorderRow
+                      key={r.key}
+                      row={r}
+                      idx={idx}
+                      onSave={handleRowSave}
+                      isSaving={savingId === r.key}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>

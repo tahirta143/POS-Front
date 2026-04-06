@@ -340,7 +340,7 @@ export default function Bookings() {
                 </div>
 
                 {invoiceItems.map((row) => {
-                  const availableItemsForCat = items.filter(i => String(i.category_id) === String(row.category_id))
+                  const availableItemsForCat = items.filter(i => String(i.item_category_id) === String(row.category_id))
                   return (
                     <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_90px_70px_100px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
                       <div className="col-span-2 sm:col-span-1">

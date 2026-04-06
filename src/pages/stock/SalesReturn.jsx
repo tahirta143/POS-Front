@@ -23,21 +23,30 @@ export default function SalesReturnPage() {
 
   async function fetchInvoices() {
     try {
-      const response = await axiosInstance.get('/sales-invoices');
-      setInvoices(response.data || []);
+      const response = await axiosInstance.get('/sale-invoices');
+      const data = response.data;
+      setInvoices(Array.isArray(data) ? data : (data?.data || []));
     } catch (err) {
       toast.error('Failed to load invoices.');
     }
   }
 
   const handleInvoiceChange = (e) => {
-    const inv = invoices.find(i => i.id === e.target.value);
+    const inv = invoices.find(i => String(i.id) === String(e.target.value));
     setSelectedInvoice(inv);
-    setReturnItems(inv ? inv.items.map(item => ({ ...item, returnQty: 0 })) : []);
+    setReturnItems(inv ? (inv.items || []).map(item => ({ ...item, returnQty: 0 })) : []);
   };
 
   const handleQtyChange = (itemId, qty) => {
-    setReturnItems(prev => prev.map(item => item.id === itemId ? { ...item, returnQty: Math.min(Math.max(0, qty), item.quantity) } : item));
+    setReturnItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const parsedQty = qty === '' ? 0 : Number(qty);
+        const safeQty = isNaN(parsedQty) ? 0 : parsedQty;
+        const maxQty = Number(item.qty || item.quantity || 0);
+        return { ...item, returnQty: Math.min(Math.max(0, safeQty), maxQty) };
+      }
+      return item;
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -72,7 +81,7 @@ export default function SalesReturnPage() {
           <Field label="Invoice">
             <select onChange={handleInvoiceChange} className="h-9 w-full rounded-md border border-slate-300 p-2 text-sm focus:border-teal-400 outline-none">
               <option value="">Select Invoice</option>
-              {invoices.map(inv => <option key={inv.id} value={inv.id}>{inv.invoice_number}</option>)}
+              {invoices.map(inv => <option key={inv.id} value={inv.id}>{inv.receipt_no}</option>)}
             </select>
           </Field>
         </Card>
@@ -93,9 +102,9 @@ export default function SalesReturnPage() {
                     {returnItems.map(item => (
                       <tr key={item.id} className="border-b">
                         <td className="p-2">{item.item_name}</td>
-                        <td className="p-2 text-right">{item.quantity}</td>
+                        <td className="p-2 text-right">{item.qty || item.quantity || 0}</td>
                         <td className="p-2 text-right">
-                          <input type="number" min="0" max={item.quantity} value={item.returnQty} onChange={(e) => handleQtyChange(item.id, e.target.value)} className="h-8 w-20 border rounded px-2" />
+                          <input type="number" min="0" max={item.qty || item.quantity || 0} value={isNaN(item.returnQty) ? '' : item.returnQty} onChange={(e) => handleQtyChange(item.id, e.target.value)} className="h-8 w-20 border rounded px-2" />
                         </td>
                       </tr>
                     ))}
