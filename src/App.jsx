@@ -50,7 +50,6 @@ import AmountPayablePage from './pages/finance/AmountPayable';
 import SupplierLedgerPage from './pages/finance/SupplierLedger';
 import CustomerPaymentPage from './pages/finance/CustomerPayment';
 import AmountReceivablePage from './pages/finance/AmountReceivable';
-import StockTransferPage from './pages/stock/StockTransfer';
 import SalesReturnPage from './pages/stock/SalesReturn';
 import GoodsReceiptNotePage from './pages/stock/GoodsReceiptNote';
 
@@ -76,7 +75,6 @@ const App = () => {
         <Route path="/stock/opening" element={<OpeningStock />} />
         <Route path="/stock/closing" element={<ClosingStock />} />
         <Route path="/stock/reorder" element={<ReOrderStock />} />
-        <Route path="/stock/transfer" element={<StockTransferPage />} />
         <Route path="/stock/sales-return" element={<SalesReturnPage />} />
         <Route path="/stock/grn" element={<GoodsReceiptNotePage />} />
 

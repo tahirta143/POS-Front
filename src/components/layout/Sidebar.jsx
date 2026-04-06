@@ -28,7 +28,6 @@ const NAV_ITEMS = [
       { to: '/stock/closing', label: 'Closing Stock', icon: MdRemoveCircle },
       { to: '/stock/reorder', label: 'Reorder Stock', icon: MdRefresh },
       { to: '/stock/grn',     label: 'Goods Receipt', icon: MdReceipt },
-      { to: '/stock/transfer', label: 'Stock Transfer', icon: MdRefresh },
       { to: '/stock/sales-return', label: 'Sales Return', icon: MdRemoveCircle },
     ],
   },
