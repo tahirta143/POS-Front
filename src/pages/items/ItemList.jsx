@@ -129,16 +129,18 @@ export default function ItemPage() {
       formData.append('salePrice', parseFloat(form.sale_price) || 0)
       formData.append('stock', parseFloat(form.opening_stock) || 0)
       formData.append('itemCategoryId', form.category_id)
-      
+
       if (form.item_type_id) formData.append('itemTypeId', form.item_type_id)
       if (form.subcategory_id) formData.append('itemSubcategoryId', form.subcategory_id)
       if (form.manufacturer) formData.append('manufacturerId', form.manufacturer)
       if (form.supplier) formData.append('supplierId', form.supplier)
       if (form.store_location) formData.append('shelveLocationId', form.store_location)
       if (form.item_unit) formData.append('itemUnitId', form.item_unit)
-      
+
+      formData.append('barCode', form.barcode.trim())
       formData.append('description', form.description.trim())
       formData.append('reorder', parseFloat(form.reorder_level) || 0)
+      formData.append('perUnit', parseInt(form.per_unit) || 1)
 
       if (form.image_file) {
         formData.append('itemImage', form.image_file)

@@ -306,7 +306,7 @@ export default function PurchasePage() {
                 </div>
 
                 {purchaseItems.map((row) => {
-                  const availableItemsForCat = items.filter(i => String(i.category_id) === String(row.category_id))
+                  const availableItemsForCat = items.filter(i => String(i.item_category_id) === String(row.category_id))
                   return (
                     <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_80px_80px_60px_90px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
                       <div className="col-span-2 sm:col-span-1">
