@@ -45,6 +45,15 @@ import Daybook from './pages/expense/Daybook';
 
 
 
+import SupplierPaymentPage from './pages/finance/SupplierPayment';
+import AmountPayablePage from './pages/finance/AmountPayable';
+import SupplierLedgerPage from './pages/finance/SupplierLedger';
+import CustomerPaymentPage from './pages/finance/CustomerPayment';
+import AmountReceivablePage from './pages/finance/AmountReceivable';
+import StockTransferPage from './pages/stock/StockTransfer';
+import SalesReturnPage from './pages/stock/SalesReturn';
+import GoodsReceiptNotePage from './pages/stock/GoodsReceiptNote';
+
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [showRegister, setShowRegister] = useState(false);
@@ -67,6 +76,9 @@ const App = () => {
         <Route path="/stock/opening" element={<OpeningStock />} />
         <Route path="/stock/closing" element={<ClosingStock />} />
         <Route path="/stock/reorder" element={<ReOrderStock />} />
+        <Route path="/stock/transfer" element={<StockTransferPage />} />
+        <Route path="/stock/sales-return" element={<SalesReturnPage />} />
+        <Route path="/stock/grn" element={<GoodsReceiptNotePage />} />
 
         {/* Items */}
         <Route path="/items" element={<ItemList />} />
@@ -74,6 +86,13 @@ const App = () => {
         {/* Sales & Purchase */}
         <Route path="/purchase" element={<PurchasePage />} />
         <Route path="/sale" element={<Sales />} />
+
+        {/* Finance Routes */}
+        <Route path="/finance/supplier-payment" element={<SupplierPaymentPage />} />
+        <Route path="/finance/amount-payable" element={<AmountPayablePage />} />
+        <Route path="/finance/supplier-ledger" element={<SupplierLedgerPage />} />
+        <Route path="/finance/customer-payment" element={<CustomerPaymentPage />} />
+        <Route path="/finance/amount-receivable" element={<AmountReceivablePage />} />
 
         {/* Customer Routes */}
         <Route path="/customer/registration" element={<CustomerList />} />

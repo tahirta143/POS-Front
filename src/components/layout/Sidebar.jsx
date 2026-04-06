@@ -9,7 +9,9 @@ import {
   MdReceipt, MdAccountBalance, MdAssessment,
   MdLocalOffer, MdCalendarToday, MdSecurity, MdApartment, MdBadge,
   MdPerson, MdFactory, MdLocalShipping, MdStorefront,
-  MdCorporateFare, MdWorkspaces, MdStyle, MdMenu, MdClose
+  MdCorporateFare, MdWorkspaces, MdStyle, MdMenu, MdClose,
+  MdHistory, MdViewModule, MdExtension, MdLockPerson, MdAppRegistration,
+  MdGroupWork, MdSearch, MdVpnKey
 } from 'react-icons/md';
 import { logout } from '../../features/auth/authSlice';
 
@@ -25,6 +27,19 @@ const NAV_ITEMS = [
       { to: '/stock/opening', label: 'Opening Stock', icon: MdAddBox },
       { to: '/stock/closing', label: 'Closing Stock', icon: MdRemoveCircle },
       { to: '/stock/reorder', label: 'Reorder Stock', icon: MdRefresh },
+      { to: '/stock/grn',     label: 'Goods Receipt', icon: MdReceipt },
+      { to: '/stock/transfer', label: 'Stock Transfer', icon: MdRefresh },
+      { to: '/stock/sales-return', label: 'Sales Return', icon: MdRemoveCircle },
+    ],
+  },
+  {
+    id: 'finance', label: 'Finance', icon: MdAccountBalance,
+    children: [
+      { to: '/finance/supplier-payment', label: 'Supplier Payment', icon: MdMonetizationOn },
+      { to: '/finance/amount-payable',   label: 'Amount Payable',   icon: MdAssessment },
+      { to: '/finance/supplier-ledger',  label: 'Supplier Ledger',  icon: MdReceipt },
+      { to: '/finance/customer-payment', label: 'Customer Payment', icon: MdMonetizationOn },
+      { to: '/finance/amount-receivable', label: 'Amount Receivable', icon: MdAssessment },
     ],
   },
   {
@@ -66,12 +81,33 @@ const NAV_ITEMS = [
         children: [
           { to: '/setup/department',  label: 'Department',  icon: MdApartment },
           { to: '/setup/designation', label: 'Designation', icon: MdBadge },
-          { to: '/setup/employee',    label: 'Employee',    icon: MdPerson },
+          { to: '/security/employee',    label: 'Employee',    icon: MdPerson },
         ],
       },
     ],
   },
-  { to: '/security', label: 'Security', icon: MdSecurity },
+  {
+    id: 'security-settings', label: 'Security', icon: MdSecurity,
+    children: [
+      { to: '/security', label: 'Overview', icon: MdDashboard },
+      {
+        id: 'security-manage', label: 'Actions', icon: MdExpandMore,
+        children: [
+          { to: '/security/company',          label: 'Company',             icon: MdCorporateFare },
+          { to: '/security/employee',         label: 'Employee',            icon: MdBadge },
+          { to: '/security/software-group',   label: 'Software Group',      icon: MdWorkspaces },
+          { to: '/security/user',             label: 'Users',               icon: MdPerson },
+          { to: '/security/group-users',      label: 'Group Users',         icon: MdAppRegistration },
+          { to: '/security/user-to-group',    label: 'User to Group',       icon: MdPeople },
+          { to: '/security/security-log',     label: 'Security Log',        icon: MdHistory },
+          { to: '/security/module-info',      label: 'Modules',             icon: MdViewModule },
+          { to: '/security/module-functions', label: 'Module Functions',    icon: MdStyle },
+          { to: '/security/group-rights',     label: 'Group Rights',        icon: MdSecurity },
+          { to: '/security/user-module',      label: 'Users Module Access', icon: MdSettings },
+        ]
+      }
+    ]
+  },
 ]
 
 // ── helpers ───────────────────────────────────────────────────────────────────

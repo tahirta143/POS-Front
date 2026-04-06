@@ -36,63 +36,6 @@ function SearchIcon({ className }) {
   )
 }
 
-// Generate mock transaction data for a customer
-function generateMockTransactions(customer) {
-  const transactions = []
-  const paymentMethods = ['Cash', 'Credit Card', 'Online Transfer', 'Cheque']
-  const descriptions = [
-    'Purchase Invoice #INV-001',
-    'Purchase Invoice #INV-002',
-    'Payment Received',
-    'Purchase Invoice #INV-003',
-    'Credit Note Adjustment',
-    'Purchase Invoice #INV-004',
-    'Partial Payment',
-    'Purchase Invoice #INV-005',
-    'Refund Processed',
-    'Purchase Invoice #INV-006',
-  ]
-
-  let runningBalance = parseFloat(customer?.previous_balance || 0)
-  const openingBalance = runningBalance
-
-  for (let i = 0; i < 10; i++) {
-    const date = new Date()
-    date.setDate(date.getDate() - i * 3)
-    
-    const isDebit = i % 3 !== 1
-    const amount = Math.round((Math.random() * 5000 + 500) * 100) / 100
-    
-    let debit = 0
-    let credit = 0
-    
-    if (isDebit) {
-      debit = amount
-      runningBalance += amount
-    } else {
-      credit = amount
-      runningBalance -= amount
-    }
-
-    transactions.push({
-      id: `TXN-${String(1000 + i).slice(1)}-${Date.now().toString().slice(-4)}`,
-      dateTime: date.toISOString(),
-      description: descriptions[i],
-      transactionType: isDebit ? 'Debit' : 'Credit',
-      debit: debit,
-      credit: credit,
-      balance: runningBalance,
-      paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
-    })
-  }
-
-  return {
-    openingBalance,
-    transactions: transactions.reverse(),
-    closingBalance: runningBalance,
-  }
-}
-
 export default function CustomerLedger() {
   const [customers, setCustomers] = useState([])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -100,7 +43,8 @@ export default function CustomerLedger() {
   const [filteredCustomers, setFilteredCustomers] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [ledgerData, setLedgerData] = useState(null)
+  const [transactions, setTransactions] = useState([])
+  const [tableSearch, setTableSearch] = useState('')
 
   const CREDIT_LIMIT = 50000
 
@@ -109,21 +53,21 @@ export default function CustomerLedger() {
   }, [])
 
   async function fetchCustomers() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await axiosInstance.get('/customers')
-      const data = response.data
-      setCustomers(Array.isArray(data) ? data : data.data || [])
+      const response = await axiosInstance.get('/customers');
+      const data = response.data;
+      setCustomers(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
-      toast.error('Failed to load customers.')
-      setCustomers([])
+      toast.error('Failed to load customers.');
+      setCustomers([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (searchQuery.trim()) {
+    if (searchQuery.trim() && !selectedCustomer) {
       const filtered = customers.filter(c => 
         c.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.mobile_number?.includes(searchQuery)
@@ -134,245 +78,150 @@ export default function CustomerLedger() {
       setFilteredCustomers([])
       setShowDropdown(false)
     }
-  }, [searchQuery, customers])
+  }, [searchQuery, customers, selectedCustomer])
 
-  function handleCustomerSelect(customer) {
+  async function handleCustomerSelect(customer) {
     setSelectedCustomer(customer)
     setSearchQuery(customer.customer_name)
     setShowDropdown(false)
-    const data = generateMockTransactions(customer)
-    setLedgerData(data)
+    
+    setLoading(true);
+    try {
+        const response = await axiosInstance.get(`/customer-ledger/${customer.id}`);
+        setTransactions(response.data || []);
+    } catch (err) {
+        toast.error('Failed to load ledger.');
+    } finally {
+        setLoading(false);
+    }
   }
 
   function clearSelection() {
     setSelectedCustomer(null)
     setSearchQuery('')
-    setLedgerData(null)
+    setTransactions([])
     setShowDropdown(false)
   }
 
-  const outstandingBalance = ledgerData?.closingBalance || 0
-  const creditRemaining = Math.max(0, CREDIT_LIMIT - outstandingBalance)
-  const creditUsedPercent = Math.min(100, (outstandingBalance / CREDIT_LIMIT) * 100)
+  const filteredTransactions = transactions.filter(t => 
+    t.description?.toLowerCase().includes(tableSearch.toLowerCase()) ||
+    t.id?.toLowerCase().includes(tableSearch.toLowerCase())
+  );
+
+  const openingBalance = parseFloat(selectedCustomer?.previous_balance || 0);
+  const closingBalance = transactions.reduce((acc, curr) => acc + (Number(curr.debit) || 0) - (Number(curr.credit) || 0), openingBalance);
+  const creditRemaining = Math.max(0, CREDIT_LIMIT - closingBalance)
+  const creditUsedPercent = Math.min(100, (closingBalance / CREDIT_LIMIT) * 100)
 
   return (
-    <PageShell>
-      <div className="space-y-4">
-        <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title="Customer Ledger"
-            description="View complete transaction history and account balance for customers"
-            icon={<BookIcon className="h-5 w-5" />}
-          />
-
-          <SectionCard color="teal" title="Select Customer">
+    <PageShell title="Customer Ledger" description="View transaction history and balance" accent="from-teal-600 via-emerald-600 to-cyan-700">
+      <div className="space-y-4 max-w-6xl mx-auto">
+        <Card className="border-l-[6px] border-l-teal-500 p-3">
+          <SectionHeader title="Customer Selection" description="Select a customer to view record" icon={<BookIcon className="h-5 w-5" />} />
+          <SectionCard title="Search Customer">
             <div className="relative">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by customer name or mobile number..."
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white pl-8 pr-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    onChange={(e) => { setSearchQuery(e.target.value); if(selectedCustomer) setSelectedCustomer(null); }}
+                    placeholder="Search by customer name or mobile..."
+                    className="h-8 w-full rounded-md border border-slate-300 bg-white pl-8 pr-2 text-[11px] outline-none focus:border-teal-400"
                   />
-                  <div className="absolute inset-y-0 left-2 flex items-center text-slate-400">
-                    <SearchIcon className="h-3.5 w-3.5" />
-                  </div>
+                  <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                 </div>
                 {selectedCustomer && (
-                  <button
-                    type="button"
-                    onClick={clearSelection}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-                  >
-                    Clear
-                  </button>
+                  <button onClick={clearSelection} className="rounded-lg border px-3 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition">Clear</button>
                 )}
               </div>
 
               {showDropdown && filteredCustomers.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 bg-white py-1 shadow-lg max-h-40 overflow-y-auto">
                   {filteredCustomers.map((customer) => (
                     <button
                       key={customer.id}
-                      type="button"
                       onClick={() => handleCustomerSelect(customer)}
-                      className="w-full px-3 py-1.5 text-left text-[11px] hover:bg-teal-50 flex items-center justify-between"
+                      className="w-full px-3 py-1.5 text-left text-[11px] hover:bg-teal-50 flex items-center justify-between border-b last:border-0"
                     >
                       <div>
                         <span className="font-medium text-slate-800">{customer.customer_name}</span>
                         <span className="ml-2 text-slate-500 text-[10px]">{customer.mobile_number}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400">
-                        Balance: PKR {parseFloat(customer.previous_balance || 0).toFixed(2)}
-                      </span>
+                      <span className="text-[10px] text-slate-400">PKR {parseFloat(customer.previous_balance || 0).toFixed(2)}</span>
                     </button>
                   ))}
-                </div>
-              )}
-
-              {showDropdown && filteredCustomers.length === 0 && searchQuery.trim() && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 bg-white py-2 text-center shadow-lg">
-                  <span className="text-[11px] text-slate-500">No customers found</span>
                 </div>
               )}
             </div>
           </SectionCard>
         </Card>
 
-        {/* Summary Cards */}
-        {selectedCustomer && ledgerData && (
-          <Card className="mx-auto max-w-6xl p-3">
+        {selectedCustomer && (
+          <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-teal-50 to-white p-3">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-100 text-teal-600">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+               <Card className="p-3 bg-gradient-to-br from-teal-50 to-white">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Customer</span>
+                  <p className="text-[13px] font-bold text-slate-800 truncate">{selectedCustomer.customer_name}</p>
+               </Card>
+               <Card className="p-3">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Opening</span>
+                  <p className="text-[13px] font-bold text-slate-800">PKR {openingBalance.toFixed(2)}</p>
+               </Card>
+               <Card className="p-3">
+                  <span className="text-[10px] font-bold text-teal-600 uppercase">Current Balance</span>
+                  <p className="text-[13px] font-bold text-teal-700">PKR {closingBalance.toFixed(2)}</p>
+               </Card>
+               <Card className="p-3">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Credit Used</span>
+                  <div className="mt-1 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                     <div className="h-full bg-teal-500" style={{ width: `${creditUsedPercent}%` }} />
                   </div>
-                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Customer</span>
-                </div>
-                <p className="text-[13px] font-semibold text-slate-800 truncate">{selectedCustomer.customer_name}</p>
-                <p className="text-[10px] text-slate-500">{selectedCustomer.mobile_number || 'No phone'}</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Opening</span>
-                </div>
-                <p className="text-[15px] font-bold text-slate-800">PKR {ledgerData.openingBalance.toFixed(2)}</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-teal-50 to-white p-3">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-100 text-teal-600">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Outstanding</span>
-                </div>
-                <p className="text-[15px] font-bold text-teal-700">PKR {Math.abs(outstandingBalance).toFixed(2)}</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-teal-50 to-white p-3">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-100 text-teal-600">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Credit Limit</span>
-                </div>
-                <p className="text-[15px] font-bold text-teal-700">PKR {CREDIT_LIMIT.toFixed(2)}</p>
-                <div className="mt-1">
-                  <div className="h-1 w-full rounded-full bg-slate-200">
-                    <div className="h-1 rounded-full transition-all bg-teal-500" style={{ width: `${creditUsedPercent}%` }} />
-                  </div>
-                  <p className="mt-0.5 text-[9px] text-slate-400">PKR {creditRemaining.toFixed(2)} remaining</p>
-                </div>
-              </div>
+               </Card>
             </div>
-          </Card>
-        )}
 
-        {/* Ledger Table */}
-        <Card className="mx-auto max-w-6xl p-3">
-          <SectionHeader
-            title="Transaction History"
-            description={selectedCustomer ? `Showing transactions for ${selectedCustomer.customer_name}` : 'Select a customer to view their ledger'}
-            icon={
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            }
-          />
+            <Card className="p-2 border-l-[4px] border-l-teal-500">
+               <input 
+                type="text" 
+                value={tableSearch} 
+                onChange={(e) => setTableSearch(e.target.value)} 
+                placeholder="Search history..." 
+                className="h-7 w-full rounded border border-slate-200 px-2 text-[11px] outline-none focus:border-teal-400" 
+               />
+            </Card>
 
-          {!selectedCustomer ? (
-            <TableState message="Please search and select a customer to view their ledger" />
-          ) : loading ? (
-            <TableState message="Loading ledger data..." />
-          ) : ledgerData?.transactions.length === 0 ? (
-            <TableState message="No transactions found for this customer" />
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto w-full max-h-[400px]">
                 <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50 sticky top-0 z-10">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2">Date & Time</th>
-                      <th className="px-3 py-2">Transaction ID</th>
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      <th className="px-3 py-2">Date</th>
                       <th className="px-3 py-2">Description</th>
-                      <th className="px-3 py-2">Type</th>
                       <th className="px-3 py-2 text-right">Debit (+)</th>
                       <th className="px-3 py-2 text-right">Credit (-)</th>
                       <th className="px-3 py-2 text-right">Balance</th>
-                      <th className="px-3 py-2">Payment Method</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    <tr className="border-t border-slate-50 bg-slate-50/50">
-                      <td className="px-3 py-2 text-slate-400 text-[10px]">-</td>
-                      <td className="px-3 py-2 text-slate-400 text-[10px]">-</td>
-                      <td className="px-3 py-2 font-medium text-slate-600 text-[11px]">Opening Balance</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-slate-100 text-slate-600">B/F</span>
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-400">-</td>
-                      <td className="px-3 py-2 text-right text-slate-400">-</td>
-                      <td className="px-3 py-2 text-right font-semibold text-slate-700 text-[11px]">PKR {ledgerData.openingBalance.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-slate-400">-</td>
-                    </tr>
-
-                    {ledgerData.transactions.map((txn) => (
-                      <tr key={txn.id} className="border-t border-slate-50 transition hover:bg-slate-50/50 text-[11px]">
-                        <td className="px-3 py-2">
-                          <div className="font-medium text-slate-700 text-[11px]">
-                            {new Date(txn.dateTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </div>
-                          <div className="text-[9px] text-slate-400">
-                            {new Date(txn.dateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 font-mono text-[10px] text-slate-600">{txn.id}</td>
-                        <td className="px-3 py-2 text-slate-700">{txn.description}</td>
-                        <td className="px-3 py-2">
-                          <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${txn.transactionType === 'Debit' ? 'bg-teal-100 text-teal-700' : 'bg-teal-50 text-teal-600'}`}>
-                            {txn.transactionType}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {txn.debit > 0 ? <span className="font-medium text-teal-700">+ PKR {txn.debit.toFixed(2)}</span> : <span className="text-slate-300">-</span>}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {txn.credit > 0 ? <span className="font-medium text-teal-600">- PKR {txn.credit.toFixed(2)}</span> : <span className="text-slate-300">-</span>}
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-slate-800">PKR {txn.balance.toFixed(2)}</td>
-                        <td className="px-3 py-2">
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-600">{txn.paymentMethod}</span>
-                        </td>
-                      </tr>
-                    ))}
-
-                    <tr className="border-t-2 border-slate-200 bg-teal-50/30 font-semibold">
-                      <td className="px-3 py-2 text-slate-600 text-[11px]" colSpan={2}>Closing Balance</td>
-                      <td className="px-3 py-2" colSpan={4}></td>
-                      <td className="px-3 py-2 text-right text-teal-700 font-bold text-[12px]">PKR {ledgerData.closingBalance.toFixed(2)}</td>
-                      <td className="px-3 py-2"></td>
-                    </tr>
+                    {filteredTransactions.length === 0 ? (
+                      <tr><td colSpan="5"><TableState message={loading ? 'Loading...' : 'No records.'} /></td></tr>
+                    ) : (
+                      filteredTransactions.map((txn, idx) => (
+                        <tr key={idx} className="text-[11px] hover:bg-slate-50">
+                          <td className="px-3 py-2 text-slate-500">{new Date(txn.dateTime).toLocaleDateString()}</td>
+                          <td className="px-3 py-2 text-slate-700">{txn.description}</td>
+                          <td className="px-3 py-2 text-right text-teal-700 font-medium">{txn.debit > 0 ? txn.debit.toFixed(2) : '-'}</td>
+                          <td className="px-3 py-2 text-right text-teal-600">{txn.credit > 0 ? txn.credit.toFixed(2) : '-'}</td>
+                          <td className="px-3 py-2 text-right font-bold text-slate-800">{txn.balance.toFixed(2)}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-        </Card>
+            </Card>
+          </>
+        )}
       </div>
     </PageShell>
   )

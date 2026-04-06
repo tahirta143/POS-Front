@@ -1,11 +1,24 @@
+import { useState } from 'react'
 import { Card, SectionHeader, Field } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdSave, MdViewModule, MdRefresh } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import axiosInstance from '../../services/axiosInstance'
+
 export default function SoftwareGroup({ onBack }) {
   const navigate = useNavigate()
-  const handleSave = (e) => {
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    // Save logic
+    setLoading(true);
+    // Placeholder for actual API call, maintain design
+    console.log("Saving software group:", name);
+    setTimeout(() => {
+      setName('');
+      setLoading(false);
+    }, 1000);
   };
 
   return (
@@ -40,7 +53,9 @@ export default function SoftwareGroup({ onBack }) {
                 type="text" 
                 className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none transition-all" 
                 placeholder="e.g. ERP Module" 
-                required 
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </Field>
           </div>
@@ -48,9 +63,10 @@ export default function SoftwareGroup({ onBack }) {
           <div className="flex justify-end pt-6 border-slate-100">
             <button 
               type="submit" 
-              className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition"
+              disabled={loading}
+              className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
             >
-              <MdSave /> Save Software Group
+              <MdSave /> {loading ? 'Saving...' : 'Save Software Group'}
             </button>
           </div>
         </form>
