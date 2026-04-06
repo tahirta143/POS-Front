@@ -515,10 +515,10 @@ export default function ClosingStock() {
                         </td>
                         <td className="px-2 py-2 border-b border-slate-50">
                           <span className="inline-flex items-center rounded-full bg-teal-50 border border-teal-100 px-1.5 py-0.5 text-[9px] font-semibold text-teal-700 truncate max-w-[80px]">
-                            {getCategoryName(item.category_id)}
+                            {getCategoryName(item.item_category_id)}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-slate-600 border-b border-slate-50">{item.item_unit || '-'}</td>
+                        <td className="px-2 py-2 text-slate-600 border-b border-slate-50">{item.unit_name || '-'}</td>
 
                         {/* Opening Stock — read-only */}
                         <td className="px-2 py-2 text-center border-b border-slate-50">
@@ -530,14 +530,14 @@ export default function ClosingStock() {
                         {/* Purchases — read-only */}
                         <td className="px-2 py-2 text-center border-b border-slate-50">
                           <span className="inline-flex items-center justify-center rounded bg-teal-50 border border-teal-200 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 min-w-[36px]">
-                            +{item.purchases_in}
+                            +{item.purchase_price}
                           </span>
                         </td>
 
                         {/* Sales — read-only */}
                         <td className="px-2 py-2 text-center border-b border-slate-50">
                           <span className="inline-flex items-center justify-center rounded bg-teal-50 border border-teal-100 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 min-w-[36px]">
-                            −{item.sales_out}
+                            −{item.sale_price}
                           </span>
                         </td>
 

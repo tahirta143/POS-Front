@@ -13,12 +13,12 @@ import {
 } from 'react-icons/md'
 
 const STAT_CARDS = [
-  { key: 'totalCustomers', label: 'Customers',  icon: MdPeople,         gradient: 'from-blue-500 to-blue-600',    bg: 'bg-blue-50',    text: 'text-blue-600'    },
-  { key: 'totalProducts',  label: 'Products',   icon: MdInventory,      gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  { key: 'totalStaff',     label: 'Staff',      icon: MdBadge,          gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50',   text: 'text-amber-600'   },
-  { key: 'totalSales',     label: 'Sales',      icon: MdReceipt,        gradient: 'from-violet-500 to-purple-600',bg: 'bg-violet-50',  text: 'text-violet-600'  },
-  { key: 'totalRevenue',   label: 'Revenue',    icon: MdMonetizationOn, gradient: 'from-rose-500 to-pink-600',    bg: 'bg-rose-50',    text: 'text-rose-600',   isCurrency: true },
-  { key: 'totalBookings',  label: 'Bookings',   icon: MdCalendarToday,  gradient: 'from-cyan-500 to-sky-600',     bg: 'bg-cyan-50',    text: 'text-cyan-600'    },
+  { key: 'totalCustomers', label: 'Customers', icon: MdPeople, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-600' },
+  { key: 'totalProducts', label: 'Products', icon: MdInventory, gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+  { key: 'totalStaff', label: 'Staff', icon: MdBadge, gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', text: 'text-amber-600' },
+  { key: 'totalSales', label: 'Sales', icon: MdReceipt, gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600' },
+  { key: 'totalRevenue', label: 'Revenue', icon: MdMonetizationOn, gradient: 'from-rose-500 to-pink-600', bg: 'bg-rose-50', text: 'text-rose-600', isCurrency: true },
+  { key: 'totalBookings', label: 'Bookings', icon: MdCalendarToday, gradient: 'from-cyan-500 to-sky-600', bg: 'bg-cyan-50', text: 'text-cyan-600' },
 ]
 
 const formatCurrency = (v) =>
@@ -83,10 +83,10 @@ function SectionCard({ title, subtitle, action, children, className = '' }) {
 function StatusBadge({ status }) {
   const map = {
     Completed: 'bg-emerald-50 text-emerald-700',
-    Pending:   'bg-amber-50 text-amber-700',
-    Rejected:  'bg-rose-50 text-rose-700',
-    Paid:      'bg-emerald-50 text-emerald-700',
-    Partial:   'bg-amber-50 text-amber-700',
+    Pending: 'bg-amber-50 text-amber-700',
+    Rejected: 'bg-rose-50 text-rose-700',
+    Paid: 'bg-emerald-50 text-emerald-700',
+    Partial: 'bg-amber-50 text-amber-700',
   }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${map[status] ?? 'bg-slate-50 text-slate-500'}`}>
@@ -110,20 +110,20 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function Dashboard() {
-  const [loading, setLoading]               = useState(true)
-  const [isMounted, setIsMounted]           = useState(false)
-  const [selectedPeriod, setSelectedPeriod] = useState('weekly')
-  const [salesOverview, setSalesOverview]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState('daily')
+  const [salesOverview, setSalesOverview] = useState([])
   const [recentBookings, setRecentBookings] = useState([])
-  const [recentSales, setRecentSales]       = useState([])
-  const [orderStatus, setOrderStatus]       = useState({ pending: 0, completed: 0, rejected: 0 })
+  const [recentSales, setRecentSales] = useState([])
+  const [orderStatus, setOrderStatus] = useState({ pending: 0, completed: 0, rejected: 0 })
   const [stats, setStats] = useState({
     totalCustomers: { value: 0, change: 0 },
-    totalProducts:  { value: 0, change: 0 },
-    totalStaff:     { value: 0, change: 0 },
-    totalSales:     { value: 0, change: 0 },
-    totalRevenue:   { value: 0, change: 0 },
-    totalBookings:  { value: 0, change: 0 },
+    totalProducts: { value: 0, change: 0 },
+    totalStaff: { value: 0, change: 0 },
+    totalSales: { value: 0, change: 0 },
+    totalRevenue: { value: 0, change: 0 },
+    totalBookings: { value: 0, change: 0 },
   })
 
   useEffect(() => { setIsMounted(true); fetchGlobalStats() }, [])
@@ -141,12 +141,12 @@ export default function Dashboard() {
         axiosInstance.get('/sale-invoices/revenue').catch(() => ({ data: { revenue: 11650 } })),
       ])
       setStats({
-        totalCustomers: { value: customersRes.data?.count       || 203,  change: 12 },
-        totalProducts:  { value: productsRes.data?.count        || 16,   change: 5  },
-        totalStaff:     { value: staffRes.data?.data?.total     || 0,    change: 2  },
-        totalSales:     { value: salesRes.data?.total           || 0,    change: 18 },
-        totalRevenue:   { value: revenueRes.data?.revenue       || 0,    change: 15 },
-        totalBookings:  { value: bookingsRes.data?.length       || 10,   change: 8  },
+        totalCustomers: { value: customersRes.data?.count || 203, change: 12 },
+        totalProducts: { value: productsRes.data?.count || 16, change: 5 },
+        totalStaff: { value: staffRes.data?.data?.total || 0, change: 2 },
+        totalSales: { value: salesRes.data?.total || 0, change: 18 },
+        totalRevenue: { value: revenueRes.data?.revenue || 0, change: 15 },
+        totalBookings: { value: bookingsRes.data?.length || 10, change: 8 },
       })
       fetchBookingsStatus()
       fetchRecentSales()
@@ -166,9 +166,9 @@ export default function Dashboard() {
     if (res?.data) {
       const list = Array.isArray(res.data) ? res.data : res.data.data || []
       setOrderStatus({
-        pending:   list.filter(b => b.status === 'Pending').length,
+        pending: list.filter(b => b.status === 'Pending').length,
         completed: list.filter(b => b.status === 'Completed').length,
-        rejected:  list.filter(b => b.status === 'Rejected').length,
+        rejected: list.filter(b => b.status === 'Rejected').length,
       })
       setRecentBookings(list.slice(0, 5))
     } else {
@@ -191,9 +191,9 @@ export default function Dashboard() {
   }))
 
   const pieData = [
-    { name: 'Pending',   value: orderStatus.pending,   color: '#f59e0b' },
+    { name: 'Pending', value: orderStatus.pending, color: '#f59e0b' },
     { name: 'Completed', value: orderStatus.completed, color: '#10b981' },
-    { name: 'Rejected',  value: orderStatus.rejected,  color: '#f43f5e' },
+    { name: 'Rejected', value: orderStatus.rejected, color: '#f43f5e' },
   ].filter(d => d.value > 0)
 
   const totalOrders = orderStatus.pending + orderStatus.completed + orderStatus.rejected
@@ -234,13 +234,12 @@ export default function Dashboard() {
               subtitle="Sales vs Expenses performance"
               action={
                 <div className="flex bg-slate-100 p-1 rounded-xl gap-0.5">
-                  {['weekly', 'monthly', 'yearly'].map(p => (
+                  {['daily', 'weekly', 'monthly', 'yearly'].map(p => (
                     <button key={p} onClick={() => setSelectedPeriod(p)}
-                      className={`px-3 py-1 text-[11px] font-semibold rounded-lg capitalize transition-all duration-150 ${
-                        selectedPeriod === p
+                      className={`px-3 py-1 text-[11px] font-semibold rounded-lg capitalize transition-all duration-150 ${selectedPeriod === p
                           ? 'bg-white text-teal-600 shadow-sm'
                           : 'text-slate-400 hover:text-slate-600'
-                      }`}
+                        }`}
                     >{p}</button>
                   ))}
                 </div>
@@ -261,7 +260,7 @@ export default function Dashboard() {
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f8fafc' }} />
                     <Legend iconType="circle" iconSize={7}
                       formatter={v => <span className="text-[11px] text-slate-500">{v}</span>} />
-                    <Bar dataKey="Sales"    fill="#14b8a6" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                    <Bar dataKey="Sales" fill="#14b8a6" radius={[4, 4, 0, 0]} maxBarSize={28} />
                     <Bar dataKey="Expenses" fill="#fb7185" radius={[4, 4, 0, 0]} maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -293,9 +292,9 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     {[
-                      { label: 'Pending',   count: orderStatus.pending,   color: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400'   },
-                      { label: 'Done',      count: orderStatus.completed, color: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-400' },
-                      { label: 'Rejected',  count: orderStatus.rejected,  color: 'bg-rose-50',    text: 'text-rose-700',    dot: 'bg-rose-400'    },
+                      { label: 'Pending', count: orderStatus.pending, color: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-400' },
+                      { label: 'Done', count: orderStatus.completed, color: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-400' },
+                      { label: 'Rejected', count: orderStatus.rejected, color: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-400' },
                     ].map(s => (
                       <div key={s.label} className={`${s.color} rounded-xl p-2.5 text-center`}>
                         <div className="flex items-center justify-center gap-1 mb-1">
