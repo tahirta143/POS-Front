@@ -69,12 +69,11 @@ export default function GoodsReceiptNotePage() {
 
     setSubmitting(true);
     try {
-      // This endpoint would confirm receipt of items for the selected PO
-      await axiosInstance.post(`/purchase-receipts`, {
+      // This endpoint confirms receipt of items for the selected PO
+      await axiosInstance.post(`/purchases/receipts`, {
         purchaseOrderId: selectedPO.id,
         grnDate,
         remarks,
-        // Potentially include quantities received if partial receipts are allowed
       });
       toast.success('Goods Receipt Note recorded successfully!');
       setSelectedPO(null);
