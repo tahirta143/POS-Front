@@ -1,7 +1,9 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx'
+import FallbackNotice from '../../components/layout/FallbackNotice.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { getCustomerPayments, getSalesReturns } from '../../utils/transactionStore.js'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -38,6 +40,7 @@ function SearchIcon({ className }) {
 
 export default function CustomerLedger() {
   const [customers, setCustomers] = useState([])
+  const [sales, setSales] = useState([])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filteredCustomers, setFilteredCustomers] = useState([])
@@ -55,10 +58,15 @@ export default function CustomerLedger() {
   async function fetchCustomers() {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/customers');
-      const data = response.data;
+      const [customersResponse, salesResponse] = await Promise.all([
+        axiosInstance.get('/customers'),
+        axiosInstance.get('/sale-invoices').catch(() => ({ data: [] })),
+      ])
+      const data = customersResponse.data;
+      const salesData = salesResponse.data;
       setCustomers(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
+      setSales(Array.isArray(salesData) ? salesData : salesData.data || []);
+    } catch {
       toast.error('Failed to load customers.');
       setCustomers([]);
     } finally {
@@ -89,8 +97,57 @@ export default function CustomerLedger() {
     try {
         const response = await axiosInstance.get(`/customer-ledger/${customer.id}`);
         setTransactions(response.data || []);
-    } catch (err) {
-        toast.error('Failed to load ledger.');
+    } catch {
+        const opening = Number(customer.previous_balance || 0)
+        const paymentRows = getCustomerPayments()
+          .filter((payment) => String(payment.customerId) === String(customer.id))
+          .map((payment) => ({
+            dateTime: payment.date,
+            description: `Customer payment by ${payment.method}`,
+            debit: 0,
+            credit: Number(payment.amount || 0),
+          }))
+
+        const returnRows = getSalesReturns()
+          .filter((record) => String(record.customerId) === String(customer.id))
+          .map((record) => ({
+            dateTime: record.date,
+            description: `Sales return against ${record.receiptNo}`,
+            debit: 0,
+            credit: Number(record.totalReturn || 0),
+          }))
+
+        const saleRows = sales
+          .filter((sale) => String(sale.customer_id) === String(customer.id))
+          .map((sale) => ({
+            dateTime: sale.created_at || sale.date || new Date().toISOString(),
+            description: `Sales invoice ${sale.receipt_no}`,
+            debit: Math.max(0, Number(sale.payable || 0) - Number(sale.given_amount || 0)),
+            credit: 0,
+          }))
+
+        const merged = [
+          {
+            dateTime: customer.created_at || new Date().toISOString(),
+            description: 'Opening balance',
+            debit: opening,
+            credit: 0,
+          },
+          ...saleRows,
+          ...paymentRows,
+          ...returnRows,
+        ]
+          .sort((a, b) => new Date(a.dateTime || 0) - new Date(b.dateTime || 0))
+          .map((row, index, array) => {
+            const previousBalance = index === 0 ? 0 : Number(array[index - 1].balance || 0)
+            const base = index === 0 ? 0 : previousBalance
+            return {
+              ...row,
+              balance: base + Number(row.debit || 0) - Number(row.credit || 0),
+            }
+          })
+
+        setTransactions(merged)
     } finally {
         setLoading(false);
     }
@@ -109,8 +166,9 @@ export default function CustomerLedger() {
   );
 
   const openingBalance = parseFloat(selectedCustomer?.previous_balance || 0);
-  const closingBalance = transactions.reduce((acc, curr) => acc + (Number(curr.debit) || 0) - (Number(curr.credit) || 0), openingBalance);
-  const creditRemaining = Math.max(0, CREDIT_LIMIT - closingBalance)
+  const closingBalance = transactions.length > 0
+    ? Number(transactions[transactions.length - 1]?.balance || 0)
+    : openingBalance;
   const creditUsedPercent = Math.min(100, (closingBalance / CREDIT_LIMIT) * 100)
 
   return (
@@ -118,6 +176,9 @@ export default function CustomerLedger() {
       <div className="space-y-4 max-w-6xl mx-auto">
         <Card className="border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader title="Customer Selection" description="Select a customer to view record" icon={<BookIcon className="h-5 w-5" />} />
+          <div className="mt-4">
+            <FallbackNotice message="Customer ledger falls back to frontend-calculated balances when the backend customer-ledger route is unavailable." />
+          </div>
           <SectionCard title="Search Customer">
             <div className="relative">
               <div className="flex gap-2">
@@ -132,7 +193,7 @@ export default function CustomerLedger() {
                   <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                 </div>
                 {selectedCustomer && (
-                  <button onClick={clearSelection} className="rounded-lg border px-3 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition">Clear</button>
+                  <button onClick={clearSelection} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">Clear</button>
                 )}
               </div>
 
@@ -160,17 +221,17 @@ export default function CustomerLedger() {
         {selectedCustomer && (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-               <Card className="p-3 bg-gradient-to-br from-teal-50 to-white">
+               <Card className="bg-gradient-to-br from-teal-50 to-white p-3">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Customer</span>
-                  <p className="text-[13px] font-bold text-slate-800 truncate">{selectedCustomer.customer_name}</p>
+                  <p className="text-[12px] font-bold text-slate-800 truncate">{selectedCustomer.customer_name}</p>
                </Card>
                <Card className="p-3">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Opening</span>
-                  <p className="text-[13px] font-bold text-slate-800">PKR {openingBalance.toFixed(2)}</p>
+                  <p className="text-[12px] font-bold text-slate-800">PKR {openingBalance.toFixed(2)}</p>
                </Card>
                <Card className="p-3">
                   <span className="text-[10px] font-bold text-teal-600 uppercase">Current Balance</span>
-                  <p className="text-[13px] font-bold text-teal-700">PKR {closingBalance.toFixed(2)}</p>
+                  <p className="text-[12px] font-bold text-teal-700">PKR {closingBalance.toFixed(2)}</p>
                </Card>
                <Card className="p-3">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Credit Used</span>
@@ -180,13 +241,13 @@ export default function CustomerLedger() {
                </Card>
             </div>
 
-            <Card className="p-2 border-l-[4px] border-l-teal-500">
+            <Card className="border-l-[4px] border-l-teal-500 p-2">
                <input 
                 type="text" 
                 value={tableSearch} 
                 onChange={(e) => setTableSearch(e.target.value)} 
                 placeholder="Search history..." 
-                className="h-7 w-full rounded border border-slate-200 px-2 text-[11px] outline-none focus:border-teal-400" 
+                className="h-8 w-full rounded-md border border-slate-200 px-2.5 text-[12px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100" 
                />
             </Card>
 

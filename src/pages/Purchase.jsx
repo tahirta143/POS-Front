@@ -444,14 +444,14 @@ export default function PurchasePage() {
                   </div>
 
                   <div className="h-px bg-slate-200 my-0.5 w-full" />
-                  <div className="flex justify-between items-center text-[13px]">
+                  <div className="flex justify-between items-center text-[12px]">
                     <span className="font-bold text-slate-700">Payable:</span>
                     <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col w-full md:w-auto gap-2 flex-1 md:max-w-[350px]">
-                  <div className="flex bg-white border border-slate-200 p-2 rounded-xl">
+                  <div className="flex rounded-xl border border-slate-200 bg-white p-2">
                     <div className="flex-1 px-1">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Company Paid</p>
                       <input
@@ -459,7 +459,7 @@ export default function PurchasePage() {
                         value={givenAmount}
                         onChange={(e) => setGivenAmount(e.target.value)}
                         placeholder="Amount Tendered"
-                        className="h-7 w-full text-[13px] font-bold text-slate-800 outline-none"
+                        className="h-7 w-full text-[12px] font-bold text-slate-800 outline-none"
                       />
                     </div>
                   </div>

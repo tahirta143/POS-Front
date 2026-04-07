@@ -51,6 +51,7 @@ import SupplierLedgerPage from './pages/finance/SupplierLedger';
 import CustomerPaymentPage from './pages/finance/CustomerPayment';
 import AmountReceivablePage from './pages/finance/AmountReceivable';
 import SalesReturnPage from './pages/stock/SalesReturn';
+import PurchaseReturnPage from './pages/stock/PurchaseReturn';
 import GoodsReceiptNotePage from './pages/stock/GoodsReceiptNote';
 
 const App = () => {
@@ -76,6 +77,7 @@ const App = () => {
         <Route path="/stock/closing" element={<ClosingStock />} />
         <Route path="/stock/reorder" element={<ReOrderStock />} />
         <Route path="/stock/sales-return" element={<SalesReturnPage />} />
+        <Route path="/stock/purchase-return" element={<PurchaseReturnPage />} />
         <Route path="/stock/grn" element={<GoodsReceiptNotePage />} />
 
         {/* Items */}

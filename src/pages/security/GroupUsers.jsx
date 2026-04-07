@@ -11,9 +11,9 @@ export default function GroupUsers({ onBack }) {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-       <button
+      <button
         onClick={() => navigate('/security')}
-        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
       >
         <MdArrowBack /> Back to Overview
       </button>
@@ -31,7 +31,7 @@ export default function GroupUsers({ onBack }) {
             <Field label="Group ID">
               <input 
                 type="text" 
-                className="w-full rounded-lg border border-slate-100 bg-slate-50 p-2 text-sm font-mono text-slate-500" 
+                className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-500" 
                 value="GRP-2026-004" 
                 disabled 
               />
@@ -39,7 +39,7 @@ export default function GroupUsers({ onBack }) {
             <Field label="Group Name" required>
               <input 
                 type="text" 
-                className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none transition-all" 
+                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" 
                 placeholder="e.g. System Administrators" 
                 required 
               />

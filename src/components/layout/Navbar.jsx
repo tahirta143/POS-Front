@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  MdNotifications, MdAccountCircle, MdLogout, MdCheck,
+  MdNotifications, MdLogout, MdCheck,
   MdDoneAll, MdPerson, MdExpandMore
 } from 'react-icons/md';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,6 +16,9 @@ const pageTitles = {
   '/stock/opening': 'Opening Stock',
   '/stock/closing': 'Closing Stock',
   '/stock/reorder': 'Reorder Stock',
+  '/stock/grn': 'Goods Receipt Note',
+  '/stock/sales-return': 'Sales Return',
+  '/stock/purchase-return': 'Purchase Return',
   '/purchase': 'Purchase',
   '/sale': 'Sales Invoice',
   '/expiry-tags': 'Expiry Tags',
@@ -27,15 +30,32 @@ const pageTitles = {
   '/setup/item-type': 'Item Type',
   '/setup/item-barcode': 'Item Barcode',
   '/setup/shelve-location': 'Shelve Location',
-  '/setup/company': 'Company',
   '/setup/department': 'Department',
   '/setup/designation': 'Designation',
-  '/setup/employee': 'Employee',
+  '/security/company': 'Company',
+  '/security/employee': 'Employee',
+  '/security/software-group': 'Software Group',
+  '/security/user': 'Users',
+  '/security/group-users': 'Group Users',
+  '/security/user-to-group': 'User To Group',
+  '/security/security-log': 'Security Log',
+  '/security/module-info': 'Modules',
+  '/security/module-functions': 'Module Functions',
+  '/security/group-rights': 'Group Rights',
+  '/security/user-module': 'Users Module Access',
   '/expense/head': 'Expense Head',
   '/expense/voucher': 'Expense Voucher',
   '/expense/report': 'Expense Report',
-  '/customers': 'Customers',
+  '/daybook': 'Daybook',
+  '/customer/registration': 'Customer Registration',
+  '/customer/record': 'Customer Ledger',
   '/booking-customers': 'Bookings',
+  '/finance/supplier-payment': 'Supplier Payment',
+  '/finance/amount-payable': 'Amount Payable',
+  '/finance/supplier-ledger': 'Supplier Ledger',
+  '/finance/customer-payment': 'Customer Payment',
+  '/finance/amount-receivable': 'Amount Receivable',
+  '/profile': 'My Profile',
   '/security': 'Security Modules',
 };
 
@@ -57,8 +77,19 @@ const Navbar = () => {
     const path = location.pathname;
     if (pageTitles[path]) return pageTitles[path];
     const parentPath = Object.keys(pageTitles).find(p => path.startsWith(p + '/'));
-    return parentPath ? pageTitles[parentPath] : 'POS System';
+    if (parentPath) return pageTitles[parentPath];
+
+    const fallbackTitle = path
+      .split('/')
+      .filter(Boolean)
+      .pop()
+      ?.replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+    return fallbackTitle || 'Dashboard';
   };
+
+  const pageTitle = getPageTitle();
 
   async function fetchNotifications() {
     try {
@@ -93,9 +124,16 @@ const Navbar = () => {
   }
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const timeoutId = setTimeout(() => {
+      fetchNotifications();
+    }, 0);
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, []);
 
   // Close dropdowns on outside click
@@ -115,13 +153,13 @@ const Navbar = () => {
     .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <header className="bg-white border-b border-gray-100 h-16 flex items-center justify-between px-6 shadow-sm">
+    <header className="flex h-16 items-center justify-between border-b border-gray-100 bg-white px-4 shadow-sm sm:px-5 md:px-6">
 
       {/* ── Left: Page title ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-6 bg-teal-500 rounded-full" />
-        <h2 className="text-[15px] font-semibold text-gray-800 tracking-tight">
-          {getPageTitle()}
+      <div className="flex min-w-0 items-center gap-3 pl-12 md:pl-0">
+        <div className="h-6 w-1 shrink-0 rounded-full bg-teal-500" />
+        <h2 className="truncate text-[14px] font-bold tracking-tight text-gray-800 sm:text-[15px]">
+          {pageTitle}
         </h2>
       </div>
 

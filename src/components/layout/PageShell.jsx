@@ -3,7 +3,7 @@
 // are intentionally unused here; the Sidebar topbar already shows the page title.
 export function PageShell({ children }) {
   return (
-    <section className="w-full space-y-6 pb-20">
+    <section className="page-shell w-full space-y-6 pb-20">
       {children}
     </section>
   )
@@ -12,7 +12,7 @@ export function PageShell({ children }) {
 export function Card({ children, className = '' }) {
   return (
     <div
-      className={`rounded-3xl border border-white/80 bg-white/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur ${className}`}
+      className={`app-card rounded-3xl border border-white/80 bg-white/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur ${className}`}
     >
       {children}
     </div>
@@ -21,14 +21,14 @@ export function Card({ children, className = '' }) {
 
 export function SectionHeader({ icon, title, description, action }) {
   return (
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-teal-100 pb-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-600">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-600 shadow-sm">
           {icon}
         </div>
         <div>
-          <h3 className="text-[15px] font-semibold text-slate-900">{title}</h3>
-          <p className="text-[13px] leading-5 text-slate-500">{description}</p>
+          <h3 className="text-[16px] font-bold tracking-tight text-slate-900">{title}</h3>
+          <p className="text-[12px] leading-5 text-slate-500">{description}</p>
         </div>
       </div>
       {action}
@@ -52,7 +52,7 @@ export function StatusAlert({ type = 'error', message }) {
 export function Field({ label, required = false, hint, children, className = '' }) {
   return (
     <label className={`block space-y-1 ${className}`}>
-      <span className="block text-[13px] font-medium text-slate-700">
+      <span className="block text-[11px] font-bold uppercase tracking-wide text-slate-600">
         {label}
         {required && <span className="ml-1 text-rose-500">*</span>}
       </span>
@@ -120,14 +120,27 @@ export function ActionButton({ label, tone, onClick, disabled }) {
     amber: 'bg-amber-50 text-amber-700 hover:bg-amber-100 disabled:opacity-50 disabled:hover:bg-amber-50',
     indigo: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 disabled:hover:bg-indigo-50',
   }
+  const isIconOnly = label === 'Edit' || label === 'Delete'
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${tones[tone] || tones.teal}`}
+      aria-label={label}
+      title={label}
+      className={`${isIconOnly ? 'inline-flex h-8 w-8 items-center justify-center rounded-lg p-0' : 'rounded-xl px-3 py-2 text-xs font-semibold'} transition ${tones[tone] || tones.teal}`}
     >
-      {label}
+      {label === 'Edit' ? (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.1 2.1 0 113.03 2.908L9.4 17.462 5 19l1.62-4.273L16.862 4.487z" />
+        </svg>
+      ) : label === 'Delete' ? (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ) : (
+        label
+      )}
     </button>
   )
 }

@@ -174,7 +174,7 @@ export default function CompanyPage() {
     setLogoPreview(file ? URL.createObjectURL(file) : null)
   }
 
-  const inputCls = "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
 
   return (
     <PageShell
@@ -183,9 +183,9 @@ export default function CompanyPage() {
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
       <div className="space-y-5">
-            <button
+              <button
                 onClick={() => navigate('/security')}
-                className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
               >
                 <MdArrowBack /> Back to Overview
               </button>
@@ -247,7 +247,7 @@ export default function CompanyPage() {
                       value={form.address}
                       onChange={e => updateField('address', e.target.value)}
                       placeholder="Company address"
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                      className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                   </Field>
                 </div>
@@ -268,7 +268,7 @@ export default function CompanyPage() {
                     </Field>
 
                     <Field label="Renewable Licence">
-                      <div className="flex items-center gap-3 h-10">
+                      <div className="flex min-h-8 items-center gap-3">
                         <label className="relative inline-flex cursor-pointer items-center">
                           <input
                             type="checkbox"
@@ -299,7 +299,7 @@ export default function CompanyPage() {
                     </Field>
 
                     <Field label="Company Logo">
-                      <label className="flex items-center justify-center w-full h-10 border-2 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition overflow-hidden">
+                      <label className="flex h-8 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed bg-slate-50 transition hover:bg-slate-100 cursor-pointer">
                         {logoPreview ? (
                           <img src={logoPreview} alt="Logo preview" className="h-full object-contain p-1" />
                         ) : (

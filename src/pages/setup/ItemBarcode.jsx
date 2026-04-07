@@ -40,6 +40,7 @@ export default function ItemBarcodePage() {
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(false)
   const [barcodes, setBarcodes] = useState([])
+  const [editId, setEditId] = useState(null)
   
   const [categories, setCategories] = useState([])
   const [manufacturers, setManufacturers] = useState([])
@@ -95,7 +96,7 @@ export default function ItemBarcodePage() {
         const data = Array.isArray(unitRes.data) ? unitRes.data : unitRes.data.data || []
         setUnits(data)
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load dropdown data')
     } finally {
       setLoading(false)
@@ -119,6 +120,7 @@ export default function ItemBarcodePage() {
   }
 
   function resetForm() {
+    setEditId(null)
     setForm({
       code: '',
       category_id: '',
@@ -182,8 +184,23 @@ export default function ItemBarcodePage() {
         sale_price: Number(form.sale_price),
       }
 
-      await axiosInstance.post('/item-barcodes', payload)
-      toast.success('Barcode created successfully.')
+      if (editId) {
+        await axiosInstance.put(`/item-barcodes/${editId}`, {
+          code: payload.code,
+          category: payload.category_id,
+          manufacturer: payload.manufacturer_id,
+          supplier: payload.supplier_id,
+          itemDetail: payload.item_id,
+          unit: payload.unit_id,
+          stock: payload.stock,
+          reorderLevel: payload.reorder_level,
+          salePrice: payload.sale_price,
+        })
+        toast.success('Barcode updated successfully.')
+      } else {
+        await axiosInstance.post('/item-barcodes', payload)
+        toast.success('Barcode created successfully.')
+      }
       resetForm()
       fetchBarcodes()
     } catch (err) {
@@ -202,6 +219,22 @@ export default function ItemBarcodePage() {
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to delete barcode.')
     }
+  }
+
+  function handleEdit(barcode) {
+    setEditId(barcode.id)
+    setForm({
+      code: barcode.code || '',
+      category_id: barcode.category_id || '',
+      manufacturer_id: barcode.manufacturer_id || '',
+      supplier_id: barcode.supplier_id || '',
+      item_id: barcode.item_detail_id || barcode.item_id || '',
+      unit_id: barcode.unit_id || '',
+      stock: barcode.stock ?? '',
+      reorder_level: barcode.reorder_level ?? '',
+      sale_price: barcode.sale_price ?? '',
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const getItemName = (id) => {
@@ -228,9 +261,18 @@ export default function ItemBarcodePage() {
       <div className="space-y-4">
         <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
-            title="New Barcode Registration"
+            title={editId ? 'Edit Barcode Registration' : 'New Barcode Registration'}
             description="Enter barcode details and stock information."
             icon={<BarcodeIcon className="h-5 w-5" />}
+            action={editId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel Edit
+              </button>
+            ) : null}
           />
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -362,14 +404,14 @@ export default function ItemBarcodePage() {
               >
                 Reset
               </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg bg-teal-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 transition disabled:opacity-50"
-              >
-                {submitting ? 'Saving...' : 'Save Barcode'}
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-teal-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 transition disabled:opacity-50"
+                >
+                {submitting ? 'Saving...' : editId ? 'Update Barcode' : 'Save Barcode'}
+                </button>
+              </div>
           </form>
         </Card>
 
@@ -418,12 +460,10 @@ export default function ItemBarcodePage() {
                       <td className="px-3 py-2 text-right font-medium text-slate-700">{barcode.stock}</td>
                       <td className="px-3 py-2 text-right font-medium text-emerald-600">Rs {Number(barcode.sale_price).toFixed(2)}</td>
                       <td className="px-3 py-2 text-center">
-                        <button
-                          onClick={() => handleDelete(barcode.id)}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 transition"
-                        >
-                          <TrashIcon className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex justify-center gap-1.5">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(barcode)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(barcode.id)} />
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
+import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
 import axiosInstance from '../../services/axiosInstance';
 import { toast } from 'react-toastify';
+import { getPurchaseReturns, getSupplierPayments } from '../../utils/transactionStore.js';
 
 function LedgerIcon({ className }) {
   return (
@@ -13,6 +15,7 @@ function LedgerIcon({ className }) {
 
 export default function SupplierLedgerPage() {
   const [suppliers, setSuppliers] = useState([]);
+  const [purchases, setPurchases] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,43 +25,107 @@ export default function SupplierLedgerPage() {
     fetchSuppliers();
   }, []);
 
+  async function fetchSuppliers() {
+    try {
+      const [suppliersResponse, purchasesResponse] = await Promise.all([
+        axiosInstance.get('/suppliers'),
+        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
+      ]);
+      const suppliersData = suppliersResponse.data;
+      const purchasesData = purchasesResponse.data;
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : suppliersData.data || []);
+      setPurchases(Array.isArray(purchasesData) ? purchasesData : purchasesData.data || []);
+    } catch {
+      toast.error('Failed to load suppliers.');
+    }
+  }
+
+  const fetchLedger = useCallback(async (id) => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get(`/supplier-ledger/${id}`);
+      const data = response.data;
+      setTransactions(Array.isArray(data) ? data : data.data || []);
+    } catch {
+      const selectedSupplier = suppliers.find((supplier) => String(supplier.id) === String(id));
+      const opening = Number(selectedSupplier?.previous_balance || 0);
+
+      const purchaseRows = purchases
+        .filter((purchase) => String(purchase.supplier_id) === String(id))
+        .map((purchase) => ({
+          date: purchase.grn_date,
+          reference: purchase.grn_no || purchase.invoice_no || `PUR-${purchase.id}`,
+          description: `Purchase invoice${purchase.invoice_no ? ` ${purchase.invoice_no}` : ''}`,
+          debit: Math.max(0, Number(purchase.payable || 0) - Number(purchase.paid_amount || 0)),
+          credit: 0,
+        }));
+
+      const paymentRows = getSupplierPayments()
+        .filter((payment) => String(payment.supplierId) === String(id))
+        .map((payment) => ({
+          date: payment.date,
+          reference: payment.id,
+          description: `Supplier payment by ${payment.method}`,
+          debit: 0,
+          credit: Number(payment.amount || 0),
+        }));
+
+      const returnRows = getPurchaseReturns()
+        .filter((record) => String(record.supplierId) === String(id))
+        .map((record) => ({
+          date: record.date,
+          reference: record.id,
+          description: `Purchase return against ${record.grnNo || record.invoiceNo || 'purchase'}`,
+          debit: 0,
+          credit: Number(record.totalReturn || 0),
+        }));
+
+      const merged = [
+        {
+          date: selectedSupplier?.created_at || new Date().toISOString().slice(0, 10),
+          reference: 'OPENING',
+          description: 'Opening balance',
+          debit: opening,
+          credit: 0,
+        },
+        ...purchaseRows,
+        ...paymentRows,
+        ...returnRows,
+      ]
+        .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
+      let runningBalance = 0
+      const withBalances = merged.map((row) => {
+        runningBalance += Number(row.debit || 0) - Number(row.credit || 0)
+        return { ...row, balance: runningBalance }
+      })
+
+      setTransactions(withBalances);
+    } finally {
+      setLoading(false);
+    }
+  }, [purchases, suppliers])
+
   useEffect(() => {
     if (selectedSupplierId) {
       fetchLedger(selectedSupplierId);
     } else {
       setTransactions([]);
     }
-  }, [selectedSupplierId]);
+  }, [fetchLedger, selectedSupplierId]);
 
-  async function fetchSuppliers() {
-    try {
-      const response = await axiosInstance.get('/suppliers');
-      const data = response.data;
-      setSuppliers(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      toast.error('Failed to load suppliers.');
-    }
-  }
-
-  async function fetchLedger(id) {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get(`/supplier-ledger/${id}`);
-      const data = response.data;
-      setTransactions(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      toast.error('Failed to load ledger data.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const filteredTransactions = transactions.filter(t => 
+  const filteredTransactions = transactions.filter(t =>
     t.reference?.toLowerCase().includes(search.toLowerCase()) || 
     t.description?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const closingBalance = transactions.reduce((acc, curr) => acc + (Number(curr.debit) || 0) - (Number(curr.credit) || 0), 0);
+  const selectedSupplier = useMemo(
+    () => suppliers.find((supplier) => String(supplier.id) === String(selectedSupplierId)),
+    [selectedSupplierId, suppliers]
+  );
+
+  const closingBalance = filteredTransactions.length > 0
+    ? Number(filteredTransactions[filteredTransactions.length - 1]?.balance || 0)
+    : Number(selectedSupplier?.previous_balance || 0);
 
   return (
     <PageShell
@@ -69,6 +136,9 @@ export default function SupplierLedgerPage() {
       <div className="space-y-6 max-w-6xl mx-auto">
         <Card className="p-4 border-l-[6px] border-l-teal-500 bg-white shadow-sm">
           <SectionHeader title="Account Selection" description="Select a supplier to view their financial statement." icon={<LedgerIcon className="h-5 w-5" />} />
+          <div className="mt-4">
+            <FallbackNotice message="Supplier ledger falls back to frontend-calculated balances when the backend supplier-ledger route is unavailable." />
+          </div>
           <div className="mt-4 max-w-md">
             <Field label="Supplier Name">
               <select

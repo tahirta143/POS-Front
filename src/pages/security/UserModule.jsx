@@ -1,13 +1,13 @@
 import { Card, SectionHeader, Field } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdVpnKey, MdSave } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-export default function UserModule({ onBack }) {
+export default function UserModule() {
   const navigate = useNavigate()
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-       <button
+      <button
         onClick={() => navigate('/security')}
-        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
       >
         <MdArrowBack /> Back to Overview
       </button>
@@ -15,17 +15,17 @@ export default function UserModule({ onBack }) {
         <SectionHeader title="User Module Access" description="Grant direct module access to individual system users." icon={<MdVpnKey className="text-teal-600 text-3xl"/>} />
         <form className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <Field label="Access ID">
-            <input type="text" className="w-full rounded-lg border border-slate-100 bg-slate-50 p-2 text-sm font-mono text-slate-500" value="ACC-202" disabled />
+            <input type="text" className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-500" value="ACC-202" disabled />
           </Field>
           <Field label="Module Dropdown">
-            <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">
+            <select className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
               <option>Select Module</option>
               <option>Reports</option>
               <option>Settings</option>
             </select>
           </Field>
           <Field label="User Dropdown">
-            <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">
+            <select className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
               <option>Select User</option>
               <option>John Doe</option>
             </select>

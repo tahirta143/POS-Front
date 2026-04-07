@@ -13,7 +13,7 @@ export const fetchItems = createAsyncThunk('items/fetchItems', async (_, { rejec
 
 export const addItem = createAsyncThunk('items/addItem', async (itemData, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post('/items', itemData);
+    const response = await axiosInstance.post('/item-details', itemData);
     toast.success('Item added successfully');
     return response.data;
   } catch (error) {
@@ -23,7 +23,7 @@ export const addItem = createAsyncThunk('items/addItem', async (itemData, { reje
 
 export const updateItem = createAsyncThunk('items/updateItem', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.put(`/items/${id}`, data);
+    const response = await axiosInstance.put(`/item-details/${id}`, data);
     toast.success('Item updated successfully');
     return response.data;
   } catch (error) {
@@ -33,7 +33,7 @@ export const updateItem = createAsyncThunk('items/updateItem', async ({ id, data
 
 export const deleteItem = createAsyncThunk('items/deleteItem', async (id, { rejectWithValue }) => {
   try {
-    await axiosInstance.delete(`/items/${id}`);
+    await axiosInstance.delete(`/item-details/${id}`);
     toast.success('Item deleted successfully');
     return id;
   } catch (error) {

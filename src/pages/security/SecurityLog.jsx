@@ -2,13 +2,13 @@ import { Card, SectionHeader, Field } from '../../components/layout/PageShell.js
 import { MdArrowBack, MdSave, MdHistory } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 
-export default function SecurityLogPage({ onBack }) {
+export default function SecurityLogPage() {
   const navigate = useNavigate()
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4">
       <button
         onClick={() => navigate('/security')}
-        className="flex items-center gap-2 rounded-lg bg-white border px-4 py-2 text-sm font-bold text-teal-700 hover:bg-teal-50 transition"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
       >
         <MdArrowBack /> Back to Overview
       </button>
@@ -18,19 +18,19 @@ export default function SecurityLogPage({ onBack }) {
         <form className="mt-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Field label="Log ID">
-              <input type="text" className="w-full rounded-lg border border-slate-100 bg-slate-50 p-2 text-sm font-mono" value="LOG-77291" disabled />
+              <input type="text" className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono" value="LOG-77291" disabled />
             </Field>
             <Field label="User Dropdown">
-              <select className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none bg-white">
+              <select className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
                 <option>Select User</option><option>John Doe</option>
               </select>
             </Field>
             <Field label="Activity Time">
-              <input type="datetime-local" className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none" />
+              <input type="datetime-local" className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
             </Field>
           </div>
           <Field label="Activity Description">
-            <textarea className="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-teal-500 outline-none" rows="3" placeholder="Describe the system activity..."></textarea>
+            <textarea className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" rows="3" placeholder="Describe the system activity..."></textarea>
           </Field>
           <div className="flex justify-end">
             <button className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg hover:bg-teal-700 transition">

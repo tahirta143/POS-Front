@@ -147,7 +147,7 @@ export default function ExpenseHeadPage() {
                     value={form.head}
                     onChange={(e) => updateField('head', e.target.value)}
                     placeholder="e.g. Office Rent, Utility Bills, Salaries"
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
                 <Field label="Description" className="sm:col-span-2">
@@ -156,7 +156,7 @@ export default function ExpenseHeadPage() {
                     value={form.description}
                     onChange={(e) => updateField('description', e.target.value)}
                     placeholder="Details about what falls under this expense head"
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
               </div>

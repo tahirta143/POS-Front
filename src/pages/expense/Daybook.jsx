@@ -1,6 +1,8 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx'
+import FallbackNotice from '../../components/layout/FallbackNotice.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { getCustomerPayments, getPurchaseReturns, getSalesReturns, getSupplierPayments } from '../../utils/transactionStore.js'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -39,10 +41,16 @@ function getTypeBadgeStyle(type) {
   switch (type) {
     case 'SALE':
       return 'bg-teal-100 text-teal-700'
+    case 'RECEIPT':
+      return 'bg-emerald-100 text-emerald-700'
     case 'EXPENSE':
       return 'bg-teal-50 text-teal-600'
     case 'PURCHASE':
       return 'bg-teal-100 text-teal-700'
+    case 'PAYMENT':
+      return 'bg-rose-100 text-rose-700'
+    case 'RETURN':
+      return 'bg-amber-100 text-amber-700'
     default:
       return 'bg-slate-100 text-slate-600'
   }
@@ -55,23 +63,95 @@ export default function Daybook() {
   const [openingBalance, setOpeningBalance] = useState(0)
   const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    fetchDaybookData()
-  }, [selectedDate])
-
-  async function fetchDaybookData() {
+  const fetchDaybookData = useCallback(async () => {
     setLoading(true)
     try {
       const response = await axiosInstance.get(`/daybook?date=${selectedDate}`)
       const data = response.data || {}
       setTransactions(data.transactions || [])
       setOpeningBalance(data.openingBalance || 0)
-    } catch (err) {
-      console.error('Failed to load daybook data:', err)
+    } catch {
+      const [salesRes, purchasesRes, expensesRes] = await Promise.all([
+        axiosInstance.get('/sale-invoices').catch(() => ({ data: [] })),
+        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
+        axiosInstance.get('/expense-vouchers').catch(() => ({ data: [] })),
+      ])
+
+      const sales = Array.isArray(salesRes.data) ? salesRes.data : salesRes.data?.data || []
+      const purchases = Array.isArray(purchasesRes.data) ? purchasesRes.data : purchasesRes.data?.data || []
+      const expenses = Array.isArray(expensesRes.data) ? expensesRes.data : expensesRes.data?.data || []
+
+      const normalized = [
+        ...sales.map((sale) => ({
+          dateTime: sale.created_at || selectedDate,
+          reference: sale.receipt_no || `INV-${sale.id}`,
+          type: 'SALE',
+          description: `Sales invoice ${sale.receipt_no || sale.id}`,
+          cashIn: Number(sale.given_amount || 0),
+          cashOut: 0,
+        })),
+        ...purchases.map((purchase) => ({
+          dateTime: purchase.grn_date || selectedDate,
+          reference: purchase.grn_no || `PUR-${purchase.id}`,
+          type: 'PURCHASE',
+          description: `Purchase ${purchase.invoice_no || purchase.grn_no || purchase.id}`,
+          cashIn: 0,
+          cashOut: Number(purchase.paid_amount || 0),
+        })),
+        ...expenses.map((expense) => ({
+          dateTime: expense.voucher_date || expense.created_at || selectedDate,
+          reference: expense.voucher_no || `EXP-${expense.id}`,
+          type: 'EXPENSE',
+          description: expense.description || expense.head_name || 'Expense voucher',
+          cashIn: 0,
+          cashOut: Number(expense.amount || 0),
+        })),
+        ...getCustomerPayments().map((payment) => ({
+          dateTime: payment.date,
+          reference: payment.id,
+          type: 'RECEIPT',
+          description: `Payment from ${payment.customerName}`,
+          cashIn: Number(payment.amount || 0),
+          cashOut: 0,
+        })),
+        ...getSupplierPayments().map((payment) => ({
+          dateTime: payment.date,
+          reference: payment.id,
+          type: 'PAYMENT',
+          description: `Payment to ${payment.supplierName}`,
+          cashIn: 0,
+          cashOut: Number(payment.amount || 0),
+        })),
+        ...getSalesReturns().map((record) => ({
+          dateTime: record.date,
+          reference: record.id,
+          type: 'RETURN',
+          description: `Sales return for ${record.receiptNo}`,
+          cashIn: 0,
+          cashOut: Number(record.totalReturn || 0),
+        })),
+        ...getPurchaseReturns().map((record) => ({
+          dateTime: record.date,
+          reference: record.id,
+          type: 'RETURN',
+          description: `Purchase return for ${record.grnNo || record.invoiceNo || 'purchase'}`,
+          cashIn: Number(record.totalReturn || 0),
+          cashOut: 0,
+        })),
+      ]
+        .filter((entry) => String(entry.dateTime || '').slice(0, 10) === selectedDate)
+        .sort((a, b) => new Date(a.dateTime || 0) - new Date(b.dateTime || 0))
+
+      setTransactions(normalized)
+      setOpeningBalance(0)
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDate])
+
+  useEffect(() => {
+    fetchDaybookData()
+  }, [fetchDaybookData])
 
   const filteredTransactions = transactions.filter(t => 
     t.description?.toLowerCase().includes(search.toLowerCase()) ||
@@ -91,9 +171,12 @@ export default function Daybook() {
       <div className="space-y-4 max-w-6xl mx-auto">
         <Card className="border-l-[6px] border-l-teal-500 p-3.5">
           <SectionHeader title="Daybook" description="Chronological log of today's activities" icon={<CalendarIcon className="h-6 w-6" />} />
+          <div className="mt-4">
+            <FallbackNotice message="Daybook is using frontend-computed transactions until the backend daybook route is added." />
+          </div>
           <div className="flex gap-2 items-center mt-4">
              <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="h-9 rounded-md border border-slate-300 px-3 text-sm focus:border-teal-400 outline-none" />
-             <button onClick={fetchDaybookData} className="h-9 px-4 bg-teal-600 text-white rounded-lg text-sm font-bold shadow-lg hover:bg-teal-700">Refresh</button>
+             <button onClick={fetchDaybookData} disabled={loading} className="h-9 px-4 bg-teal-600 text-white rounded-lg text-sm font-bold shadow-lg hover:bg-teal-700 disabled:opacity-50">Refresh</button>
           </div>
         </Card>
 

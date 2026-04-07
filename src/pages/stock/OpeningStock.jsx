@@ -53,10 +53,6 @@ export default function OpeningStockPage() {
   const [dateFilter, setDateFilter] = useState('')
   const today = useMemo(() => toLocalYMD(new Date()), [])
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
   async function fetchData() {
     setLoading(true)
     setStockSaveError('')
@@ -88,13 +84,21 @@ export default function OpeningStockPage() {
       originalStockByIdRef.current = new Map(
         nextItems.map((i) => [i.id, Number(i.stock) || 0]),
       )
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
       toast.error('Failed to load opening stock data')
     }
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleStockInputChange = (itemId, newStockRaw) => {
     setItems((prev) =>
@@ -114,7 +118,7 @@ export default function OpeningStockPage() {
 
       originalStockByIdRef.current.set(itemId, nextNumber)
       toast.success('Stock updated successfully')
-    } catch (e) {
+    } catch {
       // Revert UI to last persisted value.
       setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, stock: lastSaved } : i)))
       setStockSaveError('Failed to save stock change. Please try again.')
@@ -160,17 +164,17 @@ export default function OpeningStockPage() {
       description="View and manage initial stock quantities."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6 max-w-[1400px] mx-auto">
+      <div className="mx-auto max-w-[1400px] space-y-6">
 
         {/* Header Ribbon identical to UI Screenshot */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-bold text-teal-600">Opening Stock</h1>
             <p className="text-sm text-slate-500">View and manage initial stock quantities</p>
           </div>
           <button
             onClick={fetchData}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -180,16 +184,16 @@ export default function OpeningStockPage() {
         {/* 4 Cards Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Total Items" value={totalItems.toLocaleString()} valueColor="text-teal-500" />
-          <MetricCard title="Stock on Hand (SOH)" value={totalStock.toLocaleString()} valueColor="text-amber-500" />
-          <MetricCard title="Purchase Value" value={`Rs ${purchaseValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} valueColor="text-sky-500" />
-          <MetricCard title="Sale Value" value={`Rs ${saleValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} valueColor="text-emerald-500" />
+          <MetricCard title="Stock on Hand (SOH)" value={totalStock.toLocaleString()} valueColor="text-teal-500" />
+          <MetricCard title="Purchase Value" value={`Rs ${purchaseValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} valueColor="text-teal-600" />
+          <MetricCard title="Sale Value" value={`Rs ${saleValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} valueColor="text-teal-600" />
         </div>
 
         {/* Filter Stock */}
         <Card className="p-4 border-l-[6px] border-l-teal-500">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="mb-4 flex items-center gap-2">
             <span className="h-4 w-1 bg-teal-500 rounded-full block"></span>
-            <h2 className="text-[13px] font-bold text-slate-800 tracking-wide uppercase">Filter Stock</h2>
+            <h2 className="text-[12px] font-bold uppercase tracking-wide text-slate-800">Filter Stock</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
@@ -252,6 +256,12 @@ export default function OpeningStockPage() {
             </div>
           </div>
 
+          {stockSaveError ? (
+            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-medium text-rose-700">
+              {stockSaveError}
+            </div>
+          ) : null}
+
           <div className="flex justify-between items-center mt-5 pt-4 border-t border-slate-100">
             <p className="text-[12px] text-slate-500">
               Showing <strong className="text-slate-800">{filteredItems.length}</strong> of <strong className="text-slate-800">{items.length}</strong> items
@@ -311,8 +321,8 @@ export default function OpeningStockPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-600">{item.unit_name || '-'}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-blue-600">Rs {Number(item.purchase_price || 0).toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-emerald-600">Rs {Number(item.sale_price || 0).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(item.purchase_price || 0).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(item.sale_price || 0).toFixed(2)}</td>
                       <td className="px-4 py-3 text-center">
                         <div className="relative inline-block">
                           <input
@@ -322,10 +332,10 @@ export default function OpeningStockPage() {
                             value={item.stock ?? ''}
                             onChange={(e) => handleStockInputChange(item.id, e.target.value === '' ? '' : e.target.value)}
                             onBlur={(e) => commitStockChange(item.id, e.target.value)}
-                            className="h-8 w-16 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-bold text-center outline-none transition focus:border-amber-400 focus:bg-amber-100 focus:ring-2 focus:ring-amber-200/50 hover:bg-amber-100 cursor-text pr-7"
+                            className="h-8 w-24 rounded-full border border-teal-200 bg-teal-50 pr-7 text-center font-bold text-teal-900 outline-none transition hover:bg-teal-100 focus:border-teal-400 focus:bg-teal-100 focus:ring-2 focus:ring-teal-200/50 cursor-text"
                           />
                           <svg
-                            className="absolute top-1/2 -translate-y-1/2 right-2 h-3.5 w-3.5 text-amber-500 opacity-70 pointer-events-none"
+                            className="absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-teal-500 opacity-70 pointer-events-none"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >

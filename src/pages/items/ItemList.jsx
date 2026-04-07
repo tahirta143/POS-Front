@@ -28,24 +28,24 @@ function createEmptyForm() {
 
 const sectionStyles = {
   lime: {
-    accent: 'bg-lime-500',
-    header: 'border-lime-100 bg-lime-50/80',
+    accent: 'bg-teal-500',
+    header: 'border-teal-100 bg-teal-50/80',
   },
   sky: {
-    accent: 'bg-sky-500',
-    header: 'border-sky-100 bg-sky-50/80',
+    accent: 'bg-teal-500',
+    header: 'border-teal-100 bg-teal-50/80',
   },
   violet: {
-    accent: 'bg-violet-500',
-    header: 'border-violet-100 bg-violet-50/80',
+    accent: 'bg-teal-500',
+    header: 'border-teal-100 bg-teal-50/80',
   },
   emerald: {
-    accent: 'bg-emerald-500',
-    header: 'border-emerald-100 bg-emerald-50/80',
+    accent: 'bg-teal-500',
+    header: 'border-teal-100 bg-teal-50/80',
   },
   amber: {
-    accent: 'bg-amber-500',
-    header: 'border-amber-100 bg-amber-50/80',
+    accent: 'bg-teal-500',
+    header: 'border-teal-100 bg-teal-50/80',
   },
 }
 
@@ -190,7 +190,7 @@ export default function ItemPage() {
         />
 
         <form onSubmit={handleSubmit} className="space-y-1.5">
-          <SectionCard color="#CCFBF1" title="Basic information">
+          <SectionCard color="lime" title="Basic information">
             <div className="grid gap-1.5 xl:grid-cols-[1fr_1fr_1.05fr]">
               <SelectField
                 label="Item category"
@@ -330,11 +330,11 @@ export default function ItemPage() {
             <SectionCard color="emerald" title="Product image">
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 py-1.5 transition hover:border-teal-300 hover:bg-teal-50/40">
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-teal-500 shadow-sm">
                   <UploadIcon className="h-3.5 w-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] font-semibold text-sky-600">Upload image</p>
+                  <p className="text-[12px] font-semibold text-teal-600">Upload image</p>
                   <p className="mt-0.5 truncate text-[10px] text-slate-500">{form.image_name || 'PNG, JPG, SVG up to 10MB'}</p>
                 </div>
               </label>
@@ -443,7 +443,7 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
         className={`inline-flex items-center gap-2 rounded-full border px-1.5 py-0.5 transition ${enabled
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          ? 'border-teal-200 bg-teal-50 text-teal-700'
           : 'border-slate-200 bg-white text-slate-500'
           }`}
       >
@@ -451,7 +451,7 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
           {enabled ? 'On' : 'Off'}
         </span>
         <span
-          className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${enabled ? 'bg-emerald-500' : 'bg-slate-300'
+          className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${enabled ? 'bg-teal-500' : 'bg-slate-300'
             }`}
         >
           <span

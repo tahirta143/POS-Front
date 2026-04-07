@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { useNavigate } from 'react-router-dom'
 import { PageShell } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
 import {
@@ -36,7 +35,8 @@ function Spinner() {
   )
 }
 
-function StatCard({ label, value, change, icon: Icon, gradient, bg, text, isCurrency, loading }) {
+function StatCard({ label, value, change, icon, gradient, bg, text, isCurrency, loading }) {
+  const IconComponent = icon
   if (loading) return (
     <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm animate-pulse">
       <div className="h-3 bg-slate-200 rounded w-20 mb-3" />
@@ -50,7 +50,7 @@ function StatCard({ label, value, change, icon: Icon, gradient, bg, text, isCurr
       <div className="flex items-start justify-between mb-3">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
         <div className={`w-8 h-8 rounded-xl ${bg} ${text} flex items-center justify-center`}>
-          <Icon className="text-base" />
+          <IconComponent className="text-base" />
         </div>
       </div>
       <p className="text-2xl font-bold text-slate-800 leading-none mb-2">
@@ -142,12 +142,15 @@ export default function Dashboard() {
         axiosInstance.get('/sale-invoices/revenue').catch(() => ({ data: { revenue: 11650 } })),
       ])
       setStats({
-        totalCustomers: { value: customersRes.data?.count || 203, change: 12 },
+        totalCustomers: { value: customersRes.data?.totalCustomers || customersRes.data?.count || 203, change: 12 },
         totalProducts: { value: productsRes.data?.count || 16, change: 5 },
         totalStaff: { value: staffRes.data?.data?.total || 0, change: 2 },
         totalSales: { value: salesRes.data?.total || 0, change: 18 },
         totalRevenue: { value: revenueRes.data?.revenue || 0, change: 15 },
-        totalBookings: { value: bookingsRes.data?.length || 10, change: 8 },
+        totalBookings: {
+          value: Array.isArray(bookingsRes.data) ? bookingsRes.data.length : bookingsRes.data?.total || bookingsRes.data?.length || 10,
+          change: 8
+        },
       })
       fetchBookingsStatus()
       fetchRecentSales()

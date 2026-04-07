@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Card, Field, PageShell, SectionHeader,
   StatusAlert, TableState, ActionButton
 } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
-import { MdPeople, MdBadge, MdApartment, MdBusiness } from 'react-icons/md'
+import { MdPeople, MdBadge, MdApartment, MdBusiness, MdArrowBack } from 'react-icons/md'
 
 const sectionStyles = {
   teal:    { accent: 'bg-teal-500',    header: 'border-teal-100 bg-teal-50/80' },
@@ -36,6 +37,7 @@ function createEmptyForm() {
 }
 
 export default function EmployeePage() {
+  const navigate = useNavigate()
   const [form, setForm]               = useState(createEmptyForm)
   const [employees, setEmployees]     = useState([])
   const [companies, setCompanies]     = useState([])
@@ -63,7 +65,7 @@ export default function EmployeePage() {
       setCompanies(Array.isArray(companiesRes.data)     ? companiesRes.data     : companiesRes.data.data     || [])
       setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data   : departmentsRes.data.data   || [])
       setDesignations(Array.isArray(designationsRes.data) ? designationsRes.data : designationsRes.data.data || [])
-    } catch (err) {
+    } catch {
       setError('Failed to load dropdown data.')
     }
   }
@@ -152,7 +154,7 @@ export default function EmployeePage() {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  const inputCls = "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
   const selectCls = `${inputCls} appearance-none cursor-pointer`
 
   return (
@@ -162,6 +164,14 @@ export default function EmployeePage() {
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
       <div className="space-y-5">
+        <button
+          type="button"
+          onClick={() => navigate('/security')}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
+        >
+          <MdArrowBack /> Back to Overview
+        </button>
+
         <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3.5">
           <SectionHeader
             title={editId ? 'Edit Employee' : 'Add New Employee'}
@@ -190,7 +200,7 @@ export default function EmployeePage() {
                       type="text"
                       disabled
                       value={editId ? `EMP-ID-${editId}` : 'Auto Generated'}
-                      className="h-10 w-full rounded-md border border-slate-100 bg-slate-50 px-3 text-[13px] font-mono text-slate-400 cursor-not-allowed"
+                      className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-400 cursor-not-allowed"
                     />
                   </Field>
 

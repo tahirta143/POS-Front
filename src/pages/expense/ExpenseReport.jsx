@@ -28,7 +28,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-8 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((option) => (
@@ -144,7 +144,7 @@ export default function ExpenseReport() {
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                 />
               </Field>
               <Field label="To Date">
@@ -152,7 +152,7 @@ export default function ExpenseReport() {
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                 />
               </Field>
             </div>

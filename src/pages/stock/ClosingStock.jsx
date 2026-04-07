@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Card, PageShell, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import {
+  getClosingStockSnapshotByDate,
+  getSalesReturns,
+  saveClosingStockSnapshot,
+} from '../../utils/transactionStore.js'
 
 function RefreshIcon({ className }) {
   return (
@@ -46,32 +51,126 @@ function SaveIcon({ className }) {
 function MetricCard({ title, value, valueColor }) {
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">{title}</p>
+      <p className="text-[12px] font-medium uppercase tracking-wide text-slate-500">{title}</p>
       <p className={`mt-2 text-2xl font-bold ${valueColor}`}>{value}</p>
     </div>
   )
 }
 
-function toLocalYMD(d) {
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
+function toLocalYMD(date) {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd}`
+}
+
+function parseListData(response) {
+  const data = response?.data
+  return Array.isArray(data) ? data : data?.data || []
+}
+
+function isOnOrBeforeDate(dateValue, selectedValue) {
+  if (!dateValue || !selectedValue) return false
+
+  const date = new Date(dateValue)
+  const selected = new Date(`${selectedValue}T23:59:59`)
+
+  if (Number.isNaN(date.getTime()) || Number.isNaN(selected.getTime())) {
+    return false
+  }
+
+  return date <= selected
 }
 
 function downloadCsv(filename, rows) {
   const csv = rows
-    .map((r) => r.map((v) => `"${String(v ?? '').replaceAll('"', '""')}"`).join(','))
+    .map((row) => row.map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
     .join('\n')
+
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
   URL.revokeObjectURL(url)
+}
+
+function buildFallbackReportData(items, purchases, sales, closingDate) {
+  const snapshot = getClosingStockSnapshotByDate(closingDate)
+  if (snapshot?.items?.length) {
+    return snapshot.items.map((item) => ({
+      id: item.id,
+      opening_stock: Number(item.opening_stock ?? 0),
+      total_purchases: Number(item.total_purchases ?? 0),
+      total_sales: Number(item.total_sales ?? 0),
+      adjustment: Number(item.adjustment ?? 0),
+      current_stock: Number(item.calc_closing ?? item.current_stock ?? 0),
+      is_snapshot: true,
+    }))
+  }
+
+  const returns = getSalesReturns().filter((entry) =>
+    isOnOrBeforeDate(entry.date || entry.createdAt, closingDate),
+  )
+
+  const purchaseQtyByItem = purchases.reduce((acc, purchase) => {
+    if (!isOnOrBeforeDate(purchase.grn_date || purchase.created_at, closingDate)) return acc
+    if (purchase.status && purchase.status !== 'received') return acc
+
+    purchase.items?.forEach((item) => {
+      const itemId = item.item_id || item.id
+      if (!itemId) return
+      acc[itemId] = (acc[itemId] || 0) + Number(item.qty || item.quantity || 0)
+    })
+
+    return acc
+  }, {})
+
+  const salesQtyByItem = sales.reduce((acc, invoice) => {
+    if (!isOnOrBeforeDate(invoice.created_at, closingDate)) return acc
+
+    invoice.items?.forEach((item) => {
+      const itemId = item.item_id || item.id
+      if (!itemId) return
+      acc[itemId] = (acc[itemId] || 0) + Number(item.qty || item.quantity || 0)
+    })
+
+    return acc
+  }, {})
+
+  const returnQtyByItem = returns.reduce((acc, record) => {
+    record.items?.forEach((item) => {
+      const itemId = item.item_id || item.id
+      if (!itemId) return
+      acc[itemId] = (acc[itemId] || 0) + Number(item.qty || item.quantity || 0)
+    })
+
+    return acc
+  }, {})
+
+  return items.map((item) => {
+    const itemId = item.id
+    const totalPurchases = Number(purchaseQtyByItem[itemId] || 0)
+    const totalSales = Math.max(
+      Number(salesQtyByItem[itemId] || 0) - Number(returnQtyByItem[itemId] || 0),
+      0,
+    )
+    const currentStock = Number(item.stock || 0)
+    const openingStock = currentStock - totalPurchases + totalSales
+
+    return {
+      id: itemId,
+      opening_stock: openingStock,
+      total_purchases: totalPurchases,
+      total_sales: totalSales,
+      adjustment: 0,
+      current_stock: currentStock,
+      is_snapshot: false,
+    }
+  })
 }
 
 export default function ClosingStock() {
@@ -80,66 +179,51 @@ export default function ClosingStock() {
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  // Editable adjustments per item
   const [adjustmentById, setAdjustmentById] = useState({})
-
-  // Filters
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [supplierFilter, setSupplierFilter] = useState('')
   const [dateFilter, setDateFilter] = useState(() => toLocalYMD(new Date()))
   const today = useMemo(() => toLocalYMD(new Date()), [])
 
-  useEffect(() => {
-    fetchData()
-  }, [dateFilter])
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true)
+
     try {
-      const [itmRes, catRes, supRes, reportRes] = await Promise.all([
+      const [itemsRes, categoriesRes, suppliersRes, purchasesRes, salesRes, reportRes] = await Promise.all([
         axiosInstance.get('/item-details').catch(() => null),
         axiosInstance.get('/categories').catch(() => null),
         axiosInstance.get('/suppliers').catch(() => null),
+        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
+        axiosInstance.get('/sale-invoices').catch(() => ({ data: [] })),
         axiosInstance.get(`/reports/stock?date=${dateFilter}`).catch(() => null),
       ])
 
-      let nextItems = []
-      let nextCategories = []
-      let nextSuppliers = []
-      let reportData = []
+      const nextItems = parseListData(itemsRes)
+      const nextCategories = parseListData(categoriesRes)
+      const nextSuppliers = parseListData(suppliersRes)
+      const purchases = parseListData(purchasesRes)
+      const sales = parseListData(salesRes)
 
-      if (itmRes?.data) {
-        const d = itmRes.data
-        nextItems = Array.isArray(d) ? d : d.data || []
-      }
-      if (catRes?.data) {
-        const d = catRes.data
-        nextCategories = Array.isArray(d) ? d : d.data || []
-      }
-      if (supRes?.data) {
-        const d = supRes.data
-        nextSuppliers = Array.isArray(d) ? d : d.data || []
-      }
-      if (reportRes?.data) {
-        reportData = reportRes.data
-      }
+      const reportData = reportRes?.data
+        ? parseListData(reportRes)
+        : buildFallbackReportData(nextItems, purchases, sales, dateFilter)
 
-      // Merge report data into items
       const nextAdjustments = {}
-      const merged = nextItems.map(item => {
-        const report = reportData.find(r => r.id === item.id)
+      const merged = nextItems.map((item) => {
+        const report = reportData.find((entry) => String(entry.id) === String(item.id))
+
         if (report?.adjustment) {
-          nextAdjustments[item.id] = report.adjustment
+          nextAdjustments[item.id] = Number(report.adjustment || 0)
         }
+
         return {
           ...item,
-          opening_stock_val: report?.opening_stock ?? item.stock ?? 0,
-          purchases_in: report?.total_purchases ?? 0,
-          sales_out: report?.total_sales ?? 0,
-          current_stock: report?.current_stock ?? item.stock ?? 0,
-          is_snapshot: report?.is_snapshot ?? false
+          opening_stock_val: Number(report?.opening_stock ?? item.stock ?? 0),
+          purchases_in: Number(report?.total_purchases ?? 0),
+          sales_out: Number(report?.total_sales ?? 0),
+          current_stock: Number(report?.current_stock ?? item.stock ?? 0),
+          is_snapshot: Boolean(report?.is_snapshot),
         }
       })
 
@@ -147,50 +231,18 @@ export default function ClosingStock() {
       setAdjustmentById(nextAdjustments)
       setCategories(nextCategories)
       setSuppliers(nextSuppliers)
-
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
       toast.error('Unable to load stock data.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [dateFilter])
 
-  async function handleSaveSnapshot() {
-    if (!window.confirm(`Save stock snapshot for ${dateFilter}? This will freeze the daily balances.`)) return
-    
-    setSaving(true)
-    try {
-      const payload = {
-        closing_date: dateFilter,
-        items: enrichedItems.map(i => ({
-          id: i.id,
-          opening_stock: i.opening_stock_val,
-          total_purchases: i.purchases_in,
-          total_sales: i.sales_out,
-          adjustment: i.adjustment,
-          calc_closing: i.closing_stock,
-          purchase_price: i.purchase_price,
-          sale_price: i.sale_price
-        }))
-      }
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
-      await axiosInstance.post('/reports/snapshot', payload)
-      toast.success('Snapshot saved successfully!')
-      fetchData()
-    } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to save snapshot.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const getCategoryName = (id) => {
-    const c = categories.find((cat) => String(cat.id) === String(id))
-    return c ? c.category_name : 'Uncategorized'
-  }
-
-  // Build enriched rows with calculated closing stock
   const enrichedItems = useMemo(() => {
     return items.map((item) => {
       const adjustment = Number(adjustmentById[item.id] ?? item.adjustment ?? 0) || 0
@@ -204,54 +256,92 @@ export default function ClosingStock() {
     })
   }, [items, adjustmentById])
 
+  async function handleSaveSnapshot() {
+    if (!window.confirm(`Save stock snapshot for ${dateFilter}? This will freeze the daily balances.`)) return
 
-  // Apply filters
-  const filteredItems = useMemo(() => {
-    return enrichedItems.filter((item) => {
-      const s = search.toLowerCase()
-      const matchesSearch =
-        !s ||
-        item.item_name?.toLowerCase().includes(s) ||
-        item.barcode?.toLowerCase().includes(s) ||
-        item.supplier?.toLowerCase().includes(s) ||
-        item.supplier_name?.toLowerCase().includes(s)
+    setSaving(true)
 
-      const matchesCat = !categoryFilter || String(item.category_id) === String(categoryFilter)
-      const supplierTokens = [item.supplier, item.supplier_name, item.supplier_id]
-        .filter(Boolean)
-        .map(String)
-      const matchesSup = !supplierFilter || supplierTokens.includes(String(supplierFilter))
-      // Backend now handles the date balancing, we show all items.
-      // const matchesDate = !dateFilter || (item.created_at || '').includes(dateFilter)
+    try {
+      const payload = {
+        closing_date: dateFilter,
+        items: enrichedItems.map((item) => ({
+          id: item.id,
+          opening_stock: item.opening_stock_val,
+          total_purchases: item.purchases_in,
+          total_sales: item.sales_out,
+          adjustment: item.adjustment,
+          calc_closing: item.closing_stock,
+          current_stock: item.closing_stock,
+          purchase_price: item.purchase_price,
+          sale_price: item.sale_price,
+        })),
+      }
 
-      return matchesSearch && matchesCat && matchesSup
-    })
-  }, [enrichedItems, search, categoryFilter, supplierFilter, dateFilter])
+      try {
+        await axiosInstance.post('/reports/snapshot', payload)
+      } catch {
+        saveClosingStockSnapshot(payload)
+      }
 
-  // Metrics
-  const totalItems = enrichedItems.length
-  const totalClosingStock = enrichedItems.reduce((sum, i) => sum + i.closing_stock, 0)
-  const costValue = enrichedItems.reduce(
-    (sum, i) => sum + i.closing_stock * (Number(i.purchase_price) || 0),
-    0,
-  )
-  const retailValue = enrichedItems.reduce(
-    (sum, i) => sum + i.closing_stock * (Number(i.sale_price) || 0),
-    0,
-  )
+      toast.success('Snapshot saved successfully!')
+      fetchData()
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to save snapshot.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function handleAdjustmentChange(itemId, value) {
     setAdjustmentById((prev) => ({ ...prev, [itemId]: value === '' ? '' : value }))
   }
 
+  function getCategoryName(categoryId) {
+    const category = categories.find((row) => String(row.id) === String(categoryId))
+    return category ? category.category_name : 'Uncategorized'
+  }
+
+  const filteredItems = useMemo(() => {
+    return enrichedItems.filter((item) => {
+      const query = search.toLowerCase()
+      const matchesSearch =
+        !query ||
+        item.item_name?.toLowerCase().includes(query) ||
+        item.barcode?.toLowerCase().includes(query) ||
+        item.supplier?.toLowerCase().includes(query) ||
+        item.supplier_name?.toLowerCase().includes(query)
+
+      const itemCategoryId = item.item_category_id || item.category_id
+      const matchesCategory = !categoryFilter || String(itemCategoryId) === String(categoryFilter)
+
+      const supplierTokens = [item.supplier, item.supplier_name, item.supplier_id]
+        .filter(Boolean)
+        .map(String)
+      const matchesSupplier = !supplierFilter || supplierTokens.includes(String(supplierFilter))
+
+      return matchesSearch && matchesCategory && matchesSupplier
+    })
+  }, [enrichedItems, search, categoryFilter, supplierFilter])
+
+  const totalItems = enrichedItems.length
+  const totalClosingStock = enrichedItems.reduce((sum, item) => sum + item.closing_stock, 0)
+  const costValue = enrichedItems.reduce(
+    (sum, item) => sum + item.closing_stock * (Number(item.purchase_price) || 0),
+    0,
+  )
+  const retailValue = enrichedItems.reduce(
+    (sum, item) => sum + item.closing_stock * (Number(item.sale_price) || 0),
+    0,
+  )
+
   function exportCsv() {
     const rows = [
       ['#', 'Item Name', 'Category', 'Unit', 'Opening Stock', 'Purchases', 'Sales', 'Adjustment', 'Closing Stock', 'Purchase Price', 'Sale Price'],
-      ...filteredItems.map((item, idx) => [
-        idx + 1,
+      ...filteredItems.map((item, index) => [
+        index + 1,
         item.item_name,
-        getCategoryName(item.category_id),
-        item.item_unit || '-',
+        getCategoryName(item.item_category_id || item.category_id),
+        item.unit_name || item.item_unit || '-',
         item.opening_stock_val,
         item.purchases_in,
         item.sales_out,
@@ -261,6 +351,7 @@ export default function ClosingStock() {
         Number(item.sale_price || 0).toFixed(2),
       ]),
     ]
+
     downloadCsv(`closing-stock-${dateFilter || today}.csv`, rows)
   }
 
@@ -270,41 +361,44 @@ export default function ClosingStock() {
       description="End-of-period stock snapshot with calculated balances."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6 w-full mx-auto px-4 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mx-auto w-full space-y-6 px-4 lg:px-8">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-bold text-teal-600">Closing Stock</h1>
             <p className="text-sm text-slate-500">
-              End-of-period stock balances — Opening + Purchases − Sales ± Adjustments
+              End-of-period stock balances: Opening + Purchases - Sales +/- Adjustments
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={exportCsv}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <DownloadIcon className="h-4 w-4" />
               Export CSV
             </button>
+
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <PrinterIcon className="h-4 w-4" />
               Print
             </button>
+
             <button
               onClick={handleSaveSnapshot}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[12px] font-bold text-teal-700 shadow-sm hover:bg-teal-100 transition disabled:opacity-50"
+              disabled={loading || saving}
+              className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition hover:bg-teal-100 disabled:opacity-50"
             >
               <SaveIcon className="h-4 w-4" />
-              Save Snapshot
+              {saving ? 'Saving...' : 'Save Snapshot'}
             </button>
+
             <button
               onClick={fetchData}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -312,18 +406,9 @@ export default function ClosingStock() {
           </div>
         </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Total Items"
-            value={totalItems.toLocaleString()}
-            valueColor="text-teal-500"
-          />
-          <MetricCard
-            title="Closing Stock (Units)"
-            value={totalClosingStock.toLocaleString()}
-            valueColor="text-teal-500"
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard title="Total Items" value={totalItems.toLocaleString()} valueColor="text-teal-500" />
+          <MetricCard title="Closing Stock (Units)" value={totalClosingStock.toLocaleString()} valueColor="text-teal-500" />
           <MetricCard
             title="Stock Value (Cost)"
             value={`Rs ${costValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -336,26 +421,23 @@ export default function ClosingStock() {
           />
         </div>
 
-        {/* Filter Section */}
-        <Card className="p-4 border-l-[6px] border-l-teal-500">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="h-4 w-1 bg-teal-500 rounded-full block"></span>
-            <h2 className="text-[13px] font-bold text-slate-800 tracking-wide uppercase">
-              Filter Stock
-            </h2>
+        <Card className="border-l-[6px] border-l-teal-500 p-4">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="block h-4 w-1 rounded-full bg-teal-500" />
+            <h2 className="text-[12px] font-bold uppercase tracking-wide text-slate-800">Filter Stock</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Search
               </label>
               <div className="relative">
-                <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Name, category, supplier, barcode..."
                   className="h-8 w-full rounded-md border border-slate-300 bg-white pl-8 pr-3 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                 />
@@ -363,66 +445,67 @@ export default function ClosingStock() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Category ({categories.length})
               </label>
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(event) => setCategoryFilter(event.target.value)}
                 className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               >
                 <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.category_name}
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.category_name}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Supplier ({suppliers.length})
               </label>
               <select
                 value={supplierFilter}
-                onChange={(e) => setSupplierFilter(e.target.value)}
+                onChange={(event) => setSupplierFilter(event.target.value)}
                 className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               >
                 <option value="">All Suppliers</option>
                 {suppliers.length > 0
-                  ? suppliers.map((s) => (
-                      <option key={s.id} value={s.supplier_name || s.id}>
-                        {s.supplier_name || s.id}
+                  ? suppliers.map((supplier) => (
+                      <option key={supplier.id} value={supplier.supplier_name || supplier.id}>
+                        {supplier.supplier_name || supplier.id}
                       </option>
                     ))
-                  : [...new Set(items.map((i) => i.supplier).filter(Boolean))].map((s, idx) => (
-                      <option key={idx} value={s}>
-                        {s}
+                  : [...new Set(items.map((item) => item.supplier).filter(Boolean))].map((supplier, index) => (
+                      <option key={index} value={supplier}>
+                        {supplier}
                       </option>
                     ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Closing Date
               </label>
               <input
                 type="date"
                 max={today}
                 value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
+                onChange={(event) => setDateFilter(event.target.value)}
                 className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               />
             </div>
           </div>
 
-          <div className="flex justify-between items-center mt-5 pt-4 border-t border-slate-100">
+          <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
             <p className="text-[12px] text-slate-500">
               Showing <strong className="text-slate-800">{filteredItems.length}</strong> of{' '}
               <strong className="text-slate-800">{enrichedItems.length}</strong> items
             </p>
+
             <button
               onClick={() => {
                 setSearch('')
@@ -430,56 +513,55 @@ export default function ClosingStock() {
                 setSupplierFilter('')
                 setDateFilter(today)
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-50"
             >
-              <RefreshIcon className="h-3.5 w-3.5" /> Reset
+              <RefreshIcon className="h-3.5 w-3.5" />
+              Reset
             </button>
           </div>
         </Card>
 
-        {/* Data Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-[#f8fafc]">
-                    <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      <th className="px-2 py-3 w-8 text-center border-b border-slate-200">#</th>
-                      <th className="px-2 py-3 min-w-[140px] border-b border-slate-200">ITEM NAME</th>
-                      <th className="px-2 py-3 border-b border-slate-200">CATEGORY</th>
-                      <th className="px-2 py-3 border-b border-slate-200">UNIT</th>
-                      <th className="px-2 py-3 text-center border-b border-slate-200">
-                        <span className="inline-flex items-center gap-1">
-                          OPENING
-                          <span className="text-[9px] text-slate-400 font-normal normal-case">(SOH)</span>
-                        </span>
-                      </th>
-                      <th className="px-2 py-3 text-center border-b border-slate-200">
-                        <span className="inline-flex items-center gap-1 text-teal-600">
-                          PURCHASES
-                          <span className="text-[9px] font-normal normal-case">(+)</span>
-                        </span>
-                      </th>
-                      <th className="px-2 py-3 text-center border-b border-slate-200">
-                        <span className="inline-flex items-center gap-1 text-teal-600">
-                          SALES
-                          <span className="text-[9px] font-normal normal-case">(−)</span>
-                        </span>
-                      </th>
-                      <th className="px-2 py-3 text-center border-b border-slate-200">
-                        <span className="inline-flex items-center gap-1 text-teal-600">
-                          ADJUST
-                          <span className="text-[9px] font-normal normal-case">(±)</span>
-                        </span>
-                      </th>
-                      <th className="px-2 py-3 text-center border-b border-slate-200">
-                        <span className="inline-flex items-center gap-1 text-teal-700 font-extrabold">
-                          CLOSING
-                        </span>
-                      </th>
-                      <th className="px-2 py-3 text-right border-b border-slate-200">COST</th>
-                      <th className="px-2 py-3 text-right border-b border-slate-200">RETAIL</th>
-                    </tr>
-                  </thead>
+              <thead className="bg-[#f8fafc]">
+                <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="w-8 border-b border-slate-200 px-2 py-3 text-center">#</th>
+                  <th className="min-w-[140px] border-b border-slate-200 px-2 py-3">ITEM NAME</th>
+                  <th className="border-b border-slate-200 px-2 py-3">CATEGORY</th>
+                  <th className="border-b border-slate-200 px-2 py-3">UNIT</th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-center">
+                    <span className="inline-flex items-center gap-1">
+                      OPENING
+                      <span className="text-[9px] font-normal normal-case text-slate-400">(SOH)</span>
+                    </span>
+                  </th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-center">
+                    <span className="inline-flex items-center gap-1 text-teal-600">
+                      PURCHASES
+                      <span className="text-[9px] font-normal normal-case">(+)</span>
+                    </span>
+                  </th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-center">
+                    <span className="inline-flex items-center gap-1 text-teal-600">
+                      SALES
+                      <span className="text-[9px] font-normal normal-case">(-)</span>
+                    </span>
+                  </th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-center">
+                    <span className="inline-flex items-center gap-1 text-teal-600">
+                      ADJUST
+                      <span className="text-[9px] font-normal normal-case">(+/-)</span>
+                    </span>
+                  </th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-center">
+                    <span className="inline-flex items-center gap-1 font-extrabold text-teal-700">CLOSING</span>
+                  </th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-right">COST</th>
+                  <th className="border-b border-slate-200 px-2 py-3 text-right">RETAIL</th>
+                </tr>
+              </thead>
+
               <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
@@ -494,90 +576,79 @@ export default function ClosingStock() {
                     </td>
                   </tr>
                 ) : (
-                  filteredItems.map((item, idx) => {
-                    const closingPositive = item.closing_stock > 0
+                  filteredItems.map((item, index) => {
                     const closingZero = item.closing_stock === 0
                     const closingNegative = item.closing_stock < 0
 
                     return (
                       <tr
-                        key={item.id || idx}
+                        key={item.id || index}
                         className={`text-[11px] transition hover:bg-slate-50/50 ${closingNegative ? 'bg-teal-50/30' : ''}`}
                       >
-                        <td className="px-2 py-2 text-center text-slate-400 border-b border-slate-50">{idx + 1}</td>
-                        <td className="px-2 py-2 border-b border-slate-50">
-                          <div className="font-bold text-slate-800 leading-tight truncate max-w-[120px]" title={item.item_name}>
+                        <td className="border-b border-slate-50 px-2 py-2 text-center text-slate-400">{index + 1}</td>
+                        <td className="border-b border-slate-50 px-2 py-2">
+                          <div className="max-w-[120px] truncate font-bold leading-tight text-slate-800" title={item.item_name}>
                             {item.item_name}
                           </div>
-                          <div className="text-[9px] text-slate-400 font-mono mt-0.5 max-w-[100px] truncate">
+                          <div className="mt-0.5 max-w-[100px] truncate font-mono text-[9px] text-slate-400">
                             {item.barcode || item.id}
                           </div>
                         </td>
-                        <td className="px-2 py-2 border-b border-slate-50">
-                          <span className="inline-flex items-center rounded-full bg-teal-50 border border-teal-100 px-1.5 py-0.5 text-[9px] font-semibold text-teal-700 truncate max-w-[80px]">
-                            {getCategoryName(item.item_category_id)}
+                        <td className="border-b border-slate-50 px-2 py-2">
+                          <span className="inline-flex max-w-[80px] items-center truncate rounded-full border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[9px] font-semibold text-teal-700">
+                            {getCategoryName(item.item_category_id || item.category_id)}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-slate-600 border-b border-slate-50">{item.unit_name || '-'}</td>
-
-                        {/* Opening Stock — read-only */}
-                        <td className="px-2 py-2 text-center border-b border-slate-50">
-                          <span className="inline-flex items-center justify-center rounded bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 min-w-[36px]">
+                        <td className="border-b border-slate-50 px-2 py-2 text-slate-600">{item.unit_name || item.item_unit || '-'}</td>
+                        <td className="border-b border-slate-50 px-2 py-2 text-center">
+                          <span className="inline-flex min-w-[36px] items-center justify-center rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-700">
                             {item.opening_stock_val}
                           </span>
                         </td>
-
-                        {/* Purchases — read-only */}
-                        <td className="px-2 py-2 text-center border-b border-slate-50">
-                          <span className="inline-flex items-center justify-center rounded bg-teal-50 border border-teal-200 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 min-w-[36px]">
-                            +{item.purchase_price}
+                        <td className="border-b border-slate-50 px-2 py-2 text-center">
+                          <span className="inline-flex min-w-[36px] items-center justify-center rounded border border-teal-200 bg-teal-50 px-1.5 py-0.5 text-[11px] font-bold text-teal-700">
+                            +{item.purchases_in}
                           </span>
                         </td>
-
-                        {/* Sales — read-only */}
-                        <td className="px-2 py-2 text-center border-b border-slate-50">
-                          <span className="inline-flex items-center justify-center rounded bg-teal-50 border border-teal-100 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 min-w-[36px]">
-                            −{item.sale_price}
+                        <td className="border-b border-slate-50 px-2 py-2 text-center">
+                          <span className="inline-flex min-w-[36px] items-center justify-center rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[11px] font-bold text-teal-700">
+                            -{item.sales_out}
                           </span>
                         </td>
-
-                        {/* Adjustment — editable */}
-                        <td className="px-2 py-2 text-center border-b border-slate-50">
+                        <td className="border-b border-slate-50 px-2 py-2 text-center">
                           <div className="relative inline-block">
                             <input
                               type="number"
                               value={adjustmentById[item.id] ?? item.adjustment ?? 0}
-                              onChange={(e) =>
-                                handleAdjustmentChange(item.id, e.target.value)
-                              }
-                              className="h-6 w-12 rounded bg-teal-50 border border-teal-200 text-teal-800 font-bold text-center outline-none transition focus:border-teal-400 focus:bg-teal-100 focus:ring-2 focus:ring-teal-200/50 hover:bg-teal-100 cursor-text text-[11px]"
+                              onChange={(event) => handleAdjustmentChange(item.id, event.target.value)}
+                              className="h-6 w-12 cursor-text rounded border border-teal-200 bg-teal-50 text-center text-[11px] font-bold text-teal-800 outline-none transition hover:bg-teal-100 focus:border-teal-400 focus:bg-teal-100 focus:ring-2 focus:ring-teal-200/50"
                             />
                           </div>
                         </td>
-
-                        {/* Closing Stock — calculated, bold highlight */}
-                        <td className="px-2 py-2 text-center border-b border-slate-50">
+                        <td className="border-b border-slate-50 px-2 py-2 text-center">
                           <span
-                            className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-extrabold min-w-[40px] border ${
+                            className={`inline-flex min-w-[40px] items-center justify-center rounded border px-2 py-0.5 text-[11px] font-extrabold ${
                               closingNegative
-                                ? 'bg-teal-50 border-teal-200 text-teal-600'
+                                ? 'border-teal-200 bg-teal-50 text-teal-600'
                                 : closingZero
-                                  ? 'bg-slate-100 border-slate-300 text-slate-600'
-                                  : 'bg-teal-100 border-teal-300 text-teal-800'
+                                  ? 'border-slate-300 bg-slate-100 text-slate-600'
+                                  : 'border-teal-300 bg-teal-100 text-teal-800'
                             }`}
                           >
                             {item.closing_stock}
                           </span>
                         </td>
-
-                        {/* Cost Value */}
-                        <td className="px-2 py-2 text-right font-semibold text-teal-600 border-b border-slate-50 whitespace-nowrap">
-                          { (item.closing_stock * (Number(item.purchase_price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        <td className="border-b border-slate-50 px-2 py-2 text-right font-semibold whitespace-nowrap text-teal-600">
+                          {(item.closing_stock * (Number(item.purchase_price) || 0)).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
-
-                        {/* Retail Value */}
-                        <td className="px-2 py-2 text-right font-semibold text-teal-600 border-b border-slate-50 whitespace-nowrap">
-                          { (item.closing_stock * (Number(item.sale_price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        <td className="border-b border-slate-50 px-2 py-2 text-right font-semibold whitespace-nowrap text-teal-600">
+                          {(item.closing_stock * (Number(item.sale_price) || 0)).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                       </tr>
                     )
@@ -585,34 +656,33 @@ export default function ClosingStock() {
                 )}
               </tbody>
 
-              {/* Table Footer — Totals row */}
               {filteredItems.length > 0 && (
-                <tfoot className="bg-slate-50 border-t-2 border-teal-200">
+                <tfoot className="border-t-2 border-teal-200 bg-slate-50">
                   <tr className="text-[11px] font-bold text-slate-700">
                     <td className="px-2 py-3" colSpan="4" />
                     <td className="px-2 py-3 text-center">
-                      {filteredItems.reduce((s, i) => s + i.opening_stock_val, 0)}
+                      {filteredItems.reduce((sum, item) => sum + item.opening_stock_val, 0)}
                     </td>
                     <td className="px-2 py-3 text-center text-teal-700">
-                      +{filteredItems.reduce((s, i) => s + i.purchases_in, 0)}
+                      +{filteredItems.reduce((sum, item) => sum + item.purchases_in, 0)}
                     </td>
                     <td className="px-2 py-3 text-center text-teal-700">
-                      −{filteredItems.reduce((s, i) => s + i.sales_out, 0)}
+                      -{filteredItems.reduce((sum, item) => sum + item.sales_out, 0)}
                     </td>
                     <td className="px-2 py-3 text-center text-teal-700">
-                      {filteredItems.reduce((s, i) => s + i.adjustment, 0)}
+                      {filteredItems.reduce((sum, item) => sum + item.adjustment, 0)}
                     </td>
-                    <td className="px-2 py-3 text-center text-teal-800 text-[12px] font-extrabold">
-                      {filteredItems.reduce((s, i) => s + i.closing_stock, 0)}
+                    <td className="px-2 py-3 text-center text-[12px] font-extrabold text-teal-800">
+                      {filteredItems.reduce((sum, item) => sum + item.closing_stock, 0)}
                     </td>
-                    <td className="px-2 py-3 text-right text-teal-700 whitespace-nowrap">
+                    <td className="px-2 py-3 text-right whitespace-nowrap text-teal-700">
                       {filteredItems
-                        .reduce((s, i) => s + i.closing_stock * (Number(i.purchase_price) || 0), 0)
+                        .reduce((sum, item) => sum + item.closing_stock * (Number(item.purchase_price) || 0), 0)
                         .toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </td>
-                    <td className="px-2 py-3 text-right text-teal-700 whitespace-nowrap">
+                    <td className="px-2 py-3 text-right whitespace-nowrap text-teal-700">
                       {filteredItems
-                        .reduce((s, i) => s + i.closing_stock * (Number(i.sale_price) || 0), 0)
+                        .reduce((sum, item) => sum + item.closing_stock * (Number(item.sale_price) || 0), 0)
                         .toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </td>
                   </tr>

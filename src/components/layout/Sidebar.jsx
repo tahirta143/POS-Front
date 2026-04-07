@@ -29,6 +29,7 @@ const NAV_ITEMS = [
       { to: '/stock/reorder', label: 'Reorder Stock', icon: MdRefresh },
       { to: '/stock/grn',     label: 'Goods Receipt', icon: MdReceipt },
       { to: '/stock/sales-return', label: 'Sales Return', icon: MdRemoveCircle },
+      { to: '/stock/purchase-return', label: 'Purchase Return', icon: MdRemoveCircle },
     ],
   },
   {
@@ -352,7 +353,12 @@ const Sidebar = () => {
 
   // Close on route change (mobile)
   const location = useLocation()
-  useEffect(() => { setMobileOpen(false) }, [location.pathname])
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMobileOpen(false)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [location.pathname])
 
   // Close on ESC
   useEffect(() => {

@@ -22,6 +22,96 @@ code {
     monospace;
 }
 
+.app-shell .page-shell {
+  color: #0f172a;
+}
+
+.app-shell .page-shell h1 {
+  font-size: 1.625rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+}
+
+.app-shell .page-shell h2 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.app-shell .page-shell h3 {
+  color: #0f172a;
+}
+
+.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.app-shell .app-card select,
+.app-shell .app-card textarea {
+  border-radius: 0.75rem;
+  border-color: #cbd5e1;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #0f172a;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.app-shell .app-card select {
+  height: 2rem;
+  border-radius: 0.375rem;
+}
+
+.app-shell .app-card textarea {
+  border-radius: 0.375rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+.app-shell .app-card select:focus,
+.app-shell .app-card textarea:focus {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+  outline: none;
+}
+
+.app-shell .app-card button:not(:disabled) {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.app-shell .app-card table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.app-shell .app-card table thead {
+  background: rgba(240, 253, 250, 0.9);
+}
+
+.app-shell .app-card table thead th {
+  border-bottom: 1px solid #ccfbf1;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.app-shell .app-card table tbody td {
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.app-shell .app-card table tbody tr:hover {
+  background: rgba(240, 253, 250, 0.45);
+}
+
+.app-shell .app-card table tfoot {
+  background: rgba(240, 253, 250, 0.65);
+}
+
 /* Custom Scrollbar for better UI */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

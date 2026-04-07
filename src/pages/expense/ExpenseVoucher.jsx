@@ -29,7 +29,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-8 text-[13px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50 disabled:opacity-75"
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50 disabled:opacity-75"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((option) => (
@@ -200,7 +200,7 @@ export default function ExpenseVoucherPage() {
                     type="date"
                     value={form.date}
                     onChange={(e) => updateField('date', e.target.value)}
-                    className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
 
@@ -224,7 +224,7 @@ export default function ExpenseVoucherPage() {
                     value={form.details}
                     onChange={(e) => updateField('details', e.target.value)}
                     placeholder="Short description of the transaction"
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </Field>
 
@@ -237,7 +237,7 @@ export default function ExpenseVoucherPage() {
                       value={form.amount}
                       onChange={(e) => updateField('amount', e.target.value)}
                       placeholder="0.00"
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 pr-12 text-[13px] outline-none transition focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                      className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 pr-12 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     />
                     <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                       PKR

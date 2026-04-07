@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Card, PageShell, TableState } from '../../components/layout/PageShell.jsx';
+import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
 import axiosInstance from '../../services/axiosInstance';
+import { getPurchaseReturns, getSupplierPayments } from '../../utils/transactionStore.js';
 
 function MoneyIcon({ className }) {
   return (
@@ -22,21 +24,42 @@ export default function AmountPayablePage() {
   async function fetchPayables() {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/suppliers');
-      const data = response.data;
+      const [suppliersResponse, purchasesResponse] = await Promise.all([
+        axiosInstance.get('/suppliers'),
+        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
+      ]);
+      const data = suppliersResponse.data;
+      const purchasesData = purchasesResponse.data;
       const suppliers = Array.isArray(data) ? data : data.data || [];
+      const purchaseList = Array.isArray(purchasesData) ? purchasesData : purchasesData.data || [];
+      const supplierPayments = getSupplierPayments();
+      const purchaseReturns = getPurchaseReturns();
       
       const list = suppliers
         .map(s => ({
+          id: s.id,
           supplier_name: s.supplier_name,
           mobile_number: s.mobile_number,
-          amount: parseFloat(s.previous_balance || 0)
+          opening_balance: parseFloat(s.previous_balance || 0),
+          invoice_due: purchaseList
+            .filter((purchase) => String(purchase.supplier_id) === String(s.id))
+            .reduce((sum, purchase) => sum + Math.max(0, Number(purchase.payable || 0) - Number(purchase.paid_amount || 0)), 0),
+          paid_frontend: supplierPayments
+            .filter((payment) => String(payment.supplierId) === String(s.id))
+            .reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+          return_credit: purchaseReturns
+            .filter((record) => String(record.supplierId) === String(s.id))
+            .reduce((sum, record) => sum + Number(record.totalReturn || 0), 0),
+        }))
+        .map((supplier) => ({
+          ...supplier,
+          amount: Math.max(0, supplier.opening_balance + supplier.invoice_due - supplier.paid_frontend - supplier.return_credit),
         }))
         .filter(s => s.amount > 0);
 
       setPayables(list);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setPayables([]);
     } finally {
       setLoading(false);
     }
@@ -84,6 +107,10 @@ export default function AmountPayablePage() {
         </div>
 
         <Card className="p-4 border-l-[6px] border-l-teal-500">
+          <FallbackNotice message="Payable balances are currently derived in the frontend from supplier balances, purchases, and local payment history." />
+        </Card>
+
+        <Card className="p-4 border-l-[6px] border-l-teal-500">
            <input 
             type="text" 
             value={search} 
@@ -104,13 +131,14 @@ export default function AmountPayablePage() {
                 <tr className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
                   <th className="px-6 py-4">Supplier Name</th>
                   <th className="px-6 py-4">Contact</th>
+                  <th className="px-6 py-4 text-right">Invoices Due</th>
                   <th className="px-6 py-4 text-right">Outstanding Balance</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredPayables.length === 0 ? (
                   <tr>
-                    <td colSpan="3">
+                    <td colSpan="4">
                       <TableState message={loading ? 'Loading...' : 'No outstanding payables.'} />
                     </td>
                   </tr>
@@ -119,6 +147,7 @@ export default function AmountPayablePage() {
                     <tr key={idx} className="text-sm transition hover:bg-slate-50">
                       <td className="px-6 py-4 font-semibold text-slate-800">{p.supplier_name}</td>
                       <td className="px-6 py-4 text-slate-600 text-xs">{p.mobile_number || '-'}</td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-700">PKR {Number(p.invoice_due).toFixed(2)}</td>
                       <td className="px-6 py-4 text-right font-bold text-teal-600">PKR {Number(p.amount).toFixed(2)}</td>
                     </tr>
                   ))
