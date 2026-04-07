@@ -99,7 +99,7 @@ const STATUS_TABS = [
 // ----------------------------------------------------
 // Reorder Row Component
 // ----------------------------------------------------
-const ReorderRow = memo(function ReorderRow({ row, idx, onSave, isSaving }) {
+const ReorderRow = memo(function ReorderRow({ row, idx, onSave, onDelete, isSaving }) {
   const [qty, setQty] = useState(row.order_qty)
   const [status, setStatus] = useState(row.status)
   const [note, setNote] = useState(row.note)
@@ -119,7 +119,14 @@ const ReorderRow = memo(function ReorderRow({ row, idx, onSave, isSaving }) {
     <tr className="text-[12px] transition hover:bg-slate-50/50">
       <td className="px-2 py-2 text-center text-slate-400">{idx + 1}</td>
       <td className="px-2 py-2">
-        <div className="font-semibold text-slate-800 truncate">{row.item_name}</div>
+        <div className="flex flex-col">
+          <div className="font-semibold text-slate-800 truncate">{row.item_name}</div>
+          {row.is_suggestion && (
+            <span className="mt-0.5 inline-block w-fit rounded bg-amber-50 px-1 py-0.5 text-[9px] font-bold text-amber-600 border border-amber-100">
+              Suggested
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-2 py-2 text-slate-600">
         <span className="inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[11px] font-semibold text-teal-700 truncate">
@@ -190,13 +197,26 @@ const ReorderRow = memo(function ReorderRow({ row, idx, onSave, isSaving }) {
               setNote(row.note)
             }}
             disabled={isSaving || !isEdited}
-            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition ${isEdited && !isSaving ? 'text-rose-500 hover:bg-rose-50' : 'text-slate-300'}`}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition ${isEdited && !isSaving ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-300'}`}
             title="Clear row edits"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+          {row.original_id && (
+            <button
+              type="button"
+              onClick={() => onDelete(row)}
+              disabled={isSaving}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
+              title="Delete reorder"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -205,7 +225,9 @@ const ReorderRow = memo(function ReorderRow({ row, idx, onSave, isSaving }) {
 
 export default function ReOrderStock() {
   const [reorders, setReorders] = useState([])
+  const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingStats, setLoadingStats] = useState(false)
   const [savingId, setSavingId] = useState(null)
 
   const [query, setQuery] = useState('')
@@ -213,18 +235,16 @@ export default function ReOrderStock() {
 
   useEffect(() => {
     fetchData()
+    fetchStats()
   }, [])
 
   async function fetchData() {
     setLoading(true)
     try {
-      const res = await axiosInstance.get('/reorders').catch(() => null)
-      if (res?.data) {
-        setReorders(toArray(res.data))
-      } else {
-        setReorders([])
-      }
-    } catch {
+      const res = await axiosInstance.get('/reorders')
+      setReorders(toArray(res.data))
+    } catch (err) {
+      console.error('Fetch error:', err)
       toast.error('Unable to load reorder data.')
       setReorders([])
     } finally {
@@ -232,12 +252,29 @@ export default function ReOrderStock() {
     }
   }
 
-  async function handleRowSave(row, newQty, newStatusRaw, newNotes) {
-    const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : undefined;
-    const nQty = Number(newQty) || 0;
-    const nStatus = capitalize(newStatusRaw || 'Pending');
+  async function fetchStats() {
+    setLoadingStats(true)
+    try {
+      const res = await axiosInstance.get('/reorders/stats')
+      setStats(res.data)
+    } catch (err) {
+      console.error('Stats error:', err)
+    } finally {
+      setLoadingStats(false)
+    }
+  }
 
-    if (!window.confirm(`Are you sure you want to save ${row.item_name} as ${nStatus}?`)) {
+  async function handleRowSave(row, newQty, newStatusRaw, newNotes) {
+    const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : 'Pending';
+    const nQty = Number(newQty) || 0;
+    const nStatus = capitalize(newStatusRaw);
+
+    if (nQty <= 0) {
+      toast.warning('Please enter a valid reorder quantity.')
+      return
+    }
+
+    if (!window.confirm(`Save changes for ${row.item_name} as ${nStatus}?`)) {
       return
     }
 
@@ -250,17 +287,35 @@ export default function ReOrderStock() {
           notes: newNotes
         })
       } else {
-        await axiosInstance.post('/reorders', [{
+        await axiosInstance.post('/reorders', {
           item_id: row.item_id,
           reorder_qty: nQty,
           status: nStatus,
           notes: newNotes || ''
-        }])
+        })
       }
-      toast.success('Reorder saved successfully.')
+      toast.success(`${row.item_name} reorder updated.`)
       fetchData()
+      fetchStats()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save changes.')
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  async function handleDelete(row) {
+    if (!row.original_id) return
+    if (!window.confirm(`Delete reorder for ${row.item_name}?`)) return
+
+    setSavingId(row.key)
+    try {
+      await axiosInstance.delete(`/reorders/${row.original_id}`)
+      toast.success('Reorder deleted.')
+      fetchData()
+      fetchStats()
+    } catch (err) {
+      toast.error('Failed to delete reorder.')
     } finally {
       setSavingId(null)
     }
@@ -281,13 +336,14 @@ export default function ReOrderStock() {
         category_id: r.category_id,
         category_name: r.category ?? '-',
         stock,
-        unit: r.unit ?? '-',
+        unit: r.unit ?? 'pcs',
         reorder_level: reorderLevel,
         purchase_price: Number(r.purchase_price ?? 0) || 0,
         sale_price: Number(r.sale_price ?? 0) || 0,
         order_qty: Number(r.reorder_qty ?? 0) || 0,
         status: normalizedStatus,
         note: r.notes ?? '',
+        is_suggestion: !!r.is_suggestion
       }
     })
   }, [reorders])
@@ -372,11 +428,11 @@ export default function ReOrderStock() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <MetricCard title="Total" value={counts.all} tone="teal" />
-          <MetricCard title="Pending" value={counts.pending} tone="pending" />
-          <MetricCard title="Ordered" value={counts.ordered} tone="teal" />
-          <MetricCard title="Received" value={counts.received} tone="received" />
-          <MetricCard title="Total Value" value={`Rs. ${totalValue.toLocaleString()}`} tone="value" />
+          <MetricCard title="Active Items" value={loadingStats ? '...' : (stats?.unique_items ?? 0)} tone="teal" />
+          <MetricCard title="Pending" value={loadingStats ? '...' : (stats?.pending ?? 0)} tone="pending" />
+          <MetricCard title="Ordered" value={loadingStats ? '...' : (stats?.ordered ?? 0)} tone="teal" />
+          <MetricCard title="Received" value={loadingStats ? '...' : (stats?.received ?? 0)} tone="received" />
+          <MetricCard title="Total Value" value={loadingStats ? '...' : `PKR ${(stats?.total_value ?? 0).toLocaleString()}`} tone="value" />
         </div>
 
         <Card className="border-l-[6px] border-l-teal-500 p-4">
@@ -401,15 +457,22 @@ export default function ReOrderStock() {
             <div className="flex flex-wrap items-center gap-2">
               {STATUS_TABS.map((t) => {
                 const active = statusTab === t.id
-                const label = t.id === 'all' ? `${t.label}` : `${t.label}  ${counts[t.id]}`
+                let count = 0
+                if (t.id === 'all') count = counts.all
+                else if (t.id === 'pending') count = stats?.pending ?? 0
+                else if (t.id === 'ordered') count = stats?.ordered ?? 0
+                else if (t.id === 'received') count = stats?.received ?? 0
+
+                const label = t.id === 'all' ? t.label : `${t.label} ${count}`
+
                 return (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setStatusTab(t.id)}
                     className={`h-8 rounded-md px-3 text-[12px] font-semibold transition ${active
-                        ? 'bg-teal-600 text-white shadow-sm shadow-teal-200'
-                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      ? 'bg-teal-600 text-white shadow-sm shadow-teal-200'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                       }`}
                   >
                     {label}
@@ -454,6 +517,7 @@ export default function ReOrderStock() {
                       row={r}
                       idx={idx}
                       onSave={handleRowSave}
+                      onDelete={handleDelete}
                       isSaving={savingId === r.key}
                     />
                   ))

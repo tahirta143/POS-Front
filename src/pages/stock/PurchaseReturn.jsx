@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ActionButton, Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx'
-import FallbackNotice from '../../components/layout/FallbackNotice.jsx'
 import axiosInstance from '../../services/axiosInstance'
-import {
-  deletePurchaseReturn,
-  getPurchaseReturns,
-  savePurchaseReturn,
-  updatePurchaseReturn,
-} from '../../utils/transactionStore.js'
 
 function ReturnIcon({ className }) {
   return (
@@ -25,11 +18,12 @@ export default function PurchaseReturnPage() {
   const [returnItems, setReturnItems] = useState([])
   const [recentReturns, setRecentReturns] = useState([])
   const [submitting, setSubmitting] = useState(false)
+  const [loadingReturns, setLoadingReturns] = useState(false)
   const [editId, setEditId] = useState(null)
 
   useEffect(() => {
     fetchPurchases()
-    setRecentReturns(getPurchaseReturns())
+    fetchRecentReturns()
   }, [])
 
   async function fetchPurchases() {
@@ -44,6 +38,19 @@ export default function PurchaseReturnPage() {
       setSuppliers(Array.isArray(suppliersData) ? suppliersData : suppliersData?.data || [])
     } catch {
       toast.error('Failed to load purchases.')
+    }
+  }
+
+  async function fetchRecentReturns() {
+    setLoadingReturns(true)
+    try {
+      const response = await axiosInstance.get('/purchase-returns')
+      setRecentReturns(Array.isArray(response.data) ? response.data : response.data?.data || [])
+    } catch (error) {
+      console.error('Failed to fetch returns:', error)
+      toast.error('Failed to load recent returns.')
+    } finally {
+      setLoadingReturns(false)
     }
   }
 
@@ -105,53 +112,50 @@ export default function PurchaseReturnPage() {
     try {
       const normalizedItems = itemsToReturn.map((item) => {
         const qty = Number(item.returnQty || 0)
-        const purchasedQty = Number(item.qty || item.quantity || 0)
         const rate = Number(item.purchase_price || item.price || 0)
         return {
-          itemId: item.item_id || item.id,
-          itemName: item.item_name,
-          purchasedQty,
-          returnQty: qty,
-          rate,
+          item_id: item.item_id || item.id,
+          qty,
+          purchase_price: rate,
           total: qty * rate,
         }
       })
 
       const payload = {
         purchaseId: selectedPurchase.id,
-        grnNo: selectedPurchase.grn_no || '',
-        invoiceNo: selectedPurchase.invoice_no || '',
         supplierId: selectedPurchase.supplier_id,
-        supplierName: selectedSupplierName,
-        date: new Date().toISOString().slice(0, 10),
+        returnDate: new Date().toISOString().slice(0, 10),
         items: normalizedItems,
-        totalReturn: normalizedItems.reduce((sum, item) => sum + item.total, 0),
+        reason: 'Purchase return', // Optional: could add a field for this
       }
 
       if (editId) {
-        updatePurchaseReturn(editId, payload)
+        await axiosInstance.put(`/purchase-returns/${editId}`, payload)
         toast.success('Purchase return updated successfully.')
       } else {
-        savePurchaseReturn(payload)
-        toast.success('Purchase return recorded in frontend successfully.')
+        await axiosInstance.post('/purchase-returns', payload)
+        toast.success('Purchase return recorded successfully.')
       }
 
-      setRecentReturns(getPurchaseReturns())
+      fetchRecentReturns()
       resetForm()
+    } catch (error) {
+      console.error('Submit error:', error)
+      toast.error(error.response?.data?.message || 'Failed to save purchase return.')
     } finally {
       setSubmitting(false)
     }
   }
 
   function handleEdit(record) {
-    const purchase = purchases.find((row) => String(row.id) === String(record.purchaseId))
+    const purchase = purchases.find((row) => String(row.id) === String(record.purchase_id))
     if (!purchase) {
       toast.error('The original purchase for this return is no longer available.')
       return
     }
 
     const returnQtyByItemId = new Map(
-      (record.items || []).map((item) => [String(item.itemId), Number(item.returnQty || 0)]),
+      (record.items || []).map((item) => [String(item.item_id), Number(item.qty || 0)]),
     )
 
     setEditId(record.id)
@@ -165,11 +169,16 @@ export default function PurchaseReturnPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function handleDelete(returnId) {
+  async function handleDelete(returnId) {
     if (!window.confirm('Delete this purchase return?')) return
-    setRecentReturns(deletePurchaseReturn(returnId))
-    if (editId === returnId) resetForm()
-    toast.success('Purchase return deleted successfully.')
+    try {
+      await axiosInstance.delete(`/purchase-returns/${returnId}`)
+      toast.success('Purchase return deleted successfully.')
+      fetchRecentReturns()
+      if (editId === returnId) resetForm()
+    } catch (error) {
+      toast.error('Failed to delete purchase return.')
+    }
   }
 
   return (
@@ -190,9 +199,6 @@ export default function PurchaseReturnPage() {
               </button>
             ) : null}
           />
-          <div className="mt-4">
-            <FallbackNotice message="Purchase returns are currently being saved in frontend storage until the backend purchase-return route is added." />
-          </div>
           <Field label="Purchase">
             <select
               onChange={handlePurchaseChange}
@@ -281,11 +287,11 @@ export default function PurchaseReturnPage() {
         <Card className="p-4">
           <SectionHeader
             title="Recent Purchase Returns"
-            description="Frontend return history until backend posting is added."
+            description="History of purchase returns processed in the system."
             action={
               <button
                 type="button"
-                onClick={() => setRecentReturns(getPurchaseReturns())}
+                onClick={fetchRecentReturns}
                 className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Refresh
@@ -311,11 +317,11 @@ export default function PurchaseReturnPage() {
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {recentReturns.map((record) => (
                       <tr key={record.id} className="text-[12px] hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-mono text-slate-500">{record.id}</td>
-                        <td className="px-3 py-2 font-semibold text-slate-700">{record.grnNo || record.invoiceNo || '-'}</td>
-                        <td className="px-3 py-2 text-slate-600">{record.supplierName || '-'}</td>
-                        <td className="px-3 py-2 text-slate-600">{record.date}</td>
-                        <td className="px-3 py-2 text-right font-bold text-teal-700">PKR {Number(record.totalReturn || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 font-mono text-slate-500">#{record.id}</td>
+                        <td className="px-3 py-2 font-semibold text-slate-700">{record.purchase_id}</td>
+                        <td className="px-3 py-2 text-slate-600">{record.supplier_name || '-'}</td>
+                        <td className="px-3 py-2 text-slate-600">{new Date(record.return_date).toLocaleDateString()}</td>
+                        <td className="px-3 py-2 text-right font-bold text-teal-700">PKR {Number(record.total_amount || 0).toFixed(2)}</td>
                         <td className="px-3 py-2">
                           <div className="flex justify-end gap-2">
                             <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(record)} />

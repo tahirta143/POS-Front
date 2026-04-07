@@ -136,8 +136,9 @@ export default function ItemPage() {
       if (form.supplier) formData.append('supplierId', form.supplier)
       if (form.store_location) formData.append('shelveLocationId', form.store_location)
       if (form.item_unit) formData.append('itemUnitId', form.item_unit)
-
-      formData.append('barCode', form.barcode.trim())
+      if (form.barcode.trim()) {
+        formData.append('barCode', form.barcode.trim())
+      }
       formData.append('description', form.description.trim())
       formData.append('reorder', parseFloat(form.reorder_level) || 0)
       formData.append('perUnit', parseInt(form.per_unit) || 1)
