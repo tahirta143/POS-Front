@@ -400,7 +400,7 @@ export default function Dashboard() {
                         </td>
                         <td className="py-2.5 text-[12px] font-semibold text-slate-700">{formatCurrency(s.payable || 0)}</td>
                         <td className="py-2.5 text-right pr-1">
-                          <StatusBadge status={s.given_amount >= s.payable ? 'Paid' : 'Partial'} />
+                          <StatusBadge status={s.status} />
                         </td>
                       </tr>
                     ))}

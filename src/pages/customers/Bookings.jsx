@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'react-toastify'
-import { Card, Field, PageShell, SectionHeader, StatusAlert, TableState } from '../../components/layout/PageShell.jsx'
+import { Card, Field, PageShell, SectionHeader, StatusAlert, TableState, ActionButton, StatusChip } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
 const sectionStyles = {
@@ -55,6 +55,7 @@ export default function Bookings() {
   const [bookingsRecord, setBookingsRecord] = useState([])
 
   const [submitting, setSubmitting] = useState(false)
+  const [editId, setEditId] = useState(null)
 
   // Form State
   const [mobileNumber, setMobileNumber] = useState('')
@@ -110,6 +111,45 @@ export default function Bookings() {
     } catch {
       // ignore
     }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this booking?')) return
+    try {
+      await axiosInstance.delete(`/bookings/${id}`)
+      toast.success('Booking deleted successfully')
+      if (editId === id) resetForm()
+      fetchBookings()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete booking')
+    }
+  }
+
+  const handleEdit = (rec) => {
+    setEditId(rec.id)
+    setMobileNumber(rec.mobile_number || '')
+    setCustomerName(rec.customer_name || '')
+    setCustomerId(rec.customer_id)
+    setAddress(rec.address || '')
+    setBookingDate(rec.booking_date || '')
+    setBookingTime(rec.booking_time || '')
+    setDiscount(rec.discount || '')
+    setGivenAmount(rec.paid || '')
+    setPaymentMethod(rec.payment_method || 'Cash')
+
+    if (rec.items && rec.items.length > 0) {
+      setInvoiceItems(rec.items.map(item => ({
+        id: Date.now() + Math.random(),
+        category_id: item.category_id || '',
+        item_id: item.item_id,
+        price: item.price || 0,
+        quantity: item.qty || 1,
+        total: (item.price || 0) * (item.qty || 1)
+      })))
+    } else {
+      setInvoiceItems([createEmptyRow()])
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // --- Customer Autofill Logic ---
@@ -206,39 +246,48 @@ export default function Bookings() {
       customer_id: customerId,
       items: validItems.map(r => ({
         item_id: r.item_id,
-        price: r.price,
         qty: r.quantity,
-        rate: r.price,
-        item_name: items.find(i => String(i.id) === String(r.item_id))?.item_name || ''
       })),
+      sub_total: subTotal,
       discount: Number(discount) || 0,
+      payable: payable,
       paid: Number(givenAmount) || 0,
+      to_be_paid: remaining,
       payment_method: paymentMethod,
       booking_date: bookingDate,
       booking_time: bookingTime,
-      status: 'Pending'
+      status: editId ? undefined : 'Pending'
     }
 
     try {
-      await axiosInstance.post('/bookings', payload)
-
-      toast.success('Booking saved successfully!')
-      setMobileNumber('')
-      setCustomerName('')
-      setCustomerId(null)
-      setAddress('')
-      setBookingDate('')
-      setBookingTime('')
-      setInvoiceItems([createEmptyRow()])
-      setDiscount('')
-      setGivenAmount('')
-      setPaymentMethod('Cash')
+      if (editId) {
+        await axiosInstance.put(`/bookings/${editId}`, payload)
+        toast.success('Booking updated successfully!')
+      } else {
+        await axiosInstance.post('/bookings', payload)
+        toast.success('Booking saved successfully!')
+      }
+      resetForm()
       fetchBookings()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save booking.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const resetForm = () => {
+    setEditId(null)
+    setMobileNumber('')
+    setCustomerName('')
+    setCustomerId(null)
+    setAddress('')
+    setBookingDate('')
+    setBookingTime('')
+    setInvoiceItems([createEmptyRow()])
+    setDiscount('')
+    setGivenAmount('')
+    setPaymentMethod('Cash')
   }
 
   return (
@@ -250,9 +299,18 @@ export default function Bookings() {
       <div className="space-y-4">
         <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
           <SectionHeader
-            title="New Booking Order"
-            description="Register advance customer orders."
+            title={editId ? 'Edit Booking Order' : 'New Booking Order'}
+            description={editId ? `Editing Booking #${editId}` : 'Register advance customer orders.'}
             icon={<CalendarIcon className="h-5 w-5" />}
+            action={editId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel Edit
+              </button>
+            )}
           />
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -396,13 +454,7 @@ export default function Bookings() {
                       </div>
 
                       <div className="col-span-1 flex justify-end sm:justify-center">
-                        <button
-                          type="button"
-                          onClick={() => removeRow(row.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
-                        >
-                          <TrashIcon className="h-3.5 w-3.5" />
-                        </button>
+                        <ActionButton label="Delete" tone="rose" onClick={() => removeRow(row.id)} />
                       </div>
                     </div>
                   )
@@ -500,7 +552,7 @@ export default function Bookings() {
                   className="inline-flex min-w-[140px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
                 >
                   <CalendarIcon className="h-4 w-4" />
-                  {submitting ? 'Saving...' : 'Save Booking'}
+                  {submitting ? 'Saving...' : editId ? 'Update Booking' : 'Save Booking'}
                 </button>
               </div>
 
@@ -538,6 +590,7 @@ export default function Bookings() {
                       <th className="px-3 py-2.5 text-center">Method</th>
                       <th className="px-3 py-2.5 text-right">Total</th>
                       <th className="px-3 py-2.5 text-center">Status</th>
+                      <th className="px-3 py-2.5 text-right w-24">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -555,11 +608,17 @@ export default function Bookings() {
                         <td className="px-3 py-2 text-center text-slate-600 text-[11px]">{s.payment_method || 'Cash'}</td>
                         <td className="px-3 py-2 text-right font-bold text-slate-800 text-[12px]">PKR {Number(s.payable || 0).toFixed(2)}</td>
                         <td className="px-3 py-2 text-center">
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                            (s.paid >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                          }`}>
-                            {(s.paid >= s.payable) ? 'PAID' : 'PENDING'}
-                          </span>
+                          <StatusChip 
+                            enabled={s.status === 'Completed' || (Number(s.paid) >= Number(s.payable))} 
+                            label={s.status === 'Completed' ? 'COMPLETED' : s.status === 'Rejected' ? 'REJECTED' : 'PENDING'} 
+                            colorClass={s.status === 'Completed' || (Number(s.paid) >= Number(s.payable)) ? 'bg-emerald-50 text-emerald-700' : s.status === 'Rejected' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'} 
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <div className="flex justify-end gap-1.5">
+                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
+                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                          </div>
                         </td>
                       </tr>
                     ))}

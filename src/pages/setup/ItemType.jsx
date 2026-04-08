@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { Card, Field, PageShell, SectionHeader, Toggle } from '../../components/layout/PageShell.jsx'
+import { Card, Field, PageShell, SectionHeader, Toggle, ActionButton, StatusChip, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
 function createEmptyForm() {
@@ -203,31 +203,6 @@ export default function ItemTypePage() {
         </Card>
       </div>
     </PageShell>
-  )
-}
-
-function TableState({ message }) {
-  return <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-[11px] text-slate-500">{message}</div>
-}
-
-function StatusChip({ enabled }) {
-  return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold ${enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-      {enabled ? 'Enabled' : 'Disabled'}
-    </span>
-  )
-}
-
-function ActionButton({ label, tone, onClick }) {
-  const tones = {
-    teal: 'bg-teal-50 text-teal-700 hover:bg-teal-100',
-    rose: 'bg-rose-50 text-rose-700 hover:bg-rose-100',
-  }
-
-  return (
-    <button type="button" onClick={onClick} className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold transition ${tones[tone]}`}>
-      {label}
-    </button>
   )
 }
 

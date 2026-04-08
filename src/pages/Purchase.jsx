@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'react-toastify'
-import { Card, Field, PageShell, SectionHeader, TableState } from '../components/layout/PageShell.jsx'
+import { Card, Field, PageShell, SectionHeader, TableState, ActionButton, StatusChip } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
 
 const sectionStyles = {
@@ -24,14 +24,6 @@ function ArchiveBoxIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-    </svg>
-  )
-}
-
-function TrashIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   )
 }
@@ -234,6 +226,40 @@ export default function PurchasePage() {
     }
   }
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this purchase record?')) return
+    try {
+      await axiosInstance.delete(`/purchases/${id}`)
+      toast.success('Purchase deleted successfully')
+      fetchPurchases()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete purchase')
+    }
+  }
+
+  const handleEdit = (rec) => {
+    // Basic skeleton: populate main fields
+    setGrnNo(rec.grn_no)
+    setGrnDate(rec.grn_date)
+    setSupplierId(rec.supplier_id)
+    setInvoiceNo(rec.invoice_no || '')
+    
+    // If items are included in the record, map them
+    if (rec.items && rec.items.length > 0) {
+      setPurchaseItems(rec.items.map(item => ({
+        id: Math.random(),
+        category_id: item.category_id || '',
+        item_id: item.item_id,
+        purchase_price: item.purchase_price,
+        sale_price: item.sale_price,
+        quantity: item.quantity,
+        total: item.total
+      })))
+    }
+    toast.info('Edit mode enabled for: ' + rec.grn_no)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <PageShell
       title="Purchase Entry"
@@ -372,13 +398,11 @@ export default function PurchasePage() {
                       </div>
 
                       <div className="col-span-1 flex justify-end sm:justify-center">
-                        <button
-                          type="button"
+                        <ActionButton
+                          label="Delete"
+                          tone="rose"
                           onClick={() => removeRow(row.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition"
-                        >
-                          <TrashIcon className="h-3.5 w-3.5" />
-                        </button>
+                        />
                       </div>
                     </div>
                   )
@@ -526,8 +550,9 @@ export default function PurchasePage() {
                       <th className="px-3 py-2.5">Supplier</th>
                       <th className="px-3 py-2.5">Invoice No</th>
                       <th className="px-3 py-2.5">Date</th>
-                      <th className="px-3 py-2.5 text-right">Total</th>
-                      <th className="px-3 py-2.5 text-center">Status</th>
+                      <th className="px-3 py-2.5 text-right total-col">Total</th>
+                      <th className="px-3 py-2.5 text-center status-col">Status</th>
+                      <th className="px-3 py-2.5 text-right w-24 actions-col">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -547,8 +572,14 @@ export default function PurchasePage() {
                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                             (s.paid_amount >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                            }`}>
-                             {(s.paid_amount >= s.payable) ? 'PAID' : 'PENDING'}
+                              {(s.paid_amount >= s.payable) ? 'PAID' : 'PENDING'}
                            </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex justify-end gap-1.5">
+                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
+                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                          </div>
                         </td>
                       </tr>
                     ))}

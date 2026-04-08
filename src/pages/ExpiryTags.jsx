@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
-import { Card, Field, PageShell, SectionHeader, TableState } from '../components/layout/PageShell.jsx'
+import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
 
 const sectionStyles = {
@@ -66,6 +66,7 @@ export default function ExpiryTagsPage() {
   const [supplier, setSupplier] = useState('')
   const [manufacturerDate, setManufacturerDate] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
+  const [editId, setEditId] = useState(null)
 
   useEffect(() => {
     fetchLookups()
@@ -88,6 +89,7 @@ export default function ExpiryTagsPage() {
     setSupplier('')
     setManufacturerDate('')
     setExpiryDate('')
+    setEditId(null)
   }
 
   async function fetchLookups() {
@@ -125,6 +127,33 @@ export default function ExpiryTagsPage() {
       setExpiryTags([])
     } finally {
       setLoadingTags(false)
+    }
+  }
+
+  function handleEdit(tag) {
+    setEditId(tag.id)
+    setReceiptNumber(tag.receipt_number || tag.receipt || '')
+    setCategoryId(tag.category_id || tag.categoryId || '')
+    setItemId(tag.item_id || tag.itemId || '')
+    setItemCode(tag.item_code || tag.code || '')
+    setPrice(tag.price || '')
+    setSalePrice(tag.sale_price || '')
+    setManufacturer(tag.manufacturer || '')
+    setSupplier(tag.supplier || '')
+    setManufacturerDate(tag.manufacturer_date || tag.mfg_date || '')
+    setExpiryDate(tag.expiry_date || tag.exp_date || '')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm('Are you sure you want to delete this expiry tag?')) return
+    try {
+      await axiosInstance.delete(`/expiry-tags/${id}`)
+      toast.success('Expiry tag deleted successfully.')
+      if (editId === id) resetForm()
+      fetchExpiryTags()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete expiry tag.')
     }
   }
 
@@ -182,9 +211,13 @@ export default function ExpiryTagsPage() {
         expiry_date: expiryDate,
       }
 
-      await axiosInstance.post('/expiry-tags', payload)
-
-      toast.success('Expiry tag saved successfully.')
+      if (editId) {
+        await axiosInstance.put(`/expiry-tags/${editId}`, payload)
+        toast.success('Expiry tag updated successfully.')
+      } else {
+        await axiosInstance.post('/expiry-tags', payload)
+        toast.success('Expiry tag saved successfully.')
+      }
       resetForm()
       fetchExpiryTags()
     } catch (err) {
@@ -347,7 +380,7 @@ export default function ExpiryTagsPage() {
                   disabled={submitting}
                   className="inline-flex min-w-[170px] items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submitting ? 'Saving...' : 'Save Expiry Tag'}
+                  {submitting ? 'Saving...' : editId ? 'Update Expiry Tag' : 'Save Expiry Tag'}
                 </button>
               </div>
             </SectionCard>
@@ -390,8 +423,9 @@ export default function ExpiryTagsPage() {
                       <th className="px-4 py-4">MANUFACTURER</th>
                       <th className="px-4 py-4">SUPPLIER</th>
                       <th className="px-4 py-4">MFG DATE</th>
-                      <th className="px-4 py-4">EXPIRY DATE</th>
-                      <th className="px-4 py-4">ADDED</th>
+                      <th className="px-4 py-4 whitespace-nowrap">EXPIRY DATE</th>
+                      <th className="px-4 py-4 whitespace-nowrap">ADDED</th>
+                      <th className="px-4 py-4 text-right w-24">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -426,6 +460,12 @@ export default function ExpiryTagsPage() {
                                 .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                                 .replace(/ /g, '-')
                             : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-1.5">
+                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(t)} />
+                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(t.id)} />
+                          </div>
                         </td>
                       </tr>
                     ))}
