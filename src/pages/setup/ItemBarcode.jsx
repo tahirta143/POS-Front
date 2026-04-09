@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
@@ -41,6 +42,7 @@ export default function ItemBarcodePage() {
   const [loading, setLoading] = useState(false)
   const [barcodes, setBarcodes] = useState([])
   const [editId, setEditId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   
   const [categories, setCategories] = useState([])
   const [manufacturers, setManufacturers] = useState([])
@@ -202,6 +204,7 @@ export default function ItemBarcodePage() {
         toast.success('Barcode created successfully.')
       }
       resetForm()
+      setIsFormOpen(false)
       fetchBarcodes()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save barcode.')
@@ -234,6 +237,7 @@ export default function ItemBarcodePage() {
       reorder_level: barcode.reorder_level ?? '',
       sale_price: barcode.sale_price ?? '',
     })
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -252,220 +256,281 @@ export default function ItemBarcodePage() {
     return mfg ? mfg.manufacturer_name : 'Unknown'
   }
 
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+
   return (
-    <PageShell
-      title="Item Barcode Management"
-      description="Create and manage item barcodes with stock details."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Barcode Registration' : 'New Barcode Registration'}
-            description="Enter barcode details and stock information."
-            icon={<BarcodeIcon className="h-5 w-5" />}
-            action={editId ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Cancel Edit
-              </button>
-            ) : null}
-          />
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Item Barcodes</h1>
+            <p className="text-sm text-slate-500">Create and manage item barcodes with stock and pricing details.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Barcode
+              </>
+            )}
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <SectionCard title="Barcode Information">
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Code" required>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => updateField('code', e.target.value)}
-                    placeholder="Enter barcode code"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Barcode Registration' : 'New Barcode Registration'}
+                  description="Enter barcode details and stock information."
+                  icon={<BarcodeIcon className="h-5 w-5" />}
+                />
 
-                <Field label="Category" required>
-                  <select
-                    value={form.category_id}
-                    onChange={(e) => updateField('category_id', e.target.value)}
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.category_name}</option>
-                    ))}
-                  </select>
-                </Field>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <SectionCard title="Barcode Information">
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field label="Code" required>
+                        <input
+                          type="text"
+                          value={form.code}
+                          onChange={(e) => updateField('code', e.target.value)}
+                          placeholder="Enter barcode code"
+                          className={inputCls}
+                        />
+                      </Field>
 
-                <Field label="Manufacturer" required>
-                  <select
-                    value={form.manufacturer_id}
-                    onChange={(e) => updateField('manufacturer_id', e.target.value)}
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Manufacturer</option>
-                    {manufacturers.map((m) => (
-                      <option key={m.id} value={m.id}>{m.manufacturer_name}</option>
-                    ))}
-                  </select>
-                </Field>
+                      <Field label="Category" required>
+                        <select
+                          value={form.category_id}
+                          onChange={(e) => updateField('category_id', e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="">Select Category</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.category_name}</option>
+                          ))}
+                        </select>
+                      </Field>
 
-                <Field label="Supplier">
-                  <select
-                    value={form.supplier_id}
-                    onChange={(e) => updateField('supplier_id', e.target.value)}
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Supplier (Optional)</option>
-                    {suppliers.map((s) => (
-                      <option key={s.id} value={s.id}>{s.supplier_name}</option>
-                    ))}
-                  </select>
-                </Field>
+                      <Field label="Manufacturer" required>
+                        <select
+                          value={form.manufacturer_id}
+                          onChange={(e) => updateField('manufacturer_id', e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="">Select Manufacturer</option>
+                          {manufacturers.map((m) => (
+                            <option key={m.id} value={m.id}>{m.manufacturer_name}</option>
+                          ))}
+                        </select>
+                      </Field>
 
-                <Field label="Item Detail" required>
-                  <select
-                    value={form.item_id}
-                    onChange={(e) => updateField('item_id', e.target.value)}
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Item</option>
-                    {items.map((i) => (
-                      <option key={i.id} value={i.id}>{i.item_name}</option>
-                    ))}
-                  </select>
-                </Field>
+                      <Field label="Supplier">
+                        <select
+                          value={form.supplier_id}
+                          onChange={(e) => updateField('supplier_id', e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="">Select Supplier (Optional)</option>
+                          {suppliers.map((s) => (
+                            <option key={s.id} value={s.id}>{s.supplier_name}</option>
+                          ))}
+                        </select>
+                      </Field>
 
-                <Field label="Unit" required>
-                  <select
-                    value={form.unit_id}
-                    onChange={(e) => updateField('unit_id', e.target.value)}
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Unit</option>
-                    {units.map((u) => (
-                      <option key={u.id} value={u.id}>{u.unit_name}</option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-            </SectionCard>
+                      <Field label="Item Detail" required>
+                        <select
+                          value={form.item_id}
+                          onChange={(e) => updateField('item_id', e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="">Select Item</option>
+                          {items.map((i) => (
+                            <option key={i.id} value={i.id}>{i.item_name}</option>
+                          ))}
+                        </select>
+                      </Field>
 
-            <SectionCard title="Stock & Pricing">
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Stock" required>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.stock}
-                    onChange={(e) => updateField('stock', e.target.value)}
-                    placeholder="Enter stock quantity"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
+                      <Field label="Unit" required>
+                        <select
+                          value={form.unit_id}
+                          onChange={(e) => updateField('unit_id', e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="">Select Unit</option>
+                          {units.map((u) => (
+                            <option key={u.id} value={u.id}>{u.unit_name}</option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                  </SectionCard>
 
-                <Field label="Reorder Level" required>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.reorder_level}
-                    onChange={(e) => updateField('reorder_level', e.target.value)}
-                    placeholder="Enter reorder level"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
+                  <SectionCard title="Stock & Pricing">
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field label="Stock" required>
+                        <input
+                          type="number"
+                          min="0"
+                          value={form.stock}
+                          onChange={(e) => updateField('stock', e.target.value)}
+                          placeholder="0"
+                          className={inputCls}
+                        />
+                      </Field>
 
-                <Field label="Sale Price" required>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">Rs</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.sale_price}
-                      onChange={(e) => updateField('sale_price', e.target.value)}
-                      placeholder="Enter sale price"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white pl-7 pr-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
+                      <Field label="Reorder Level" required>
+                        <input
+                          type="number"
+                          min="0"
+                          value={form.reorder_level}
+                          onChange={(e) => updateField('reorder_level', e.target.value)}
+                          placeholder="0"
+                          className={inputCls}
+                        />
+                      </Field>
+
+                      <Field label="Sale Price" required>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] font-semibold">PKR</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.sale_price}
+                            onChange={(e) => updateField('sale_price', e.target.value)}
+                            placeholder="0.00"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white pl-10 pr-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </div>
+                      </Field>
+                    </div>
+                  </SectionCard>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm shadow-teal-100"
+                    >
+                      {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
+                    </button>
                   </div>
-                </Field>
-              </div>
-            </SectionCard>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
-              >
-                Reset
-              </button>
+        {/* List Card below form */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
+          <SectionHeader
+            title="Barcode Registry"
+            description={`${barcodes.length} registered barcodes`}
+            icon={<BarcodeIcon className="h-5 w-5" />}
+            action={
+              <div className="p-4">
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="rounded-lg bg-teal-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 transition disabled:opacity-50"
+                  type="button"
+                  onClick={() => { fetchBarcodes(); fetchDropdownData() }}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
                 >
-                {submitting ? 'Saving...' : editId ? 'Update Barcode' : 'Save Barcode'}
+                   Refresh List
                 </button>
               </div>
-          </form>
-        </Card>
-
-        <Card className="mx-auto max-w-5xl p-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-[13px] font-semibold text-slate-800">Registered Barcodes</h3>
-              <p className="text-[10px] text-slate-500">List of all item barcodes</p>
-            </div>
-            <button
-              onClick={() => { fetchBarcodes(); fetchDropdownData() }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 transition"
-            >
-              <RefreshIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
-
-          {barcodes.length === 0 ? (
+            }
+          />
+          {loading && barcodes.length === 0 ? (
+            <TableState message="Loading barcodes..." />
+          ) : barcodes.length === 0 ? (
             <TableState message="No barcodes registered yet." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100">
-                <thead className="bg-slate-50">
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-3 py-2 text-left">Code</th>
-                    <th className="px-3 py-2 text-left">Item</th>
-                    <th className="px-3 py-2 text-left">Category</th>
-                    <th className="px-3 py-2 text-left">Manufacturer</th>
-                    <th className="px-3 py-2 text-right">Stock</th>
-                    <th className="px-3 py-2 text-right">Sale Price</th>
-                    <th className="px-3 py-2 text-center">Actions</th>
+                    <th className="px-5 py-3">Code</th>
+                    <th className="px-5 py-3">Item Details</th>
+                    <th className="px-5 py-3 text-right">Stock</th>
+                    <th className="px-5 py-3 text-right">Pricing</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-slate-50 bg-white">
                   {barcodes.map((barcode) => (
-                    <tr key={barcode.id} className="text-[11px] hover:bg-slate-50/50 transition">
-                      <td className="px-3 py-2 font-mono text-slate-700">{barcode.code}</td>
-                      <td className="px-3 py-2 font-medium text-slate-800">{getItemName(barcode.item_detail_id)}</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex items-center rounded-full bg-teal-50 px-1.5 py-0.5 text-[9px] font-medium text-teal-700">
-                          {getCategoryName(barcode.category_id)}
-                        </span>
+                    <motion.tr 
+                      key={barcode.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4 font-mono text-[11px] text-slate-700 font-bold">{barcode.code}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800 text-[12px]">{getItemName(barcode.item_detail_id)}</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 tracking-wider">
+                              {getCategoryName(barcode.category_id)}
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-medium">{getManufacturerName(barcode.manufacturer_id)}</span>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-3 py-2 text-slate-600 text-[10px]">{getManufacturerName(barcode.manufacturer_id)}</td>
-                      <td className="px-3 py-2 text-right font-medium text-slate-700">{barcode.stock}</td>
-                      <td className="px-3 py-2 text-right font-medium text-emerald-600">Rs {Number(barcode.sale_price).toFixed(2)}</td>
-                      <td className="px-3 py-2 text-center">
-                        <div className="flex justify-center gap-1.5">
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex flex-col items-end">
+                          <span className={`text-[12px] font-bold ${barcode.stock <= barcode.reorder_level ? 'text-rose-600' : 'text-slate-700'}`}>
+                            {barcode.stock}
+                          </span>
+                          <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Min: {barcode.reorder_level}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <span className="text-[12px] font-black text-emerald-600">PKR {Number(barcode.sale_price).toLocaleString()}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
                           <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(barcode)} />
                           <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(barcode.id)} />
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
@@ -474,13 +539,5 @@ export default function ItemBarcodePage() {
         </Card>
       </div>
     </PageShell>
-  )
-}
-
-function TrashIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
   )
 }

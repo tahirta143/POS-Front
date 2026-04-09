@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton, StatusChip } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
+import { MdAdd, MdRemove, MdRefresh, MdInventory, MdShoppingBag, MdDeleteOutline, MdOutlineEdit } from 'react-icons/md'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -28,14 +30,6 @@ function ArchiveBoxIcon({ className }) {
   )
 }
 
-function PlusIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-  )
-}
-
 function generateGRN() {
   const d = new Date()
   const yyyymmdd = d.toISOString().slice(0,10).replace(/-/g, '')
@@ -52,8 +46,10 @@ export default function PurchasePage() {
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [purchasesRecord, setPurchasesRecord] = useState([])
-  
+  const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editId, setEditId] = useState(null)
 
   // Form State
   const [grnNo, setGrnNo] = useState(generateGRN())
@@ -93,12 +89,12 @@ export default function PurchasePage() {
         setItems(Array.isArray(d) ? d : d.data || [])
       }
     } catch (e) {
-      console.error(e)
       toast.error('Failed to load initial data')
     }
   }
 
   async function fetchPurchases() {
+    setLoading(true)
     try {
       const response = await axiosInstance.get('/purchases')
       if (response?.data) {
@@ -106,11 +102,12 @@ export default function PurchasePage() {
         setPurchasesRecord(Array.isArray(data) ? data : data.data || [])
       }
     } catch {
-      // ignore
+      setPurchasesRecord([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  // --- Calculations ---
   const subTotal = useMemo(() => {
     return purchaseItems.reduce((sum, row) => sum + (Number(row.total) || 0), 0)
   }, [purchaseItems])
@@ -132,9 +129,8 @@ export default function PurchasePage() {
     return Math.max(0, payable - given)
   }, [payable, givenAmount])
 
-  const isAllPaid = payable > 0 && givenAmount >= payable
+  const isAllPaid = payable > 0 && Number(givenAmount) >= payable
 
-  // --- Handlers ---
   const addRow = () => setPurchaseItems([...purchaseItems, createEmptyRow()])
   
   const removeRow = (id) => {
@@ -208,16 +204,16 @@ export default function PurchasePage() {
     }
 
     try {
-      await axiosInstance.post('/purchases', payload)
+      if (editId) {
+        // await axiosInstance.put(`/purchases/${editId}`, payload)
+        // toast.success('Purchase updated successfully!')
+      } else {
+        await axiosInstance.post('/purchases', payload)
+        toast.success('Purchase Order saved successfully!')
+      }
       
-      toast.success('Purchase Order saved successfully!')
-      setGrnNo(generateGRN())
-      setSupplierId('')
-      setInvoiceNo('')
-      setPurchaseItems([createEmptyRow()])
-      setDiscountPercent('')
-      setDiscountAmount('')
-      setGivenAmount('')
+      resetForm()
+      setIsFormOpen(false)
       fetchPurchases()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save purchase.')
@@ -238,13 +234,12 @@ export default function PurchasePage() {
   }
 
   const handleEdit = (rec) => {
-    // Basic skeleton: populate main fields
+    setEditId(rec.id)
     setGrnNo(rec.grn_no)
     setGrnDate(rec.grn_date)
     setSupplierId(rec.supplier_id)
     setInvoiceNo(rec.invoice_no || '')
     
-    // If items are included in the record, map them
     if (rec.items && rec.items.length > 0) {
       setPurchaseItems(rec.items.map(item => ({
         id: Math.random(),
@@ -255,337 +250,314 @@ export default function PurchasePage() {
         quantity: item.quantity,
         total: item.total
       })))
+    } else {
+      setPurchaseItems([createEmptyRow()])
     }
-    toast.info('Edit mode enabled for: ' + rec.grn_no)
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function resetForm() {
+    setEditId(null)
+    setGrnNo(generateGRN())
+    setSupplierId('')
+    setInvoiceNo('')
+    setPurchaseItems([createEmptyRow()])
+    setDiscountPercent('')
+    setDiscountAmount('')
+    setGivenAmount('')
+  }
+
   return (
-    <PageShell
-      title="Purchase Entry"
-      description="Record stock intake and supplier invoices."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title="New Purchase Entry"
-            description="Log Goods Received Note (GRN) into inventory."
-            icon={<ArchiveBoxIcon className="h-5 w-5" />}
-          />
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+           <div>
+            <h1 className="text-xl font-bold text-slate-900">Purchase Entry</h1>
+            <p className="text-sm text-slate-500">Record stock intake and supplier invoices.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> New Purchase
+              </>
+            )}
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Purchase Details Section */}
-            <SectionCard title="Receipt Details">
-              <div className="flex flex-wrap gap-3 items-end">
-                <Field label="GRN No">
-                  <input
-                    type="text"
-                    value={grnNo}
-                    readOnly
-                    className="h-7 w-40 rounded-md border border-slate-300 bg-slate-50 px-2 text-[11px] font-mono outline-none text-slate-500"
-                  />
-                </Field>
-                <Field label="GRN Date" required>
-                  <input
-                    type="date"
-                    value={grnDate}
-                    onChange={(e) => setGrnDate(e.target.value)}
-                    className="h-7 w-32 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-                <Field label="Supplier" required>
-                  <select
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                    className="h-7 w-56 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  >
-                    <option value="">Select Supplier</option>
-                    {suppliers.map(s => (
-                      <option key={s.id} value={s.id}>{s.supplier_name}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Invoice Number">
-                  <input
-                    type="text"
-                    value={invoiceNo}
-                    onChange={(e) => setInvoiceNo(e.target.value)}
-                    placeholder="Enter Invoice #"
-                    className="h-7 w-40 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-              </div>
-            </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+                <SectionHeader
+                  title={editId ? 'View/Modify Purchase' : 'New Goods Receipt Note'}
+                  description="Record inventory arrival into the system."
+                  icon={<MdInventory className="h-6 w-6 text-teal-600" />}
+                />
 
-            {/* Items Section */}
-            <SectionCard title="Invoice Items">
-              <div className="space-y-2">
-                <div className="hidden grid-cols-[140px_1fr_80px_80px_60px_90px_40px] gap-2 px-1 sm:grid">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Item Name</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Purch.</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Sale</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total</div>
-                  <div></div>
-                </div>
-
-                {purchaseItems.map((row) => {
-                  const availableItemsForCat = items.filter(i => String(i.item_category_id) === String(row.category_id))
-                  return (
-                    <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_80px_80px_60px_90px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
-                      <div className="col-span-2 sm:col-span-1">
+                <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+                  <SectionCard title="Receipt Details">
+                    <div className="flex flex-wrap gap-4 items-end py-1">
+                      <Field label="GRN No">
+                        <input
+                          type="text"
+                          value={grnNo}
+                          readOnly
+                          className="h-8 w-40 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-[11px] font-mono font-bold text-slate-500"
+                        />
+                      </Field>
+                      <Field label="GRN Date" required>
+                        <input
+                          type="date"
+                          value={grnDate}
+                          onChange={(e) => setGrnDate(e.target.value)}
+                          className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        />
+                      </Field>
+                      <Field label="Supplier" required>
                         <select
-                          value={row.category_id}
-                          onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
+                          value={supplierId}
+                          onChange={(e) => setSupplierId(e.target.value)}
+                          className="h-8 w-60 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         >
-                          <option value="">Category</option>
-                          {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.category_name}</option>
+                          <option value="">Select Supplier</option>
+                          {suppliers.map(s => (
+                            <option key={s.id} value={s.id}>{s.supplier_name}</option>
                           ))}
                         </select>
-                      </div>
-
-                      <div className="col-span-2 sm:col-span-1">
-                        <select
-                          value={row.item_id}
-                          onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
-                          disabled={!row.category_id}
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
-                        >
-                          <option value="">Select Item</option>
-                          {availableItemsForCat.map(i => (
-                            <option key={i.id} value={i.id}>{i.item_name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="col-span-1">
+                      </Field>
+                      <Field label="Invoice Number">
                         <input
-                          type="number"
-                          value={row.purchase_price}
-                          onChange={(e) => updateRow(row.id, 'purchase_price', e.target.value)}
-                          placeholder="Price"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
+                          type="text"
+                          value={invoiceNo}
+                          onChange={(e) => setInvoiceNo(e.target.value)}
+                          placeholder="e.g. INV-100"
+                          className="h-8 w-40 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         />
-                      </div>
-                      
-                      <div className="col-span-1">
-                        <input
-                          type="number"
-                          value={row.sale_price}
-                          onChange={(e) => updateRow(row.id, 'sale_price', e.target.value)}
-                          placeholder="Sale"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
-                        />
+                      </Field>
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Inventory Items">
+                    <div className="space-y-2 mt-1">
+                      <div className="hidden grid-cols-[160px_1fr_100px_100px_80px_120px_50px] gap-3 px-2 sm:grid">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Category</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Item Detail</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Purchase (Unit)</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Sale (Unit)</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Quantity</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Subtotal</div>
+                        <div></div>
                       </div>
 
-                      <div className="col-span-1">
-                         <input
-                          type="number"
-                          min="1"
-                          value={row.quantity}
-                          onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
-                          placeholder="Qty"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
-                        />
-                      </div>
+                      {purchaseItems.map((row) => {
+                        const availableItems = items.filter(i => String(i.item_category_id) === String(row.category_id))
+                        return (
+                          <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[160px_1fr_100px_100px_80px_120px_50px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0">
+                            <div className="col-span-2 sm:col-span-1">
+                              <select
+                                value={row.category_id}
+                                onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
+                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none focus:border-teal-400"
+                              >
+                                <option value="">Category</option>
+                                {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
+                              </select>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <select
+                                value={row.item_id}
+                                onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
+                                disabled={!row.category_id}
+                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none focus:border-teal-400 disabled:bg-slate-50"
+                              >
+                                <option value="">Select Item</option>
+                                {availableItems.map(i => <option key={i.id} value={i.id}>{i.item_name}</option>)}
+                              </select>
+                            </div>
+                            <div className="col-span-1">
+                               <input type="number" step="0.01" value={row.purchase_price} onChange={(e) => updateRow(row.id, 'purchase_price', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-right focus:border-teal-400 placeholder:text-slate-300" placeholder="0.00" />
+                            </div>
+                            <div className="col-span-1">
+                               <input type="number" step="0.01" value={row.sale_price} onChange={(e) => updateRow(row.id, 'sale_price', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-right focus:border-teal-400 placeholder:text-slate-300" placeholder="0.00" />
+                            </div>
+                            <div className="col-span-1">
+                               <input type="number" min="1" value={row.quantity} onChange={(e) => updateRow(row.id, 'quantity', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-center focus:border-teal-400" />
+                            </div>
+                            <div className="col-span-1 flex items-center justify-end font-bold text-slate-700 text-[12px]">
+                               PKR {Number(row.total || 0).toLocaleString()}
+                            </div>
+                            <div className="col-span-1 flex justify-center">
+                              <button type="button" onClick={() => removeRow(row.id)} className="text-rose-500 hover:text-rose-700 transition"><MdDeleteOutline className="h-5 w-5"/></button>
+                            </div>
+                          </div>
+                        )
+                      })}
 
-                      <div className="col-span-1 bg-white border border-slate-200 h-7 flex items-center px-2 rounded-md font-medium text-slate-700 text-[11px]">
-                        PKR {Number(row.total || 0).toFixed(2)}
-                      </div>
-
-                      <div className="col-span-1 flex justify-end sm:justify-center">
-                        <ActionButton
-                          label="Delete"
-                          tone="rose"
-                          onClick={() => removeRow(row.id)}
-                        />
+                      <div className="pt-2 flex gap-3">
+                         <button type="button" onClick={addRow} className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"><MdAdd className="h-4 w-4" /> Add Line Item</button>
+                         <button type="button" onClick={clearAllRows} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-[12px] font-bold text-slate-500 border border-slate-200 hover:bg-slate-50 transition">Clear All</button>
                       </div>
                     </div>
-                  )
-                })}
+                  </SectionCard>
 
-                <div className="pt-1 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={addRow}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
-                  >
-                    <PlusIcon className="h-3.5 w-3.5" /> Add Item
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearAllRows}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* Order Summary */}
-            <SectionCard title="Order Summary">
-              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between p-1.5">
-                
-                <div className="flex bg-slate-50 p-3 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-2 min-w-[280px]">
-                  <div className="flex justify-between items-center text-[12px]">
-                    <span className="text-slate-500">Subtotal:</span>
-                    <span className="font-semibold text-slate-800">PKR {subTotal.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-[12px] gap-2">
-                    <span className="text-slate-500">Discount:</span>
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <input
-                          type="number"
-                          value={discountPercent}
-                          onChange={(e) => setDiscountPercent(e.target.value)}
-                          placeholder="%"
-                          className="h-6 w-14 rounded border border-slate-300 px-1.5 text-[11px] outline-none focus:border-teal-400 text-center"
-                        />
-                        <span className="absolute top-1/2 right-1.5 -translate-y-1/2 text-[9px] text-slate-400">%</span>
-                      </div>
-                      <span className="text-slate-300">-</span>
-                      <div className="relative">
-                        <span className="absolute top-1/2 left-1.5 -translate-y-1/2 text-[9px] text-slate-400">PKR</span>
-                        <input
-                          type="number"
-                          value={discountAmount}
-                          onChange={(e) => {
-                            setDiscountAmount(e.target.value)
-                            setDiscountPercent('')
-                          }}
-                          placeholder="Amount"
-                          className="h-6 w-24 rounded border border-slate-300 pl-7 pr-1.5 text-[11px] text-right outline-none focus:border-teal-400"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-slate-200 my-0.5 w-full" />
-                  <div className="flex justify-between items-center text-[12px]">
-                    <span className="font-bold text-slate-700">Payable:</span>
-                    <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col w-full md:w-auto gap-2 flex-1 md:max-w-[350px]">
-                  <div className="flex rounded-xl border border-slate-200 bg-white p-2">
-                    <div className="flex-1 px-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Company Paid</p>
-                      <input
-                        type="number"
-                        value={givenAmount}
-                        onChange={(e) => setGivenAmount(e.target.value)}
-                        placeholder="Amount Tendered"
-                        className="h-7 w-full text-[12px] font-bold text-slate-800 outline-none"
-                      />
-                    </div>
-                  </div>
-                  
-                  {givenAmount > 0 && (
-                    <div className={`p-2 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                      <span className={`text-[11px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {isAllPaid ? 'ALL PAID' : 'TO BE PAID'}
-                      </span>
-                      {isAllPaid ? (
-                        <div className="flex items-center gap-1 text-emerald-600 font-bold text-[11px]">
-                          <span>Change: PKR {(givenAmount - payable).toFixed(2)}</span>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <SectionCard title="Summary & Financials">
+                      <div className="space-y-3 py-1">
+                        <div className="flex justify-between items-center text-sm">
+                           <span className="text-slate-500">Gross Total</span>
+                           <span className="font-bold text-slate-800">PKR {subTotal.toLocaleString()}</span>
                         </div>
-                      ) : (
-                        <span className="font-bold text-rose-600 font-mono text-[11px]">PKR {remaining.toFixed(2)}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                        <div className="flex items-center gap-3">
+                           <span className="text-slate-500 text-sm flex-1">Discount</span>
+                           <div className="flex items-center gap-2">
+                             <input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(e.target.value)} placeholder="%" className="h-7 w-16 rounded border border-slate-300 text-center text-[12px] focus:border-teal-400" />
+                             <span className="text-slate-400 text-xs">Or</span>
+                             <input type="number" value={discountAmount} onChange={(e) => { setDiscountAmount(e.target.value); setDiscountPercent('') }} placeholder="Amount" className="h-7 w-28 rounded border border-slate-300 text-right px-2 text-[12px] focus:border-teal-400" />
+                           </div>
+                        </div>
+                        <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                           <span className="font-bold text-slate-700 text-sm">Net Payable</span>
+                           <span className="text-xl font-black text-teal-600 font-mono">PKR {payable.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </SectionCard>
 
-              </div>
-              
-              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting || payable === 0}
-                  className="inline-flex min-w-[150px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
-                >
-                  <ArchiveBoxIcon className="h-4 w-4" />
-                  {submitting ? 'Saving...' : 'Save Purchase'}
-                </button>
-              </div>
+                    <SectionCard title="Payment Status">
+                       <div className="space-y-4 py-1">
+                         <div className="space-y-1.5">
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount Paid to Supplier</p>
+                           <input type="number" value={givenAmount} onChange={(e) => setGivenAmount(e.target.value)} className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-slate-800 focus:border-teal-500 focus:bg-white transition outline-none" placeholder="0.00" />
+                         </div>
+                         {payable > 0 && (
+                            <div className={`p-3 rounded-xl border-2 flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                               <span className={`text-[11px] font-black uppercase tracking-widest ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                 {isAllPaid ? 'FULLY SETTLED' : 'OUTSTANDING'}
+                               </span>
+                               <span className={`font-mono font-bold text-sm ${isAllPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                 PKR {isAllPaid ? (givenAmount - payable).toLocaleString() : remaining.toLocaleString()}
+                               </span>
+                            </div>
+                         )}
+                       </div>
+                    </SectionCard>
+                  </div>
 
-            </SectionCard>
-          </form>
-        </Card>
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                    <button type="submit" disabled={submitting || payable <= 0} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                       <ArchiveBoxIcon className="h-5 w-5" /> {submitting ? 'Saving...' : 'Confirm & Save Purchase'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Saved Purchases Table */}
-        <Card className="mx-auto max-w-5xl p-3">
+        {/* Recent Purchases Table */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Recent Purchases"
             description="Log of recent stock arrivals and supplier GRNs."
+            icon={<MdShoppingBag className="h-6 w-6 text-teal-600" />}
             action={
-              <button
-                type="button"
-                onClick={fetchPurchases}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchPurchases}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh List
+                </button>
+              </div>
             }
           />
 
-          {purchasesRecord.length === 0 ? (
+          {loading ? (
+            <TableState message="Loading purchase records..." />
+          ) : purchasesRecord.length === 0 ? (
             <TableState message="No purchase records found." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2.5 w-28">GRN No</th>
-                      <th className="px-3 py-2.5">Supplier</th>
-                      <th className="px-3 py-2.5">Invoice No</th>
-                      <th className="px-3 py-2.5">Date</th>
-                      <th className="px-3 py-2.5 text-right total-col">Total</th>
-                      <th className="px-3 py-2.5 text-center status-col">Status</th>
-                      <th className="px-3 py-2.5 text-right w-24 actions-col">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {purchasesRecord.map((s, idx) => (
-                      <tr key={s.id || idx} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-medium text-slate-900 font-mono text-[10px]">{s.grn_no}</td>
-                        <td className="px-3 py-2 text-slate-600 font-semibold text-[12px]">
-                          {(() => {
-                            const sup = suppliers.find(su => String(su.id) === String(s.supplier_id))
-                            return sup ? sup.supplier_name : s.supplier_id
-                          })()}
-                        </td>
-                        <td className="px-3 py-2 text-slate-600 text-[12px]">{s.invoice_no || '-'}</td>
-                        <td className="px-3 py-2 text-slate-600 text-[12px]">{s.grn_date}</td>
-                        <td className="px-3 py-2 text-right font-bold text-slate-800 text-[12px]">PKR {Number(s.payable || s.total_amount || 0).toFixed(2)}</td>
-                        <td className="px-3 py-2 text-center">
-                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                            (s.paid_amount >= s.payable) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                           }`}>
-                              {(s.paid_amount >= s.payable) ? 'PAID' : 'PENDING'}
-                           </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-4">GRN & Date</th>
+                    <th className="px-5 py-4">Supplier / Invoice</th>
+                    <th className="px-5 py-4 text-right">Payable</th>
+                    <th className="px-5 py-4 text-right">Paid</th>
+                    <th className="px-5 py-4 text-center">Settlement</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {purchasesRecord.map((s) => (
+                    <motion.tr 
+                      key={s.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                           <span className="font-mono text-[11px] font-bold text-slate-700">{s.grn_no}</span>
+                           <span className="text-[10px] text-slate-400 font-semibold">{s.grn_date}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800 text-[12px]">
+                            {suppliers.find(su => String(su.id) === String(s.supplier_id))?.supplier_name || 'Unknown'}
+                          </span>
+                          <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{s.invoice_no || 'NO INVOICE'}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                         <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                         <span className="text-[12px] font-bold text-emerald-600">PKR {Number(s.paid_amount || 0).toLocaleString()}</span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                          <StatusChip enabled={s.paid_amount >= s.payable} labels={{ on: 'PAID', off: 'PENDING' }} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                           <button onClick={() => handleEdit(s)} className="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition"><MdOutlineEdit className="h-4 w-4"/></button>
+                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition"><MdDeleteOutline className="h-4 w-4"/></button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

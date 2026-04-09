@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, StatusAlert, TableState, ActionButton, StatusChip } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { MdAdd, MdRemove, MdRefresh, MdEventAvailable, MdHistory, MdPayment, MdDeleteOutline, MdOutlineEdit, MdSearch } from 'react-icons/md'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -20,30 +22,6 @@ function SectionCard({ title, children }) {
   )
 }
 
-function CalendarIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  )
-}
-
-function TrashIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-  )
-}
-
-function PlusIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-  )
-}
-
 function createEmptyRow() {
   return { id: Date.now() + Math.random(), category_id: '', item_id: '', price: '', quantity: 1, total: 0 }
 }
@@ -53,8 +31,9 @@ export default function Bookings() {
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [bookingsRecord, setBookingsRecord] = useState([])
-
+  const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState(null)
 
   // Form State
@@ -97,11 +76,12 @@ export default function Bookings() {
         setItems(Array.isArray(d) ? d : d.data || [])
       }
     } catch (e) {
-      console.error(e)
+      toast.error('Failed to load dependency data')
     }
   }
 
   async function fetchBookings() {
+    setLoading(true)
     try {
       const response = await axiosInstance.get('/bookings')
       if (response.data) {
@@ -109,7 +89,9 @@ export default function Bookings() {
         setBookingsRecord(Array.isArray(data) ? data : data.data || [])
       }
     } catch {
-      // ignore
+      setBookingsRecord([])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -149,10 +131,10 @@ export default function Bookings() {
     } else {
       setInvoiceItems([createEmptyRow()])
     }
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // --- Customer Autofill Logic ---
   const matchingCustomers = useMemo(() => {
     if (mobileNumber.length < 4) return []
     return customers.filter(c =>
@@ -182,7 +164,6 @@ export default function Bookings() {
     setShowCustomerDropdown(false)
   }
 
-  // --- Calculations ---
   const subTotal = useMemo(() => {
     return invoiceItems.reduce((sum, row) => sum + (Number(row.total) || 0), 0)
   }, [invoiceItems])
@@ -197,11 +178,9 @@ export default function Bookings() {
     return Math.max(0, payable - given)
   }, [payable, givenAmount])
 
-  const isAllPaid = payable > 0 && givenAmount >= payable
+  const isAllPaid = payable > 0 && Number(givenAmount) >= payable
 
-  // --- Handlers ---
   const addRow = () => setInvoiceItems([...invoiceItems, createEmptyRow()])
-
   const removeRow = (id) => {
     if (invoiceItems.length > 1) setInvoiceItems(invoiceItems.filter(r => r.id !== id))
   }
@@ -268,6 +247,7 @@ export default function Bookings() {
         toast.success('Booking saved successfully!')
       }
       resetForm()
+      setIsFormOpen(false)
       fetchBookings()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save booking.')
@@ -291,340 +271,259 @@ export default function Bookings() {
   }
 
   return (
-    <PageShell
-      title="Customer Bookings"
-      description="Create a new booking and print slip."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Booking Order' : 'New Booking Order'}
-            description={editId ? `Editing Booking #${editId}` : 'Register advance customer orders.'}
-            icon={<CalendarIcon className="h-5 w-5" />}
-            action={editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Cancel Edit
-              </button>
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+           <div>
+            <h1 className="text-xl font-bold text-slate-900">Customer Bookings</h1>
+            <p className="text-sm text-slate-500">Record advance orders and booking deposits.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> New Booking
+              </>
             )}
-          />
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Booking Details Section */}
-            <SectionCard title="Booking Details">
-              <div className="flex flex-wrap gap-3 items-end">
-                <Field label="Mobile Number" required>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      value={mobileNumber}
-                      onChange={handleMobileChange}
-                      onFocus={() => { if (mobileNumber.length >= 4) setShowCustomerDropdown(true) }}
-                      onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
-                      placeholder="e.g. 03001234567"
-                      className="h-7 w-44 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
-                    />
-                    {showCustomerDropdown && matchingCustomers.length > 0 && (
-                      <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
-                        {matchingCustomers.map(c => (
-                          <li
-                            key={c.id}
-                            onClick={() => handleSelectCustomer(c)}
-                            className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition"
-                          >
-                            <p className="text-[12px] font-semibold text-slate-800">{c.customer_name}</p>
-                            <p className="text-[10px] text-slate-500">{c.mobile_number}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </Field>
-                <Field label="Customer Name" required >
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter customer name"
-                    className={`h-7 w-64 rounded-md border text-[11px] outline-none transition px-2 ${
-                      customerId
-                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                        : 'border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
-                    }`}
-                  />
-                </Field>
-                <Field label="Address">
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Delivery/Service Address"
-                    className="h-7 w-72 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-                <Field label="Booking Date" required>
-                  <input
-                    type="date"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    className="h-7 w-36 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-                <Field label="Time" required>
-                  <input
-                    type="time"
-                    value={bookingTime}
-                    onChange={(e) => setBookingTime(e.target.value)}
-                    className="h-7 w-28 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-              </div>
-            </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+                <SectionHeader
+                  title={editId ? 'View/Edit Booking' : 'New Advance Booking'}
+                  description="Register a new customer appointment or order."
+                  icon={<MdEventAvailable className="h-6 w-6 text-teal-600" />}
+                />
 
-            {/* Items Section */}
-            <SectionCard title="Booked Items">
-              <div className="space-y-2">
-                <div className="hidden grid-cols-[180px_1fr_90px_70px_100px_40px] gap-2 px-1 sm:grid">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Category</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Search Item</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Rate</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Qty</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Amount</div>
-                  <div></div>
-                </div>
-
-                {invoiceItems.map((row) => {
-                  const availableItemsForCat = items.filter(i => String(i.item_category_id) === String(row.category_id))
-                  return (
-                    <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_90px_70px_100px_40px] items-center bg-slate-50 p-1.5 sm:bg-transparent rounded-lg border sm:border-0 border-slate-200">
-                      <div className="col-span-2 sm:col-span-1">
-                        <select
-                          value={row.category_id}
-                          onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
-                        >
-                          <option value="">Select Category</option>
-                          {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.category_name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="col-span-2 sm:col-span-1">
-                        <select
-                          value={row.item_id}
-                          onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
-                          disabled={!row.category_id}
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 disabled:bg-slate-100"
-                        >
-                          <option value="">Select Item</option>
-                          {availableItemsForCat.map(i => (
-                            <option key={i.id} value={i.id}>{i.item_name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="col-span-1">
-                        <input
-                          type="number"
-                          value={row.price}
-                          onChange={(e) => updateRow(row.id, 'price', e.target.value)}
-                          placeholder="Rate"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
-                        />
-                      </div>
-
-                      <div className="col-span-1">
-                        <input
-                          type="number"
-                          min="1"
-                          value={row.quantity}
-                          onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
-                          placeholder="Qty"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400"
-                        />
-                      </div>
-
-                      <div className="col-span-1 bg-white border border-slate-200 h-7 flex items-center px-2 rounded-md font-medium text-slate-700 text-[11px]">
-                        PKR {Number(row.total || 0).toFixed(2)}
-                      </div>
-
-                      <div className="col-span-1 flex justify-end sm:justify-center">
-                        <ActionButton label="Delete" tone="rose" onClick={() => removeRow(row.id)} />
-                      </div>
-                    </div>
-                  )
-                })}
-
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={addRow}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
-                  >
-                    <PlusIcon className="h-3.5 w-3.5" /> Add Row
-                  </button>
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* Order Summary */}
-            <SectionCard title="Order Summary">
-              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between p-1.5">
-
-                <div className="flex bg-slate-50 p-3 rounded-xl border border-slate-200 w-full md:w-auto flex-col gap-2 min-w-[260px]">
-                  <div className="flex justify-between items-center text-[12px]">
-                    <span className="text-slate-500">Subtotal:</span>
-                    <span className="font-semibold text-slate-800">PKR {subTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[12px] gap-3">
-                    <span className="text-slate-500 shrink-0">Discount:</span>
-                    <input
-                      type="number"
-                      value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
-                      placeholder="0.00"
-                      className="h-6 w-20 rounded border border-slate-300 px-1.5 text-[11px] text-right outline-none focus:border-teal-400"
-                    />
-                  </div>
-                  <div className="h-px bg-slate-200 my-0.5 w-full" />
-                  <div className="flex justify-between items-center text-[12px]">
-                    <span className="font-bold text-slate-700">Total:</span>
-                    <span className="font-bold text-teal-600">PKR {payable.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col w-full md:w-auto gap-2 flex-1 md:max-w-[350px]">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="flex-1 rounded-xl border border-slate-200 bg-white p-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 px-1">Method</p>
-                      <select
-                        value={paymentMethod}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="h-7 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-slate-700"
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="Online">Online</option>
-                        <option value="Card">Card</option>
-                        <option value="Cash on Delivery">Cash on Delivery</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 bg-white border border-slate-200 p-2 rounded-xl">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 px-1">Given Amount</p>
-                      <input
-                        type="number"
-                        value={givenAmount}
-                        onChange={(e) => setGivenAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="h-7 w-full bg-transparent px-1 text-[12px] font-bold text-slate-800 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {givenAmount > 0 && (
-                    <div className={`p-2 rounded-lg border flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                      <span className={`text-[11px] font-bold ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {isAllPaid ? 'ALL PAID' : 'TO BE PAID'}
-                      </span>
-                      {isAllPaid ? (
-                        <div className="flex items-center gap-1 text-emerald-600 font-bold text-[11px]">
-                          <span>Change: PKR {(givenAmount - payable).toFixed(2)}</span>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+                  <SectionCard title="Customer & Appointment">
+                    <div className="flex flex-wrap gap-4 items-end py-1">
+                      <Field label="Mobile Number" required>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={mobileNumber}
+                            onChange={handleMobileChange}
+                            onFocus={() => { if (mobileNumber.length >= 4) setShowCustomerDropdown(true) }}
+                            onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                            placeholder="Search Mobile"
+                            className="h-8 w-44 rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
+                          />
+                          <MdSearch className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
+                          {showCustomerDropdown && matchingCustomers.length > 0 && (
+                            <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
+                              {matchingCustomers.map(c => (
+                                <li key={c.id} onClick={() => handleSelectCustomer(c)} className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition">
+                                  <p className="text-[12px] font-semibold text-slate-800">{c.customer_name}</p>
+                                  <p className="text-[10px] text-slate-500">{c.mobile_number}</p>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
-                      ) : (
-                        <span className="font-bold text-rose-600 font-mono text-[11px]">PKR {remaining.toFixed(2)}</span>
-                      )}
+                      </Field>
+                      <Field label="Customer Name" required >
+                        <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Full Name" className={`h-8 w-60 rounded-md border text-[12px] outline-none transition px-2.5 ${customerId ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100'}`} />
+                      </Field>
+                      <Field label="Booking Date" required>
+                        <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                      </Field>
+                      <Field label="Time" required>
+                        <input type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} className="h-8 w-28 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                      </Field>
                     </div>
-                  )}
-                </div>
+                  </SectionCard>
 
-              </div>
+                  <SectionCard title="Booked Items">
+                    <div className="space-y-2 mt-1">
+                      <div className="hidden grid-cols-[180px_1fr_100px_80px_120px_50px] gap-3 px-2 sm:grid uppercase tracking-widest text-[10px] font-bold text-slate-400">
+                        <div>Category</div>
+                        <div>Select Item</div>
+                        <div className="text-right">Price</div>
+                        <div className="text-center">Qty</div>
+                        <div className="text-right">Subtotal</div>
+                        <div></div>
+                      </div>
 
-              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting || payable === 0}
-                  className="inline-flex min-w-[140px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  {submitting ? 'Saving...' : editId ? 'Update Booking' : 'Save Booking'}
-                </button>
-              </div>
+                      {invoiceItems.map((row) => {
+                        const availableItems = items.filter(i => String(i.item_category_id) === String(row.category_id))
+                        return (
+                          <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_100px_80px_120px_50px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0">
+                            <div className="col-span-2 sm:col-span-1">
+                              <select value={row.category_id} onChange={(e) => updateRow(row.id, 'category_id', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none">
+                                <option value="">Category</option>
+                                {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
+                              </select>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <select value={row.item_id} onChange={(e) => updateRow(row.id, 'item_id', e.target.value)} disabled={!row.category_id} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none disabled:bg-slate-50">
+                                <option value="">Select Item</option>
+                                {availableItems.map(i => <option key={i.id} value={i.id}>{i.item_name}</option>)}
+                              </select>
+                            </div>
+                            <input type="number" step="0.01" value={row.price} onChange={(e) => updateRow(row.id, 'price', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-right" placeholder="0.00" />
+                            <input type="number" min="1" value={row.quantity} onChange={(e) => updateRow(row.id, 'quantity', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-center" />
+                            <div className="flex items-center justify-end font-bold text-slate-700 text-[12px]">PKR {Number(row.total || 0).toLocaleString()}</div>
+                            <div className="flex justify-center">
+                              <button type="button" onClick={() => removeRow(row.id)} className="text-rose-500 hover:text-rose-700"><MdDeleteOutline className="h-5 w-5"/></button>
+                            </div>
+                          </div>
+                        )
+                      })}
 
-            </SectionCard>
-          </form>
-        </Card>
+                      <div className="pt-2">
+                        <button type="button" onClick={addRow} className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"><MdAdd className="h-4 w-4" /> Add Line</button>
+                      </div>
+                    </div>
+                  </SectionCard>
 
-        {/* Saved Bookings Table */}
-        <Card className="mx-auto max-w-5xl p-3">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <SectionCard title="Payment & Financials">
+                      <div className="space-y-3 py-1">
+                         <div className="flex justify-between items-center text-sm">
+                            <span className="text-slate-500">Subtotal</span>
+                            <span className="font-bold text-slate-800">PKR {subTotal.toLocaleString()}</span>
+                         </div>
+                         <div className="flex items-center gap-3">
+                            <span className="text-slate-500 text-sm flex-1">Discount</span>
+                            <input type="number" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="h-8 w-32 rounded border border-slate-300 text-right px-2 text-[12px] focus:border-teal-400" />
+                         </div>
+                         <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                            <span className="font-bold text-slate-700 text-sm">Payable Amount</span>
+                            <span className="text-xl font-black text-teal-600 font-mono">PKR {payable.toLocaleString()}</span>
+                         </div>
+                      </div>
+                    </SectionCard>
+
+                    <SectionCard title="Advance Deposit">
+                       <div className="space-y-4 py-1">
+                         <div className="flex gap-3">
+                           <div className="flex-1 space-y-1">
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Method</p>
+                             <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 text-[12px] font-bold outline-none focus:border-teal-500 transition">
+                                <option value="Cash">Cash</option>
+                                <option value="Online">Online</option>
+                                <option value="Card">Card</option>
+                                <option value="COD">COD</option>
+                             </select>
+                           </div>
+                           <div className="flex-1 space-y-1">
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Amount Paid</p>
+                             <input type="number" value={givenAmount} onChange={(e) => setGivenAmount(e.target.value)} className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-slate-800 focus:border-emerald-500 focus:bg-white transition outline-none" placeholder="0.00" />
+                           </div>
+                         </div>
+                         {payable > 0 && givenAmount > 0 && (
+                            <div className={`p-3 rounded-xl border-2 flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                               <span className={`text-[11px] font-black uppercase tracking-widest ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>{isAllPaid ? 'FULL DEPOSIT' : 'PARTIAL'}</span>
+                               <span className={`font-mono font-bold text-sm ${isAllPaid ? 'text-emerald-600' : 'text-rose-600'}`}>PKR {isAllPaid ? (givenAmount - payable).toLocaleString() : remaining.toLocaleString()}</span>
+                            </div>
+                         )}
+                       </div>
+                    </SectionCard>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                    <button type="submit" disabled={submitting || payable <= 0} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                       <MdEventAvailable className="h-5 w-5" /> {submitting ? 'Saving...' : editId ? 'Update Booking' : 'Confirm Booking'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bookings List Table */}
+        <Card className="mx-auto max-w-6xl p-0 overflow-hidden">
           <SectionHeader
-            title="Recent Bookings"
-            description="Log of recent booking orders."
+            title="Booking Registry"
+            description="Log of upcoming customer appointments and orders."
+            icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
-              <button
-                type="button"
-                onClick={fetchBookings}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button type="button" onClick={fetchBookings} className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">Refresh Log</button>
+              </div>
             }
           />
 
-          {bookingsRecord.length === 0 ? (
+          {loading ? (
+            <TableState message="Loading booking records..." />
+          ) : bookingsRecord.length === 0 ? (
             <TableState message="No booking records found." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2.5 w-20">Bk ID</th>
-                      <th className="px-3 py-2.5">Customer</th>
-                      <th className="px-3 py-2.5">Date & Time</th>
-                      <th className="px-3 py-2.5 text-center">Method</th>
-                      <th className="px-3 py-2.5 text-right">Total</th>
-                      <th className="px-3 py-2.5 text-center">Status</th>
-                      <th className="px-3 py-2.5 text-right w-24">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {bookingsRecord.map((s, idx) => (
-                      <tr key={s.id || idx} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-medium text-slate-900">#{(s.id || idx).toString().slice(-4)}</td>
-                        <td className="px-3 py-2 text-slate-600 font-medium">
-                          {s.customer_name}
-                          {s.mobile_number && <div className="text-[10px] text-slate-400 font-normal">{s.mobile_number}</div>}
-                        </td>
-                        <td className="px-3 py-2 text-slate-600">
-                          {s.booking_date}
-                          {s.booking_time && <span className="ml-1 text-slate-400 text-[10px]">{s.booking_time}</span>}
-                        </td>
-                        <td className="px-3 py-2 text-center text-slate-600 text-[11px]">{s.payment_method || 'Cash'}</td>
-                        <td className="px-3 py-2 text-right font-bold text-slate-800 text-[12px]">PKR {Number(s.payable || 0).toFixed(2)}</td>
-                        <td className="px-3 py-2 text-center">
-                          <StatusChip 
-                            enabled={s.status === 'Completed' || (Number(s.paid) >= Number(s.payable))} 
-                            label={s.status === 'Completed' ? 'COMPLETED' : s.status === 'Rejected' ? 'REJECTED' : 'PENDING'} 
-                            colorClass={s.status === 'Completed' || (Number(s.paid) >= Number(s.payable)) ? 'bg-emerald-50 text-emerald-700' : s.status === 'Rejected' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'} 
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3">Booking ID</th>
+                    <th className="px-5 py-3">Customer Info</th>
+                    <th className="px-5 py-3">Date & Time</th>
+                    <th className="px-5 py-3 text-right">Payable</th>
+                    <th className="px-5 py-3 text-center">Status</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {bookingsRecord.map((s) => (
+                    <motion.tr key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? 'bg-teal-50/50' : ''}`}>
+                      <td className="px-5 py-4 font-mono text-[11px] font-bold text-slate-400">#BK-{String(s.id).slice(-4)}</td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                           <span className="font-bold text-slate-800 text-[12px]">{s.customer_name}</span>
+                           <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{s.mobile_number || 'No Contact'}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                           <span className="text-[12px] font-semibold text-slate-600">{s.booking_date}</span>
+                           <span className="text-[10px] text-slate-400">{s.booking_time || 'No time set'}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                         <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                         <StatusChip enabled={s.paid >= s.payable} labels={{ on: 'PAID', off: 'DUE' }} />
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                           <button onClick={() => handleEdit(s)} className="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition"><MdOutlineEdit className="h-4 w-4"/></button>
+                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition"><MdDeleteOutline className="h-4 w-4"/></button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

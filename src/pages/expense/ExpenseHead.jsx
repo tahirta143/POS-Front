@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
@@ -43,6 +44,7 @@ export default function ExpenseHeadPage() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   useEffect(() => {
     fetchHeads()
@@ -86,6 +88,7 @@ export default function ExpenseHeadPage() {
 
       toast.success(editId ? 'Expense Head updated successfully.' : 'Expense Head defined successfully.')
       resetForm()
+      setIsFormOpen(false)
       fetchHeads()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Unable to save expense head.')
@@ -112,6 +115,7 @@ export default function ExpenseHeadPage() {
       head: eh.head || '',
       description: eh.description || '',
     })
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -124,77 +128,128 @@ export default function ExpenseHeadPage() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+
   return (
-    <PageShell
-      title="Expense Heads"
-      description="Define distinct expense categories or heads."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
-      <div className="space-y-5">
-        <Card className="mx-auto max-w-4xl border-l-[6px] border-l-teal-500 p-3.5">
-          <SectionHeader
-            title={editId ? 'Edit Expense Head' : 'Create Expense Head'}
-            description="Categorize your operational and fixed costs."
-            icon={<GridIcon className="h-6 w-6" />}
-          />
+    <PageShell>
+      <div className="space-y-4">
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Expense Heads</h1>
+            <p className="text-sm text-slate-500">Define distinct expense categories or heads for financial tracking.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Head
+              </>
+            )}
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <SectionCard color="teal" title="Head Details">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Head Name" required className="sm:col-span-2">
-                  <input
-                    type="text"
-                    value={form.head}
-                    onChange={(e) => updateField('head', e.target.value)}
-                    placeholder="e.g. Office Rent, Utility Bills, Salaries"
-                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-                <Field label="Description" className="sm:col-span-2">
-                  <textarea
-                    rows={2}
-                    value={form.description}
-                    onChange={(e) => updateField('description', e.target.value)}
-                    placeholder="Details about what falls under this expense head"
-                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-              </div>
-            </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-4xl border-l-[6px] border-l-teal-500 p-3.5 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Expense Head' : 'Create Expense Head'}
+                  description="Categorize your operational and fixed costs."
+                  icon={<GridIcon className="h-6 w-6" />}
+                />
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="inline-flex min-w-[120px] items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Clear
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex min-w-[120px] items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting ? 'Saving...' : editId ? 'Update Head' : 'Save Head'}
-              </button>
-            </div>
-          </form>
-        </Card>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <SectionCard color="teal" title="Head Details">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Head Name" required className="sm:col-span-2">
+                        <input
+                          type="text"
+                          value={form.head}
+                          onChange={(e) => updateField('head', e.target.value)}
+                          placeholder="e.g. Office Rent, Utility Bills, Salaries"
+                          className={inputCls}
+                        />
+                      </Field>
+                      <Field label="Description" className="sm:col-span-2">
+                        <textarea
+                          rows={2}
+                          value={form.description}
+                          onChange={(e) => updateField('description', e.target.value)}
+                          placeholder="Details about what falls under this expense head"
+                          className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        />
+                      </Field>
+                    </div>
+                  </SectionCard>
 
-        {/* List Card */}
-        <Card className="mx-auto max-w-4xl">
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm shadow-teal-100"
+                    >
+                      {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* List Card below form */}
+        <Card className="mx-auto max-w-4xl p-0 overflow-hidden">
           <SectionHeader
             title="Registered Expense Heads"
             description={`${expenseHeads.length} categories found`}
             icon={<GridIcon className="h-6 w-6" />}
             action={
-              <button
-                type="button"
-                onClick={fetchHeads}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchHeads}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh Heads
+                </button>
+              </div>
             }
           />
 
@@ -203,34 +258,39 @@ export default function ExpenseHeadPage() {
           ) : expenseHeads.length === 0 ? (
             <TableState message="No expense heads configured." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      <th className="px-4 py-4 w-16">ID</th>
-                      <th className="px-4 py-4 w-1/3">Head Name</th>
-                      <th className="px-4 py-4">Description</th>
-                      <th className="px-4 py-4 text-right w-32">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {expenseHeads.map((eh) => (
-                      <tr key={eh.id} className="text-sm border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-4 py-3.5 text-slate-400">{eh.id}</td>
-                        <td className="px-4 py-3.5 font-medium text-slate-900">{eh.head}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{eh.description || '-'}</td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex justify-end gap-2">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(eh)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(eh.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3 w-16">ID</th>
+                    <th className="px-5 py-3 w-1/3">Head Name</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {expenseHeads.map((eh) => (
+                    <motion.tr 
+                      key={eh.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4 text-slate-400 font-mono text-[11px]">#{eh.id}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">{eh.head}</td>
+                      <td className="px-5 py-4">
+                        <p className="text-[12px] text-slate-600 max-w-sm truncate">{eh.description || '-'}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(eh)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(eh.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

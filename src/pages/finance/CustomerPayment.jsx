@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ActionButton, Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
 import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
 import axiosInstance from '../../services/axiosInstance';
 import { deleteCustomerPayment, getCustomerPayments, saveCustomerPayment, getSalesReturns, updateCustomerPayment } from '../../utils/transactionStore.js';
-
-function PaymentIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
+import { MdAdd, MdRemove, MdPayment, MdRefresh, MdAccountBalanceWallet, MdEvent, MdDescription } from 'react-icons/md';
 
 export default function CustomerPaymentPage() {
   const [customers, setCustomers] = useState([]);
@@ -20,6 +14,7 @@ export default function CustomerPaymentPage() {
   const [formData, setFormData] = useState({ customerId: '', amount: '', date: new Date().toISOString().slice(0, 10), method: 'Cash', remarks: '' });
   const [submitting, setSubmitting] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     fetchPageData();
@@ -37,7 +32,7 @@ export default function CustomerPaymentPage() {
       setSales(Array.isArray(salesData) ? salesData : salesData.data || []);
       setPaymentHistory(getCustomerPayments());
     } catch {
-      toast.error('Failed to load customers.');
+      toast.error('Failed to load dependency data.');
     }
   }
 
@@ -63,7 +58,7 @@ export default function CustomerPaymentPage() {
   }, [customers, paymentHistory, sales]);
 
   const selectedSummary = customerSummaries.find((customer) => String(customer.id) === String(formData.customerId));
-  const recentPayments = useMemo(() => paymentHistory.slice(0, 8), [paymentHistory]);
+  const recentPayments = useMemo(() => paymentHistory.slice(0, 15), [paymentHistory]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,7 +72,7 @@ export default function CustomerPaymentPage() {
       return;
     }
     if (selectedSummary && amount > selectedSummary.outstanding) {
-      toast.error('Payment amount cannot exceed the outstanding amount.');
+      toast.error('Payment amount cannot exceed the outstanding balance.');
       return;
     }
 
@@ -93,10 +88,11 @@ export default function CustomerPaymentPage() {
         toast.success('Payment updated successfully.');
       } else {
         saveCustomerPayment(payload);
-        toast.success('Payment recorded in frontend successfully.');
+        toast.success('Payment recorded successfully.');
       }
       setPaymentHistory(getCustomerPayments());
       resetForm();
+      setIsFormOpen(false);
     } finally {
       setSubmitting(false);
     }
@@ -111,6 +107,7 @@ export default function CustomerPaymentPage() {
       method: payment.method || 'Cash',
       remarks: payment.remarks || '',
     });
+    setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -127,161 +124,218 @@ export default function CustomerPaymentPage() {
   }
 
   return (
-    <PageShell
-      title="Customer Payment"
-      description="Record payments received from customers."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-4xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Customer Payment' : 'Record Customer Payment'}
-            description="Process a new payment received."
-            icon={<PaymentIcon className="h-5 w-5" />}
-            action={editId ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Cancel Edit
-              </button>
-            ) : null}
-          />
-          <div className="mt-4">
-            <FallbackNotice message="Customer payments are being stored in frontend history until the backend customer-payments route is available." />
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+           <div>
+            <h1 className="text-xl font-bold text-slate-900">Customer Payments</h1>
+            <p className="text-sm text-slate-500">Log payments received for outstanding credit invoices.</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <Field label="Customer" required>
-              <select
-                value={formData.customerId}
-                onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none transition focus:border-teal-400"
-              >
-                <option value="">Select Customer</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.customer_name}</option>
-                ))}
-              </select>
-            </Field>
-
-            {selectedSummary && (
-              <div className="rounded-xl border border-teal-100 bg-teal-50/60 px-3 py-2 text-[12px] text-slate-700">
-                Outstanding amount: <span className="font-bold text-teal-700">PKR {selectedSummary.outstanding.toFixed(2)}</span>
-              </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> Collect Payment
+              </>
             )}
+          </button>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Amount" required>
-                <input
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none transition focus:border-teal-400"
-                  placeholder="0.00"
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Collection' : 'New Collection Voucher'}
+                  description="Record a cash or digital receipt from a customer."
+                  icon={<MdPayment className="h-6 w-6 text-teal-600" />}
                 />
-              </Field>
-              <Field label="Payment Date" required>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none transition focus:border-teal-400"
-                />
-              </Field>
-            </div>
+                
+                <div className="mt-2">
+                  <FallbackNotice message="Note: Customer payments are tracked locally until backend API endpoints are deployed." />
+                </div>
 
-            <Field label="Method">
-              <select
-                value={formData.method}
-                onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none transition focus:border-teal-400"
-              >
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="Online">Online Transfer</option>
-                <option value="Cheque">Cheque</option>
-              </select>
-            </Field>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="Target Customer" required>
+                      <select
+                        value={formData.customerId}
+                        onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                        className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] font-semibold outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-50"
+                      >
+                        <option value="">Choose Customer...</option>
+                        {customers.map((c) => (
+                          <option key={c.id} value={c.id}>{c.customer_name}</option>
+                        ))}
+                      </select>
+                    </Field>
 
-            <Field label="Remarks">
-              <textarea
-                value={formData.remarks}
-                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                className="h-16 w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[12px] outline-none transition focus:border-teal-400"
-                placeholder="Optional remarks"
-              />
-            </Field>
+                    {selectedSummary && (
+                      <div className="flex flex-col justify-center rounded-xl border border-teal-100 bg-teal-50/40 px-4 py-2">
+                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">Outstanding Credit</p>
+                        <p className="text-lg font-black text-teal-700 font-mono">PKR {selectedSummary.outstanding.toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="inline-flex min-w-[110px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-[12px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Clear
-              </button>
-              <button
-                type="submit"
-                disabled={submitting || customers.length === 0}
-                className="inline-flex min-w-[120px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50"
-              >
-                {submitting ? 'Processing...' : editId ? 'Update Payment' : 'Record Payment'}
-              </button>
-            </div>
-          </form>
-        </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 pt-4">
+                    <Field label="Amount Received" required>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          className="h-9 w-full rounded-md border border-slate-300 bg-white pl-3 pr-8 text-[12px] font-bold outline-none transition focus:border-teal-400"
+                          placeholder="0.00"
+                        />
+                        <MdAccountBalanceWallet className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </Field>
+                    <Field label="Receipt Date" required>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                          className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] outline-none transition focus:border-teal-400"
+                        />
+                      </div>
+                    </Field>
+                    <Field label="Collection Method">
+                      <select
+                        value={formData.method}
+                        onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                        className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] outline-none transition focus:border-teal-400"
+                      >
+                        <option value="Cash">Physical Cash</option>
+                        <option value="Card">Terminal Card</option>
+                        <option value="Online">Online / Wallet</option>
+                        <option value="Cheque">Physical Cheque</option>
+                      </select>
+                    </Field>
+                  </div>
 
-        <Card className="mx-auto max-w-4xl p-3">
+                  <Field label="Collection Remarks">
+                    <div className="relative">
+                      <textarea
+                        value={formData.remarks}
+                        onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                        className="h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 pl-9 text-[12px] outline-none transition focus:border-teal-400"
+                        placeholder="Invoiced settled, bank reference, or other notes..."
+                      />
+                      <MdDescription className="absolute left-3 top-2.5 text-slate-400" />
+                    </div>
+                  </Field>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[110px] items-center justify-center rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || customers.length === 0}
+                      className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
+                    >
+                      <MdPayment /> {submitting ? 'Processing...' : editId ? 'Update Receipt' : 'Record Receipt'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* History Table */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
-            title="Recent Customer Payments"
-            description="Frontend payment history until backend posting is added."
+            title="Collection Registry"
+            description="Log of recent incoming payments from customers."
+            icon={<MdRefresh className="h-6 w-6 text-teal-600" />}
             action={
-              <button
-                type="button"
-                onClick={() => setPaymentHistory(getCustomerPayments())}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchPageData}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  <MdRefresh className="inline mr-1" /> Refresh Registry
+                </button>
+              </div>
             }
           />
           {recentPayments.length === 0 ? (
-            <TableState message="No customer payments recorded yet." />
+            <TableState message="No collection records found in history." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2.5">Voucher</th>
-                      <th className="px-3 py-2.5">Customer</th>
-                      <th className="px-3 py-2.5">Date</th>
-                      <th className="px-3 py-2.5">Method</th>
-                      <th className="px-3 py-2.5 text-right">Amount</th>
-                      <th className="px-3 py-2.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {recentPayments.map((payment) => (
-                      <tr key={payment.id} className="text-[12px] hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-mono text-slate-500">{payment.id}</td>
-                        <td className="px-3 py-2 font-semibold text-slate-700">{payment.customerName}</td>
-                        <td className="px-3 py-2 text-slate-600">{payment.date}</td>
-                        <td className="px-3 py-2 text-slate-600">{payment.method}</td>
-                        <td className="px-3 py-2 text-right font-bold text-teal-700">PKR {Number(payment.amount).toFixed(2)}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex justify-end gap-2">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(payment)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(payment.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-4">Receipt ID</th>
+                    <th className="px-5 py-4">Customer Account</th>
+                    <th className="px-5 py-4">Date & Method</th>
+                    <th className="px-5 py-4 text-right">Collected Amount</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {recentPayments.map((payment) => (
+                    <motion.tr 
+                      key={payment.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`group transition-colors hover:bg-teal-50/30 ${editId === payment.id ? 'bg-teal-50/50' : ''}`}
+                    >
+                      <td className="px-5 py-4 font-mono text-[11px] text-slate-400">#REC-{payment.id.toUpperCase().slice(0, 8)}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800 text-[13px]">{payment.customerName}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                           <span className="text-[12px] font-medium text-slate-600">{payment.date}</span>
+                           <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{payment.method}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right font-black text-teal-700">PKR {Number(payment.amount).toLocaleString()}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2 text-right">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(payment)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(payment.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

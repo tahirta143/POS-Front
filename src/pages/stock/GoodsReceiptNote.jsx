@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ActionButton, Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
 import axiosInstance from '../../services/axiosInstance';
+import { MdAdd, MdRemove, MdRefresh, MdReceipt, MdAssignmentTurnedIn, MdHistory, MdInventory, MdSubtitles } from 'react-icons/md';
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -10,10 +12,10 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
-      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-100/50">
+      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
+        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
       </div>
       {children}
     </div>
@@ -35,6 +37,7 @@ export default function GoodsReceiptNotePage() {
   const [remarks, setRemarks] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     fetchPurchaseOrders();
@@ -44,11 +47,11 @@ export default function GoodsReceiptNotePage() {
   async function fetchPurchaseOrders() {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/purchases?status=pending_receipt'); // Assuming a status filter for pending GRN
+      const response = await axiosInstance.get('/purchases?status=pending_receipt');
       const data = response.data;
       setPurchaseOrders(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
-      toast.error('Failed to load purchase orders.');
+      toast.error('Failed to load pending purchase orders.');
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ export default function GoodsReceiptNotePage() {
 
   const handlePOSelection = (e) => {
     const poId = e.target.value;
-    const po = purchaseOrders.find((p) => p.id === poId);
+    const po = purchaseOrders.find((p) => String(p.id) === String(poId));
     setSelectedPO(po);
   };
 
@@ -69,17 +72,15 @@ export default function GoodsReceiptNotePage() {
 
     setSubmitting(true);
     try {
-      // This endpoint confirms receipt of items for the selected PO
       await axiosInstance.post(`/purchases/receipts`, {
         purchaseOrderId: selectedPO.id,
         grnDate,
         remarks,
       });
       toast.success('Goods Receipt Note recorded successfully!');
-      setSelectedPO(null);
-      setRemarks('');
-      setGrnDate(new Date().toISOString().slice(0, 10));
-      fetchPurchaseOrders(); // Refresh pending POs
+      resetForm();
+      setIsFormOpen(false);
+      fetchPurchaseOrders();
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to record GRN.');
     } finally {
@@ -87,123 +88,185 @@ export default function GoodsReceiptNotePage() {
     }
   };
 
+  function resetForm() {
+    setSelectedPO(null);
+    setRemarks('');
+    setGrnDate(new Date().toISOString().slice(0, 10));
+  }
+
   return (
-    <PageShell
-      title="Goods Receipt Note"
-      description="Acknowledge and confirm received goods from suppliers."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title="Create Goods Receipt Note"
-            description="Record incoming inventory against a Purchase Order."
-            icon={<ReceiptIcon className="h-5 w-5" />}
-          />
-
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <SectionCard title="Receipt Details">
-              <div className="flex flex-wrap gap-3 items-end">
-                <Field label="Purchase Order" required>
-                  <select
-                    value={selectedPO?.id || ''}
-                    onChange={handlePOSelection}
-                    className="h-7 w-56 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    disabled={loading}
-                  >
-                    <option value="">Select PO (GRN No)</option>
-                    {purchaseOrders.map((po) => (
-                      <option key={po.id} value={po.id}>
-                        {po.grn_no} - {po.supplier_name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="GRN Date" required>
-                  <input
-                    type="date"
-                    value={grnDate}
-                    onChange={(e) => setGrnDate(e.target.value)}
-                    className="h-7 w-32 rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    required
-                  />
-                </Field>
-                <Field label="Remarks">
-                  <input
-                    type="text"
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="Optional remarks"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-              </div>
-            </SectionCard>
-
-            {selectedPO && (
-              <SectionCard title="Purchase Order Items">
-                <div className="overflow-hidden rounded-xl border border-slate-100">
-                  <div className="overflow-x-auto w-full">
-                    <table className="min-w-full divide-y divide-slate-100 text-left">
-                      <thead className="bg-slate-50">
-                        <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                          <th className="px-3 py-2.5">Item Name</th>
-                          <th className="px-3 py-2.5">Category</th>
-                          <th className="px-3 py-2.5 text-right">Ordered Qty</th>
-                          <th className="px-3 py-2.5 text-right">Price</th>
-                          <th className="px-3 py-2.5 text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white">
-                        {selectedPO.items.map((item, idx) => (
-                          <tr key={idx} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
-                            <td className="px-3 py-2 font-medium text-slate-900">{item.item_name}</td>
-                            <td className="px-3 py-2 text-slate-600">{item.category_name}</td>
-                            <td className="px-3 py-2 text-right text-slate-600">{item.quantity}</td>
-                            <td className="px-3 py-2 text-right font-bold text-slate-800">PKR {Number(item.purchase_price).toFixed(2)}</td>
-                            <td className="px-3 py-2 text-right font-bold text-slate-800">PKR {Number(item.total).toFixed(2)}</td>
-                          </tr>
-                        ))}
-                        <tr className="bg-slate-50/50 font-semibold border-t border-slate-200">
-                          <td colSpan="4" className="px-3 py-2 text-right text-[11px] uppercase text-slate-600">Total Payable</td>
-                          <td className="px-3 py-2 text-right text-teal-600 font-bold text-[13px]">PKR {Number(selectedPO.payable).toFixed(2)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </SectionCard>
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+           <div>
+            <h1 className="text-xl font-bold text-slate-900">Goods Receipt Note (GRN)</h1>
+            <p className="text-sm text-slate-500">Acknowledge arrivals and update stock levels against orders.</p>
+          </div>
+          <button
+            onClick={() => {
+              setIsFormOpen(!isFormOpen)
+              if (!isFormOpen) resetForm()
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> Initiate GRN
+              </>
             )}
+          </button>
+        </div>
 
-            <div className="flex justify-end pt-3">
-              <button
-                type="submit"
-                disabled={submitting || !selectedPO}
-                className="inline-flex min-w-[150px] items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2 text-[12px] font-bold text-white shadow-lg shadow-teal-400 hover:bg-teal-700 transition disabled:opacity-50 disabled:shadow-none"
-              >
-                {submitting ? 'Confirming...' : 'Confirm Goods Receipt'}
-              </button>
-            </div>
-          </form>
-        </Card>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+                <SectionHeader
+                  title="Inventory Acceptance"
+                  description="Validate order accuracy and condition of received supplies."
+                  icon={<MdAssignmentTurnedIn className="h-6 w-6 text-teal-600" />}
+                />
 
-        {/* Recent GRNs Table (optional, can be similar to PurchasePage recent purchases) */}
-        <Card className="mx-auto max-w-5xl p-3">
+                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                  <SectionCard title="Acceptance Protocol">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                       <Field label="Target Purchase Order" required>
+                          <div className="relative">
+                            <select
+                              value={selectedPO?.id || ''}
+                              onChange={handlePOSelection}
+                              className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 focus:ring-4 focus:ring-teal-50 outline-none transition"
+                              disabled={loading}
+                            >
+                              <option value="">Select Pending Order...</option>
+                              {purchaseOrders.map((po) => (
+                                <option key={po.id} value={po.id}>
+                                  {po.grn_no || po.invoice_no || `PO-${po.id}`} — {po.supplier_name}
+                                </option>
+                              ))}
+                            </select>
+                            <MdReceipt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          </div>
+                       </Field>
+                       <Field label="Acceptance Date" required>
+                          <input type="date" value={grnDate} onChange={(e) => setGrnDate(e.target.value)} className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 outline-none transition" />
+                       </Field>
+                       <Field label="Condition / Remarks">
+                          <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Damaged items, batch notes..." className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-teal-400 transition" />
+                       </Field>
+                    </div>
+                  </SectionCard>
+
+                  {selectedPO && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                       <SectionCard title="Itemized Orders for Verification">
+                         <div className="rounded-2xl border border-slate-100 overflow-hidden">
+                           <table className="w-full text-left text-[12px]">
+                             <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                               <tr>
+                                 <th className="px-4 py-3">Catalog Item</th>
+                                 <th className="px-4 py-3">Category</th>
+                                 <th className="px-4 py-3 text-right">Inward Qty</th>
+                                 <th className="px-4 py-3 text-right">Acq. Rate</th>
+                                 <th className="px-4 py-3 text-right">Line Total</th>
+                               </tr>
+                             </thead>
+                             <tbody className="divide-y divide-slate-50 bg-white">
+                               {selectedPO.items.map((item, idx) => (
+                                 <tr key={idx} className="hover:bg-teal-50/20 transition-colors">
+                                   <td className="px-4 py-3 font-bold text-slate-800">{item.item_name}</td>
+                                   <td className="px-4 py-3 font-medium text-slate-500 uppercase tracking-tighter text-[10px]">{item.category_name}</td>
+                                   <td className="px-4 py-3 text-right font-black text-slate-700">{item.quantity}</td>
+                                   <td className="px-4 py-3 text-right font-mono text-slate-500">PKR {Number(item.purchase_price).toLocaleString()}</td>
+                                   <td className="px-4 py-3 text-right font-black text-teal-700">PKR {Number(item.total).toLocaleString()}</td>
+                                 </tr>
+                               ))}
+                               <tr className="bg-slate-50/50">
+                                 <td colSpan="4" className="px-4 py-4 text-right text-[11px] font-bold uppercase text-slate-500">Grand Total Valuation</td>
+                                 <td className="px-4 py-4 text-right font-black text-teal-700 text-base font-mono">PKR {Number(selectedPO.payable).toLocaleString()}</td>
+                               </tr>
+                             </tbody>
+                           </table>
+                         </div>
+                       </SectionCard>
+                    </motion.div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                    <button type="submit" disabled={submitting || !selectedPO} className="inline-flex min-w-[200px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg focus:ring-4 focus:ring-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                       <MdInventory className="h-5 w-5" /> {submitting ? 'Updating Stock...' : 'Confirm Goods Receipt'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* History / Pending Table */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
-            title="Recent Goods Receipts"
-            description="Log of recent goods receipts."
-            icon={<ReceiptIcon className="h-5 w-5" />}
+            title="Pending Receipt Verification"
+            description="Acquisitions awaiting physical verification and stock entry."
+            icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
-              <button
-                type="button"
-                onClick={fetchPurchaseOrders} // Or a dedicated fetchGRNs function
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button type="button" onClick={fetchPurchaseOrders} className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition"><MdRefresh className="inline mr-1" /> Refresh Orders</button>
+              </div>
             }
           />
-          <TableState message="No recent goods receipts found." />
+          {loading ? (
+            <TableState message="Syncing with procurement database..." />
+          ) : purchaseOrders.length === 0 ? (
+            <TableState message="No pending goods receipts found." />
+          ) : (
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-4">Reference</th>
+                    <th className="px-5 py-4">Sourcing Supplier</th>
+                    <th className="px-5 py-4">Date Ordered</th>
+                    <th className="px-5 py-4 text-right">Items</th>
+                    <th className="px-4 py-4 text-right">Valuation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {purchaseOrders.map((po) => (
+                    <motion.tr key={po.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="group transition-colors hover:bg-teal-50/30">
+                      <td className="px-5 py-4">
+                         <div className="flex flex-col">
+                            <span className="font-bold text-slate-800 text-[12px]">{po.grn_no || po.invoice_no || `PO-${po.id}`}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">ID: {po.id}</span>
+                         </div>
+                      </td>
+                      <td className="px-5 py-4 font-bold text-slate-800 text-[13px]">{po.supplier_name}</td>
+                      <td className="px-5 py-4 text-[12px] text-slate-500">{new Date(po.created_at || Date.now()).toLocaleDateString()}</td>
+                      <td className="px-5 py-4 text-right font-black text-slate-700">{po.items?.length || 0}</td>
+                      <td className="px-4 py-4 text-right font-black text-teal-700">PKR {Number(po.payable || 0).toLocaleString()}</td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
       </div>
     </PageShell>

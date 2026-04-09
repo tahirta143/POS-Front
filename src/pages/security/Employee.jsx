@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Card, Field, PageShell, SectionHeader,
   StatusAlert, TableState, ActionButton
@@ -48,8 +49,9 @@ export default function EmployeePage() {
   const [editId, setEditId]           = useState(null)
   const [error, setError]             = useState('')
   const [success, setSuccess]         = useState('')
+  const [isFormOpen, setIsFormOpen]   = useState(false)
 
-  // ── On mount: fetch employees + dropdowns ──────────────────────────────────
+  // On mount: fetch employees + dropdowns
   useEffect(() => {
     fetchEmployees()
     fetchDropdowns()
@@ -110,6 +112,7 @@ export default function EmployeePage() {
 
       setSuccess(editId ? 'Employee updated successfully.' : 'Employee created successfully.')
       resetForm()
+      setIsFormOpen(false)
       fetchEmployees()
     } catch (err) {
       setError(err?.response?.data?.message || 'Unable to save employee.')
@@ -141,6 +144,7 @@ export default function EmployeePage() {
     })
     setError('')
     setSuccess('')
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -158,157 +162,196 @@ export default function EmployeePage() {
   const selectCls = `${inputCls} appearance-none cursor-pointer`
 
   return (
-    <PageShell
-      title="Employee Management"
-      description="Register and manage organization staff members"
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
-      <div className="space-y-5">
-        <button
-          type="button"
-          onClick={() => navigate('/security')}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
-        >
-          <MdArrowBack /> Back to Overview
-        </button>
-
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3.5">
-          <SectionHeader
-            title={editId ? 'Edit Employee' : 'Add New Employee'}
-            description="Register a new staff member to the organization."
-            icon={<MdPeople className="h-6 w-6" />}
-            action={editId && (
-              <button type="button" onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                Cancel Edit
-              </button>
+    <PageShell>
+      <div className="space-y-4">
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+             <button
+              onClick={() => navigate('/security')}
+              className="group flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+            >
+              <MdArrowBack className="h-5 w-5 transition group-hover:-translate-x-0.5" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Employee Management</h1>
+              <p className="text-sm text-slate-500">Register and manage organization staff members</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Employee
+              </>
             )}
-          />
+          </button>
+        </div>
 
-          <StatusAlert type="error"   message={error}   />
-          <StatusAlert type="success" message={success} />
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Employee Identity' : 'New Employee Onboarding'}
+                  description="Fill in the staff personal and placement details."
+                  icon={<MdPeople className="h-6 w-6" />}
+                />
 
-          <form onSubmit={handleSubmit} className="space-y-3 mt-2">
-            <div className="grid gap-3 lg:grid-cols-[1fr_minmax(0,1fr)]">
+                <StatusAlert type="error"   message={error}   />
+                <StatusAlert type="success" message={success} />
 
-              {/* ── Left: Identity ── */}
-              <SectionCard color="teal" title="Employee Identity">
-                <div className="grid gap-4">
-                  {/* Auto-generated code — read only */}
-                  <Field label="Employee #Code">
-                    <input
-                      type="text"
-                      disabled
-                      value={editId ? `EMP-ID-${editId}` : 'Auto Generated'}
-                      className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-400 cursor-not-allowed"
-                    />
-                  </Field>
-
-                  <Field label="Employee Name" required>
-                    <input
-                      type="text"
-                      value={form.employeeName}
-                      onChange={e => updateField('employeeName', e.target.value)}
-                      placeholder="Full name"
-                      className={inputCls}
-                    />
-                  </Field>
-
-                  <Field label="Email Address" required>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={e => updateField('email', e.target.value)}
-                      placeholder="employee@company.com"
-                      className={inputCls}
-                    />
-                  </Field>
-                </div>
-              </SectionCard>
-
-              {/* ── Right: Assignment + Actions ── */}
-              <div className="flex flex-col gap-3">
-                <SectionCard color="emerald" title="Assignment">
-                  <div className="grid gap-4">
-
-                    <Field label="Company">
-                      <div className="relative">
-                        <select
-                          value={form.companyId}
-                          onChange={e => updateField('companyId', e.target.value)}
-                          className={selectCls}
-                        >
-                          <option value="">Select Company</option>
-                          {companies.map(c => (
-                            <option key={c.id} value={c.id}>{c.company_name}</option>
-                          ))}
-                        </select>
-                        <MdBusiness className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <SectionCard color="teal" title="Identity Details">
+                      <div className="grid gap-3">
+                        <Field label="Employee #Code">
+                           <input
+                             type="text"
+                             disabled
+                             value={editId ? `EMP-ID-${editId}` : 'Auto Generated'}
+                             className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-400 cursor-not-allowed"
+                           />
+                        </Field>
+                        <Field label="Employee Name" required>
+                          <input
+                            type="text"
+                            value={form.employeeName}
+                            onChange={e => updateField('employeeName', e.target.value)}
+                            placeholder="Full name"
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Email Address" required>
+                          <input
+                            type="email"
+                            value={form.email}
+                            onChange={e => updateField('email', e.target.value)}
+                            placeholder="employee@company.com"
+                            className={inputCls}
+                          />
+                        </Field>
                       </div>
-                    </Field>
+                    </SectionCard>
 
-                    <Field label="Department">
-                      <div className="relative">
-                        <select
-                          value={form.departmentId}
-                          onChange={e => updateField('departmentId', e.target.value)}
-                          className={selectCls}
-                        >
-                          <option value="">Select Department</option>
-                          {departments.map(d => (
-                            <option key={d.id} value={d.id}>{d.department_name}</option>
-                          ))}
-                        </select>
-                        <MdApartment className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+                    <SectionCard color="emerald" title="Assignment & Placement">
+                      <div className="grid gap-3">
+                        <Field label="Company">
+                          <div className="relative">
+                            <select
+                              value={form.companyId}
+                              onChange={e => updateField('companyId', e.target.value)}
+                              className={selectCls}
+                            >
+                              <option value="">Select Company</option>
+                              {companies.map(c => (
+                                <option key={c.id} value={c.id}>{c.company_name}</option>
+                              ))}
+                            </select>
+                            <MdBusiness className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+                          </div>
+                        </Field>
+                        <Field label="Department">
+                          <div className="relative">
+                            <select
+                              value={form.departmentId}
+                              onChange={e => updateField('departmentId', e.target.value)}
+                              className={selectCls}
+                            >
+                              <option value="">Select Department</option>
+                              {departments.map(d => (
+                                <option key={d.id} value={d.id}>{d.department_name}</option>
+                              ))}
+                            </select>
+                            <MdApartment className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+                          </div>
+                        </Field>
+                        <Field label="Designation">
+                          <div className="relative">
+                            <select
+                              value={form.designationId}
+                              onChange={e => updateField('designationId', e.target.value)}
+                              className={selectCls}
+                            >
+                              <option value="">Select Designation</option>
+                              {designations.map(d => (
+                                <option key={d.id} value={d.id}>{d.designation_name}</option>
+                              ))}
+                            </select>
+                            <MdBadge className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+                          </div>
+                        </Field>
                       </div>
-                    </Field>
-
-                    <Field label="Designation">
-                      <div className="relative">
-                        <select
-                          value={form.designationId}
-                          onChange={e => updateField('designationId', e.target.value)}
-                          className={selectCls}
-                        >
-                          <option value="">Select Designation</option>
-                          {designations.map(d => (
-                            <option key={d.id} value={d.id}>{d.designation_name}</option>
-                          ))}
-                        </select>
-                        <MdBadge className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
-                      </div>
-                    </Field>
+                    </SectionCard>
                   </div>
-                </SectionCard>
 
-                <SectionCard color="cyan" title="Actions">
-                  <div className="flex justify-center gap-2 pt-1">
-                    <button type="button" onClick={resetForm}
-                      className="inline-flex min-w-[120px] items-center justify-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                      Clear
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Cancel
                     </button>
-                    <button type="submit" disabled={submitting}
-                      className="inline-flex min-w-[140px] items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="inline-flex min-w-[140px] items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 shadow-sm shadow-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
                       {submitting ? 'Saving...' : editId ? 'Update Employee' : 'Save Employee'}
                     </button>
                   </div>
-                </SectionCard>
-              </div>
-            </div>
-          </form>
-        </Card>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* ── Table ── */}
-        <Card className="mx-auto max-w-5xl">
+        {/* Directory Table */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Employee Directory"
             description={`${employees.length} registered employees`}
             icon={<MdPeople className="h-6 w-6" />}
             action={
-              <button type="button" onClick={fetchEmployees}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchEmployees}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh Directory
+                </button>
+              </div>
             }
           />
 
@@ -317,45 +360,55 @@ export default function EmployeePage() {
           ) : employees.length === 0 ? (
             <TableState message="No employees registered yet." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      <th className="px-4 py-4">Code</th>
-                      <th className="px-4 py-4">Name</th>
-                      <th className="px-4 py-4">Email</th>
-                      <th className="px-4 py-4">Company</th>
-                      <th className="px-4 py-4">Department</th>
-                      <th className="px-4 py-4">Designation</th>
-                      <th className="px-4 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {employees.map(emp => (
-                      <tr key={emp.id}
-                        className={`text-sm transition hover:bg-slate-50/50 ${editId === emp.id ? 'bg-teal-50/40' : ''}`}>
-                        <td className="px-4 py-3.5">
-                          <span className="font-mono text-[11px] font-semibold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-md">
-                            {emp.employee_code}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 font-medium text-slate-900">{emp.employee_name}</td>
-                        <td className="px-4 py-3.5 text-slate-500">{emp.email}</td>
-                        <td className="px-4 py-3.5 text-slate-500">{emp.company_name  || '—'}</td>
-                        <td className="px-4 py-3.5 text-slate-500">{emp.department_name  || '—'}</td>
-                        <td className="px-4 py-3.5 text-slate-500">{emp.designation_name || '—'}</td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex justify-end gap-2">
-                            <ActionButton label="Edit"   tone="teal" onClick={() => handleEdit(emp)}      />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(emp.id)} />
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-4">Code</th>
+                    <th className="px-5 py-4">Staff Details</th>
+                    <th className="px-5 py-4">Placement</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {employees.map(emp => (
+                    <motion.tr 
+                      key={emp.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`group transition-colors hover:bg-teal-50/30 ${editId === emp.id ? 'bg-teal-50/50' : ''}`}
+                    >
+                      <td className="px-5 py-4">
+                        <span className="font-mono text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md">
+                          {emp.employee_code}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800">{emp.employee_name}</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{emp.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[12px] font-semibold text-slate-600">{emp.designation_name || 'No Designation'}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-slate-400">{emp.department_name || '-'}</span>
+                            <span className="text-[10px] text-slate-300">•</span>
+                            <span className="text-[10px] text-slate-400">{emp.company_name || '-'}</span>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(emp)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(emp.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

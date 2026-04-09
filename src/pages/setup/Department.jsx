@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance.js'
 import { MdApartment } from 'react-icons/md'
@@ -33,6 +34,7 @@ export default function Department() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   useEffect(() => { fetchDepartments() }, [])
 
@@ -71,6 +73,7 @@ export default function Department() {
         toast.success('Department created successfully.')
       }
       resetForm()
+      setIsFormOpen(false)
       fetchDepartments()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Unable to save department.')
@@ -94,6 +97,7 @@ export default function Department() {
   function handleEdit(dept) {
     setEditId(dept.id)
     setForm({ departmentName: dept.department_name || '', description: dept.description || '' })
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -106,109 +110,156 @@ export default function Department() {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  const inputCls = "h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
 
   return (
-    <PageShell
-      title="Department Management"
-      description="Create and manage company departments"
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Department' : 'Add Department'}
-            description="Manage department records."
-            icon={<MdApartment className="h-5 w-5" />}
-            action={editId && (
-              <button type="button" onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">
-                Cancel Edit
-              </button>
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Departments</h1>
+            <p className="text-sm text-slate-500">Create and manage company departments for organization.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Department
+              </>
             )}
-          />
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="grid gap-3 lg:grid-cols-[1fr_minmax(0,1fr)]">
-              <SectionCard color="teal" title="Department Details">
-                <div className="grid gap-3">
-                  <Field label="Department Name" required>
-                    <input type="text" value={form.departmentName}
-                      onChange={e => updateField('departmentName', e.target.value)}
-                      placeholder="e.g. Human Resources"
-                      className={inputCls} />
-                  </Field>
-                  <Field label="Description">
-                    <textarea rows={2} value={form.description}
-                      onChange={e => updateField('description', e.target.value)}
-                      placeholder="Brief description of this department"
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
-                  </Field>
-                </div>
-              </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Department' : 'Add Department'}
+                  description="Manage department records."
+                  icon={<MdApartment className="h-5 w-5" />}
+                />
 
-              <SectionCard color="cyan" title="Actions">
-                <div className="flex justify-center gap-2 pt-1">
-                  <button type="button" onClick={resetForm}
-                    className="inline-flex min-w-[100px] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">
-                    Clear
-                  </button>
-                  <button type="submit" disabled={submitting}
-                    className="inline-flex min-w-[110px] items-center justify-center rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60">
-                    {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
-                  </button>
-                </div>
-              </SectionCard>
-            </div>
-          </form>
-        </Card>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <SectionCard color="teal" title="Department Details">
+                      <div className="grid gap-3">
+                        <Field label="Department Name" required>
+                          <input type="text" value={form.departmentName}
+                            onChange={e => updateField('departmentName', e.target.value)}
+                            placeholder="e.g. Human Resources"
+                            className={inputCls} />
+                        </Field>
+                        <Field label="Description">
+                          <textarea rows={2} value={form.description}
+                            onChange={e => updateField('description', e.target.value)}
+                            placeholder="Brief description of this department"
+                            className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                        </Field>
+                      </div>
+                    </SectionCard>
 
-        <Card className="mx-auto max-w-5xl p-3">
+                    <div className="flex flex-col justify-end gap-3 pb-2">
+                       <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => {
+                            resetForm()
+                            setIsFormOpen(false)
+                          }}
+                            className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+                            Cancel
+                          </button>
+                          <button type="submit" disabled={submitting}
+                            className="inline-flex min-w-[110px] items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm shadow-teal-100">
+                            {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
+                          </button>
+                       </div>
+                    </div>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* List Card below form */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Department Registry"
             description={`${departments.length} departments`}
             icon={<MdApartment className="h-5 w-5" />}
             action={
-              <button type="button" onClick={fetchDepartments}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">
-                Refresh
-              </button>
+              <div className="p-4">
+                <button type="button" onClick={fetchDepartments}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">
+                  Refresh
+                </button>
+              </div>
             }
           />
           {loading ? <TableState message="Loading departments..." /> :
            departments.length === 0 ? <TableState message="No departments found yet." /> : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2 w-12">#</th>
-                      <th className="px-3 py-2">Department Name</th>
-                      <th className="px-3 py-2">Description</th>
-                      <th className="px-3 py-2 text-right w-32">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {departments.map((d, i) => (
-                      <tr key={d.id} className={`text-[11px] transition hover:bg-slate-50/50 ${editId === d.id ? 'bg-teal-50/40' : ''}`}>
-                        <td className="px-3 py-2 text-slate-400">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium text-slate-900">{d.department_name}</td>
-                        <td className="px-3 py-2 text-slate-500 max-w-xs truncate text-[10px]">{d.description || '—'}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(d)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(d.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3 w-12">#</th>
+                    <th className="px-5 py-3">Department Name</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {departments.map((d, i) => (
+                    <motion.tr 
+                      key={d.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4 text-[11px] text-slate-400 font-mono">{i + 1}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">{d.department_name}</td>
+                      <td className="px-5 py-4 text-slate-500 text-[11px] max-w-xs truncate">{d.description || '—'}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(d)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(d.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+           )}
         </Card>
       </div>
     </PageShell>
   )
-}
+}

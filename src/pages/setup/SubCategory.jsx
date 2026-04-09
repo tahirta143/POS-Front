@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, Toggle, TableState, ActionButton, StatusChip } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
@@ -14,6 +15,7 @@ export default function SubCategory() {
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [editId, setEditId] = useState(null)
+    const [isFormOpen, setIsFormOpen] = useState(false)
 
     useEffect(() => {
         fetchCategories()
@@ -79,6 +81,7 @@ export default function SubCategory() {
             }
 
             resetForm()
+            setIsFormOpen(false)
             fetchSubcategories()
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Failed to save subcategory.')
@@ -106,6 +109,7 @@ export default function SubCategory() {
             subcategory_name: subcategory.sub_category_name || '',
             is_enable: subcategory.is_enable === 1 || subcategory.is_enable === true,
         })
+        setIsFormOpen(true)
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -123,92 +127,142 @@ export default function SubCategory() {
     }
 
     return (
-        <PageShell
-            title="Subcategory setup"
-            description="Link each subcategory to a parent category so inventory stays organized and counter staff can find products quickly."
-            accent="from-sky-700 via-cyan-700 to-teal-600"
-        >
+        <PageShell>
             <div className="space-y-4">
-                <Card className="border-l-[6px] border-l-teal-500 p-3">
-                    <SectionHeader
-                        title={editId ? 'Edit subcategory' : 'New subcategory'}
-                        description="Choose a category, then enter the subcategory name."
-                        icon={<SubCategoryIcon className="h-5 w-5" />}
-                    />
+                {/* Top Action Bar */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-900">Subcategory Setup</h1>
+                        <p className="text-sm text-slate-500">Link each subcategory to a parent category for organized inventory.</p>
+                    </div>
+                    <button
+                        onClick={() => {
+                            if (isFormOpen && editId) {
+                                resetForm()
+                            } else {
+                                setIsFormOpen(!isFormOpen)
+                                if (!isFormOpen) resetForm()
+                            }
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                            isFormOpen 
+                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+                        }`}
+                    >
+                        {isFormOpen ? (
+                            <>
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                Close Form
+                            </>
+                        ) : (
+                            <>
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                                Add New Subcategory
+                            </>
+                        )}
+                    </button>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                        <div className="grid gap-2 md:grid-cols-[200px_minmax(0,300px)]">
-                            <Field label="Parent category" required hint="Only enabled categories are shown in this list.">
-                                <div className="relative">
-                                    <select
-                                        value={form.category_id}
-                                        onChange={(event) => setForm((current) => ({ ...current, category_id: event.target.value }))}
-                                        className="h-7 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[11px] text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                                    >
-                                        <option value="">Select a category</option>
-                                        {enabledCategories.map((category) => (
-                                            <option key={category.id} value={category.id}>
-                                                {category.category_name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
-                                        <ChevronDownIcon className="h-3.5 w-3.5" />
-                                    </div>
-                                </div>
-                            </Field>
-
-                            <Field label="Subcategory name" required hint={form.category_id ? `Selected: ${getCategoryName(form.category_id)}` : 'Select a category to continue.'}>
-                                <input
-                                    type="text"
-                                    value={form.subcategory_name}
-                                    onChange={(event) => setForm((current) => ({ ...current, subcategory_name: event.target.value }))}
-                                    disabled={!form.category_id}
-                                    placeholder="Enter subcategory name"
-                                    className="h-7 w-full max-w-sm rounded-md border border-slate-300 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                {/* Collapsible Form */}
+                <AnimatePresence>
+                    {isFormOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            className="overflow-hidden"
+                        >
+                            <Card className="border-l-[6px] border-l-teal-500 p-3 mb-6">
+                                <SectionHeader
+                                    title={editId ? 'Edit Subcategory' : 'New Subcategory'}
+                                    description="Choose a category, then enter the subcategory name."
+                                    icon={<SubCategoryIcon className="h-5 w-5" />}
                                 />
-                            </Field>
-                        </div>
 
-                        <Toggle
-                            enabled={form.is_enable}
-                            onChange={(value) => setForm((current) => ({ ...current, is_enable: value }))}
-                            label="Enable subcategory"
-                            description="Use the toggle when the subcategory should appear in active POS selection lists."
-                        />
+                                <form onSubmit={handleSubmit} className="space-y-3">
+                                    <div className="grid gap-2 md:grid-cols-[200px_minmax(0,300px)]">
+                                        <Field label="Parent category" required hint="Only enabled categories are shown.">
+                                            <div className="relative">
+                                                <select
+                                                    value={form.category_id}
+                                                    onChange={(event) => setForm((current) => ({ ...current, category_id: event.target.value }))}
+                                                    className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-7 text-[12px] text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                                                >
+                                                    <option value="">Select a category</option>
+                                                    {enabledCategories.map((category) => (
+                                                        <option key={category.id} value={category.id}>
+                                                            {category.category_name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+                                                    <ChevronDownIcon className="h-3.5 w-3.5" />
+                                                </div>
+                                            </div>
+                                        </Field>
 
-                        <div className="flex flex-wrap justify-end gap-2 pt-1">
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {submitting ? 'Saving...' : editId ? 'Update' : 'Add'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={resetForm}
-                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-                            >
-                                Clear
-                            </button>
-                        </div>
-                    </form>
-                </Card>
+                                        <Field label="Subcategory name" required hint={form.category_id ? `Selected: ${getCategoryName(form.category_id)}` : 'Select a category to continue.'}>
+                                            <input
+                                                type="text"
+                                                value={form.subcategory_name}
+                                                onChange={(event) => setForm((current) => ({ ...current, subcategory_name: event.target.value }))}
+                                                disabled={!form.category_id}
+                                                placeholder="Enter subcategory name"
+                                                className="h-8 w-full max-w-sm rounded-md border border-slate-300 bg-white px-2.5 text-[12px] text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                                            />
+                                        </Field>
+                                    </div>
 
-                <Card className="p-3">
+                                    <Toggle
+                                        enabled={form.is_enable}
+                                        onChange={(value) => setForm((current) => ({ ...current, is_enable: value }))}
+                                        label="Enable subcategory"
+                                        description="Use the toggle when the subcategory should appear in active selection lists."
+                                    />
+
+                                    <div className="flex flex-wrap justify-end gap-2 pt-1">
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {submitting ? 'Saving...' : editId ? 'Update' : 'Add'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                resetForm()
+                                                setIsFormOpen(false)
+                                            }}
+                                            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </Card>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* List card */}
+                <Card className="p-0 overflow-hidden">
                     <SectionHeader
                         title="Subcategory list"
                         description={`${subcategories.length} subcategories linked to categories`}
                         icon={<ListIcon className="h-5 w-5" />}
                         action={
-                            <button
-                                type="button"
-                                onClick={fetchSubcategories}
-                                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-                            >
-                                Refresh
-                            </button>
+                            <div className="p-4">
+                                <button
+                                    type="button"
+                                    onClick={fetchSubcategories}
+                                    className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                                >
+                                    Refresh
+                                </button>
+                            </div>
                         }
                     />
 
@@ -217,42 +271,45 @@ export default function SubCategory() {
                     ) : subcategories.length === 0 ? (
                         <TableState message="No subcategories found yet." />
                     ) : (
-                        <div className="overflow-hidden rounded-2xl border border-slate-100">
-                            <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto">
-                                <table className="min-w-full divide-y divide-slate-100">
-                                    <thead className="bg-slate-50">
-                                        <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                                            <th className="px-3 py-2 w-12">#</th>
-                                            <th className="px-3 py-2">Subcategory</th>
-                                            <th className="px-3 py-2">Category</th>
-                                            <th className="px-3 py-2">Status</th>
-                                            <th className="px-3 py-2 text-right w-32">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 bg-white">
-                                        {subcategories.map((subcategory, index) => (
-                                            <tr key={subcategory.id ?? index} className="text-[11px] text-slate-700">
-                                                <td className="px-3 py-2 text-slate-400">{index + 1}</td>
-                                                <td className="px-3 py-2 font-medium text-slate-900">{subcategory.sub_category_name}</td>
-                                                <td className="px-3 py-2">
-                                                    <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
-                                                        {getCategoryName(subcategory.category_id)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <StatusChip enabled={subcategory.is_enable === 1 || subcategory.is_enable === true} />
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="flex justify-end gap-1.5">
-                                                        <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(subcategory)} />
-                                                        <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(subcategory.id)} />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-50/50">
+                                    <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                        <th className="px-5 py-3 w-12">#</th>
+                                        <th className="px-5 py-3">Subcategory</th>
+                                        <th className="px-5 py-3">Category</th>
+                                        <th className="px-5 py-3">Status</th>
+                                        <th className="px-5 py-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 bg-white">
+                                    {subcategories.map((subcategory, index) => (
+                                        <motion.tr 
+                                            key={subcategory.id ?? index} 
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="group transition-colors hover:bg-teal-50/30"
+                                        >
+                                            <td className="px-5 py-4 text-[11px] text-slate-400 font-mono">{index + 1}</td>
+                                            <td className="px-5 py-4 font-medium text-slate-800">{subcategory.sub_category_name}</td>
+                                            <td className="px-5 py-4">
+                                                <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
+                                                    {getCategoryName(subcategory.category_id)}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <StatusChip enabled={subcategory.is_enable === 1 || subcategory.is_enable === true} />
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(subcategory)} />
+                                                    <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(subcategory.id)} />
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </Card>
@@ -271,4 +328,4 @@ function ListIcon({ className }) {
 
 function ChevronDownIcon({ className }) {
     return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-}
+}

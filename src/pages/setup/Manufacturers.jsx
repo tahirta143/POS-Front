@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, Toggle, TableState, StatusChip, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
@@ -52,6 +53,7 @@ export default function Manufacturers() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   useEffect(() => {
     fetchManufacturers()
@@ -105,6 +107,7 @@ export default function Manufacturers() {
       }
 
       resetForm()
+      setIsFormOpen(false)
       fetchManufacturers()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Unable to save the manufacturer.')
@@ -140,6 +143,7 @@ export default function Manufacturers() {
       gstNumber: m.gst || '',
       status: m.status === 1 || m.status === true,
     })
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -153,177 +157,224 @@ export default function Manufacturers() {
   }
 
   return (
-    <PageShell
-      title="Add Manufacturer"
-      description="Register a new manufacturer to link with your products."
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Manufacturer' : 'Manufacturer Registration'}
-            description="Enter primary, contact, and tax details for the new manufacturer."
-            icon={<FactoryIcon className="h-5 w-5" />}
-          />
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Manufacturers</h1>
+            <p className="text-sm text-slate-500">Register and manage manufacturers to link with your inventory items.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Manufacturer
+              </>
+            )}
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <SectionCard color="teal" title="Primary Details">
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Manufacturer ID" required>
-                  <input
-                    type="text"
-                    value={form.manufacturerId}
-                    onChange={(e) => updateField('manufacturerId', e.target.value)}
-                    placeholder="e.g. MFG-001"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-                <Field label="Manufacturer Name" required className="lg:col-span-2">
-                  <input
-                    type="text"
-                    value={form.manufacturerName}
-                    onChange={(e) => updateField('manufacturerName', e.target.value)}
-                    placeholder="Full name of manufacturer"
-                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-              </div>
-            </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Manufacturer' : 'Manufacturer Registration'}
+                  description="Enter primary, contact, and tax details for the manufacturer."
+                  icon={<FactoryIcon className="h-5 w-5" />}
+                />
 
-            <SectionCard color="emerald" title="Contact & Personnel">
-              <div className="space-y-2">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field label="Contact Person">
-                    <input
-                      type="text"
-                      value={form.contactPerson}
-                      onChange={(e) => updateField('contactPerson', e.target.value)}
-                      placeholder="Representative name"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Designation">
-                    <input
-                      type="text"
-                      value={form.designation}
-                      onChange={(e) => updateField('designation', e.target.value)}
-                      placeholder="e.g. Sales Manager"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Email Address">
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => updateField('email', e.target.value)}
-                      placeholder="contact@manufacturer.com"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Phone/Landline">
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => updateField('phone', e.target.value)}
-                      placeholder="Phone number"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Mobile Number">
-                    <input
-                      type="tel"
-                      value={form.mobileNumber}
-                      onChange={(e) => updateField('mobileNumber', e.target.value)}
-                      placeholder="Mobile number"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                </div>
-                <div className="grid gap-2">
-                  <Field label="Physical Address">
-                    <textarea
-                      rows={2}
-                      value={form.address}
-                      onChange={(e) => updateField('address', e.target.value)}
-                      placeholder="Complete headquarters or factory address"
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                </div>
-              </div>
-            </SectionCard>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <SectionCard color="teal" title="Primary Details">
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field label="Manufacturer ID" required>
+                        <input
+                          type="text"
+                          value={form.manufacturerId}
+                          onChange={(e) => updateField('manufacturerId', e.target.value)}
+                          placeholder="e.g. MFG-001"
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        />
+                      </Field>
+                      <Field label="Manufacturer Name" required className="lg:col-span-2">
+                        <input
+                          type="text"
+                          value={form.manufacturerName}
+                          onChange={(e) => updateField('manufacturerName', e.target.value)}
+                          placeholder="Full name of manufacturer"
+                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        />
+                      </Field>
+                    </div>
+                  </SectionCard>
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)]">
-              <SectionCard color="cyan" title="Tax Information">
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Field label="NTN">
-                    <input
-                      type="text"
-                      value={form.ntn}
-                      onChange={(e) => updateField('ntn', e.target.value)}
-                      placeholder="National Tax Number"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="GST Number">
-                    <input
-                      type="text"
-                      value={form.gstNumber}
-                      onChange={(e) => updateField('gstNumber', e.target.value)}
-                      placeholder="Sales Tax Number"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                </div>
-              </SectionCard>
+                  <SectionCard color="emerald" title="Contact & Personnel">
+                    <div className="space-y-2">
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <Field label="Contact Person">
+                          <input
+                            type="text"
+                            value={form.contactPerson}
+                            onChange={(e) => updateField('contactPerson', e.target.value)}
+                            placeholder="Representative name"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                        <Field label="Designation">
+                          <input
+                            type="text"
+                            value={form.designation}
+                            onChange={(e) => updateField('designation', e.target.value)}
+                            placeholder="e.g. Sales Manager"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                        <Field label="Email Address">
+                          <input
+                            type="email"
+                            value={form.email}
+                            onChange={(e) => updateField('email', e.target.value)}
+                            placeholder="contact@manufacturer.com"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                        <Field label="Phone/Landline">
+                          <input
+                            type="tel"
+                            value={form.phone}
+                            onChange={(e) => updateField('phone', e.target.value)}
+                            placeholder="Phone number"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                        <Field label="Mobile Number">
+                          <input
+                            type="tel"
+                            value={form.mobileNumber}
+                            onChange={(e) => updateField('mobileNumber', e.target.value)}
+                            placeholder="Mobile number"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                      </div>
+                      <div className="grid gap-2">
+                        <Field label="Physical Address">
+                          <textarea
+                            rows={2}
+                            value={form.address}
+                            onChange={(e) => updateField('address', e.target.value)}
+                            placeholder="Complete headquarters or factory address"
+                            className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  </SectionCard>
 
-              <div className="flex flex-col gap-3">
-                <SectionCard color="teal" title="System Settings">
-                  <Toggle
-                    enabled={form.status}
-                    onChange={(v) => updateField('status', v)}
-                    label="Manufacturer Status"
-                    description="Active manufacturers are selectable."
-                  />
-                </SectionCard>
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)]">
+                    <SectionCard color="cyan" title="Tax Information">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <Field label="NTN">
+                          <input
+                            type="text"
+                            value={form.ntn}
+                            onChange={(e) => updateField('ntn', e.target.value)}
+                            placeholder="National Tax Number"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                        <Field label="GST Number">
+                          <input
+                            type="text"
+                            value={form.gstNumber}
+                            onChange={(e) => updateField('gstNumber', e.target.value)}
+                            placeholder="Sales Tax Number"
+                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          />
+                        </Field>
+                      </div>
+                    </SectionCard>
 
-                <SectionCard color="emerald" title="Actions">
-                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <div className="flex flex-col gap-3">
+                      <SectionCard color="teal" title="System Settings">
+                        <Toggle
+                          enabled={form.status}
+                          onChange={(v) => updateField('status', v)}
+                          label="Manufacturer Status"
+                          description="Active manufacturers are selectable."
+                        />
+                      </SectionCard>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-2 pt-4">
                     <button
                       type="button"
-                      onClick={resetForm}
-                      className="inline-flex min-w-[100px] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                     >
-                      Clear
+                      Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex min-w-[110px] items-center justify-center rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
                     </button>
                   </div>
-                </SectionCard>
-              </div>
-            </div>
-          </form>
-        </Card>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* List Card below form */}
-        <Card className="mx-auto max-w-5xl p-3">
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Manufacturer List"
             description={`${manufacturers.length} manufacturers registered in system`}
             icon={<FactoryIcon className="h-5 w-5" />}
             action={
-              <button
-                type="button"
-                onClick={fetchManufacturers}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchManufacturers}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh
+                </button>
+              </div>
             }
           />
           {loading ? (
@@ -331,45 +382,50 @@ export default function Manufacturers() {
           ) : manufacturers.length === 0 ? (
             <TableState message="No manufacturers found yet." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2.5">MFG-ID</th>
-                      <th className="px-3 py-2.5">Name</th>
-                      <th className="px-3 py-2.5">Contact</th>
-                      <th className="px-3 py-2.5">Status</th>
-                      <th className="px-3 py-2.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {manufacturers.map((m) => (
-                      <tr key={m.id} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-semibold text-slate-700 text-[11px]">{m.manufacturer_id}</td>
-                        <td className="px-3 py-2 font-medium text-slate-900">{m.manufacturer_name}</td>
-                        <td className="px-3 py-2 text-slate-600">
-                          {m.phone || m.mobile || '-'}
-                          {m.contact_person && <span className="mt-0.5 block text-[9px] text-teal-600">{m.contact_person}</span>}
-                        </td>
-                        <td className="px-3 py-2">
-                          <StatusChip enabled={m.status === 1 || m.status === true} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(m)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(m.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3">MFG-ID</th>
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Contact</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {manufacturers.map((m) => (
+                    <motion.tr 
+                      key={m.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4 font-mono text-[11px] text-slate-400">{m.manufacturer_id}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">{m.manufacturer_name}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-[12px] font-medium text-slate-700">{m.phone || m.mobile || '-'}</span>
+                          {m.contact_person && <span className="text-[10px] text-teal-600 font-semibold uppercase">{m.contact_person}</span>}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <StatusChip enabled={m.status === 1 || m.status === true} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(m)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(m.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>
       </div>
     </PageShell>
   )
-}
+}

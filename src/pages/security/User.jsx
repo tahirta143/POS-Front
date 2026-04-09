@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import { MdArrowBack, MdLockPerson } from 'react-icons/md'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MdArrowBack, MdLockPerson, MdEmail, MdVpnKey, MdPerson, MdBusiness, MdBadge } from 'react-icons/md'
 import axiosInstance from '../../services/axiosInstance'
 import {
   ActionButton,
   Card,
   Field,
+  PageShell,
   SectionHeader,
   StatusAlert,
   TableState,
@@ -50,6 +52,7 @@ export default function User() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   useEffect(() => {
     fetchPageData()
@@ -131,6 +134,7 @@ export default function User() {
       }
 
       resetForm()
+      setIsFormOpen(false)
       fetchPageData()
     } catch (error) {
       setMessage(error?.response?.data?.message || 'Unable to save software user.')
@@ -153,6 +157,7 @@ export default function User() {
       description: meta.description || '',
     })
     setMessage('')
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -194,157 +199,250 @@ export default function User() {
     })
   }, [companies, employees, userMeta, users])
 
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+
   return (
-    <div className="space-y-6 animate-in slide-in-from-right-4">
-      <button
-        onClick={() => navigate('/security')}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
-      >
-        <MdArrowBack /> Back to Overview
-      </button>
-
-      <Card className="border-l-[6px] border-l-teal-500 p-6">
-        <SectionHeader
-          title={editId ? 'Edit Software User' : 'Add New User'}
-          description="Create system credentials and keep company and employee links ready in the UI."
-          icon={<MdLockPerson className="text-teal-600 text-3xl" />}
-          action={
-            editId ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Cancel Edit
-              </button>
-            ) : null
-          }
-        />
-
-        <StatusAlert type="error" message={message} />
-
-        <form onSubmit={handleSave} className="mt-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Field label="User ID">
-              <input
-                type="text"
-                className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono"
-                value={editId ? `USR-${String(editId).padStart(4, '0')}` : 'Auto generated'}
-                disabled
-              />
-            </Field>
-            <Field label="Username" required>
-              <input type="text" name="username" value={form.username} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" required />
-            </Field>
-            <Field label="Company">
-              <select name="companyId" value={form.companyId} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
-                <option value="">Select Company</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>{company.company_name}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Employee">
-              <select name="employeeId" value={form.employeeId} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
-                <option value="">Select Employee</option>
-                {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>{employee.employee_name}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-            <Field label="Email Address" required>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" required />
-            </Field>
-            <Field label="Password" required>
-              <input type="text" name="password" value={form.password} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" required />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Role Selection">
-              <select name="role" value={form.role} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="User">User</option>
-              </select>
-            </Field>
-            <Field label="Account Status">
-              <select name="status" value={form.status} onChange={handleChange} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
-                <option value="suspended">Suspended</option>
-              </select>
-            </Field>
-          </div>
-
-          <Field label="Description">
-            <textarea name="description" value={form.description} onChange={handleChange} className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" rows="2" placeholder="User access notes..." />
-          </Field>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-xl border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+    <PageShell>
+      <div className="space-y-4">
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+             <button
+              onClick={() => navigate('/security')}
+              className="group flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
             >
-              Clear
+              <MdArrowBack className="h-5 w-5 transition group-hover:-translate-x-0.5" />
             </button>
-            <button type="submit" disabled={submitting} className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg hover:bg-teal-700 transition disabled:opacity-50">
-              {submitting ? 'Saving...' : editId ? 'Update User' : 'Save User'}
-            </button>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">User Credentials</h1>
+              <p className="text-sm text-slate-500">Manage software access and system permissions</p>
+            </div>
           </div>
-        </form>
-      </Card>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add User
+              </>
+            )}
+          </button>
+        </div>
 
-      <Card className="border-l-[6px] border-l-teal-500 p-6">
-        <h3 className="text-sm font-bold text-slate-700 mb-4">Registered Users</h3>
-        {loading ? (
-          <TableState message="Loading users..." />
-        ) : rows.length === 0 ? (
-          <TableState message="No users recorded yet." />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500">
-                <tr>
-                  <th className="px-6 py-3">User ID</th>
-                  <th className="px-6 py-3">Username</th>
-                  <th className="px-6 py-3">Company</th>
-                  <th className="px-6 py-3">Employee</th>
-                  <th className="px-6 py-3">Role</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-6 py-3 font-mono text-xs text-slate-400">#USR-{String(row.id).padStart(3, '0')}</td>
-                    <td className="px-6 py-3">
-                      <div className="font-semibold text-slate-700">{row.name || row.username}</div>
-                      <div className="text-xs text-slate-500">{row.email}</div>
-                    </td>
-                    <td className="px-6 py-3 text-slate-600">{row.companyName}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.employeeName}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.role}</td>
-                    <td className="px-6 py-3 capitalize text-slate-600">{row.status || 'active'}</td>
-                    <td className="px-6 py-3">
-                      <div className="flex justify-end gap-2">
-                        <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(row)} />
-                        <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(row)} />
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Software User' : 'Add New User'}
+                  description="Create system credentials and link them to employees."
+                  icon={<MdLockPerson className="text-teal-600 text-3xl" />}
+                />
+
+                <StatusAlert type="error" message={message} />
+
+                <form onSubmit={handleSave} className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Field label="User ID">
+                      <input
+                        type="text"
+                        className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono"
+                        value={editId ? `USR-${String(editId).padStart(4, '0')}` : 'Auto generated'}
+                        disabled
+                      />
+                    </Field>
+                    <Field label="Username" required>
+                      <div className="relative">
+                        <input type="text" name="username" value={form.username} onChange={handleChange} className={inputCls} required />
+                        <MdPerson className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       </div>
-                    </td>
+                    </Field>
+                    <Field label="Company">
+                      <div className="relative">
+                        <select name="companyId" value={form.companyId} onChange={handleChange} className={`${inputCls} appearance-none pr-8`}>
+                          <option value="">Select Company</option>
+                          {companies.map((company) => (
+                            <option key={company.id} value={company.id}>{company.company_name}</option>
+                          ))}
+                        </select>
+                        <MdBusiness className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </Field>
+                    <Field label="Employee">
+                       <div className="relative">
+                        <select name="employeeId" value={form.employeeId} onChange={handleChange} className={`${inputCls} appearance-none pr-8`}>
+                          <option value="">Select Employee</option>
+                          {employees.map((employee) => (
+                            <option key={employee.id} value={employee.id}>{employee.employee_name}</option>
+                          ))}
+                        </select>
+                        <MdBadge className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2 border-b border-slate-100">
+                    <Field label="Email Address" required>
+                      <div className="relative">
+                        <input type="email" name="email" value={form.email} onChange={handleChange} className={inputCls} required />
+                        <MdEmail className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </Field>
+                    <Field label="Password" required>
+                      <div className="relative">
+                        <input type="text" name="password" value={form.password} onChange={handleChange} className={inputCls} required />
+                        <MdVpnKey className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="Role Selection">
+                      <select name="role" value={form.role} onChange={handleChange} className={inputCls}>
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="User">User</option>
+                      </select>
+                    </Field>
+                    <Field label="Account Status">
+                      <select name="status" value={form.status} onChange={handleChange} className={inputCls}>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                        <option value="suspended">Suspended</option>
+                      </select>
+                    </Field>
+                  </div>
+
+                  <Field label="Description">
+                    <textarea name="description" value={form.description} onChange={handleChange} className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" rows="2" placeholder="User access notes..." />
+                  </Field>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="rounded-xl border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={submitting} className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                      {submitting ? 'Saving...' : editId ? 'Update User' : 'Save User'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
+          <SectionHeader
+            title="Registered Users"
+            description={`${rows.length} software access accounts`}
+            icon={<MdLockPerson className="h-6 w-6 text-teal-600" />}
+            action={
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchPageData}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh Users
+                </button>
+              </div>
+            }
+          />
+          {loading ? (
+            <TableState message="Loading users..." />
+          ) : rows.length === 0 ? (
+            <TableState message="No users recorded yet." />
+          ) : (
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3">Code</th>
+                    <th className="px-5 py-3">User Details</th>
+                    <th className="px-5 py-3">Associations</th>
+                    <th className="px-5 py-3">Access Level</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-    </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {rows.map((row) => (
+                    <motion.tr 
+                      key={row.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`group transition-colors hover:bg-teal-50/30 ${editId === row.id ? 'bg-teal-50/50' : ''}`}
+                    >
+                      <td className="px-5 py-4 font-mono text-[11px] text-slate-400">#USR-{String(row.id).padStart(3, '0')}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800">{row.name || row.username}</span>
+                          <span className="text-[11px] text-slate-400">{row.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-0.5">
+                           <span className="text-[12px] font-semibold text-slate-600">{row.employeeName}</span>
+                           <span className="text-[10px] text-slate-400">{row.companyName}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            row.role === 'Admin' ? 'bg-rose-50 text-rose-700' : 
+                            row.role === 'Manager' ? 'bg-amber-50 text-amber-700' : 'bg-teal-50 text-teal-700'
+                          }`}>
+                            {row.role}
+                          </span>
+                          <span className={`h-2 w-2 rounded-full ${row.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(row)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(row)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </PageShell>
   )
 }

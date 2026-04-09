@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
 
@@ -19,32 +20,6 @@ function SectionCard({ color, title, children }) {
       </div>
       {children}
     </div>
-  )
-}
-
-function SelectField({ label, required = false, value, onChange, options, placeholder }) {
-  return (
-    <Field label={label} required={required}>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-7 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-        >
-          {placeholder && <option value="">{placeholder}</option>}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-    </Field>
   )
 }
 
@@ -73,6 +48,7 @@ export default function CustomerPage() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   useEffect(() => {
     fetchCustomers()
@@ -121,6 +97,7 @@ export default function CustomerPage() {
       }
 
       resetForm()
+      setIsFormOpen(false)
       fetchCustomers()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Unable to save the customer.')
@@ -151,6 +128,7 @@ export default function CustomerPage() {
       nearby: customer.nearby || '',
       paymentMethod: customer.payment_method || 'Cash',
     })
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -163,120 +141,158 @@ export default function CustomerPage() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+
   return (
-    <PageShell
-      title="Customer Management"
-      description="Register and manage clients for billing"
-      accent="from-teal-600 via-emerald-600 to-cyan-700"
-    >
+    <PageShell>
       <div className="space-y-4">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3">
-          <SectionHeader
-            title={editId ? 'Edit Customer' : 'Customer Registration'}
-            description="Manage client personal and payment details."
-            icon={<UserIcon className="h-5 w-5" />}
-          />
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Customers</h1>
+            <p className="text-sm text-slate-500">Register and manage clients for detailed billing and history.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Add Customer
+              </>
+            )}
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="grid gap-3 lg:grid-cols-[1fr_minmax(0,1fr)]">
-              <SectionCard color="teal" title="Personal Details">
-                <div className="grid gap-3">
-                  <Field label="Customer Name" required>
-                    <input
-                      type="text"
-                      value={form.customerName}
-                      onChange={(e) => updateField('customerName', e.target.value)}
-                      placeholder="Full name"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Mobile No / WhatsApp">
-                    <input
-                      type="tel"
-                      value={form.mobileNumber}
-                      onChange={(e) => updateField('mobileNumber', e.target.value)}
-                      placeholder="e.g. 0300-1234567"
-                      className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                  <Field label="Address">
-                    <textarea
-                      rows={2}
-                      value={form.address}
-                      onChange={(e) => updateField('address', e.target.value)}
-                      placeholder="Home or shipping address"
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                    />
-                  </Field>
-                </div>
-              </SectionCard>
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+                <SectionHeader
+                  title={editId ? 'Edit Customer' : 'Customer Registration'}
+                  description="Manage client personal and payment details."
+                  icon={<UserIcon className="h-5 w-5" />}
+                />
 
-              <div className="flex flex-col gap-3">
-                <SectionCard color="emerald" title="Financial & Location">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Nearby Landmark / Area">
-                      <input
-                        type="text"
-                        value={form.nearby}
-                        onChange={(e) => updateField('nearby', e.target.value)}
-                        placeholder="e.g. Main Market"
-                        className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                      />
-                    </Field>
-                    <SelectField
-                      label="Payment Method"
-                      required
-                      value={form.paymentMethod}
-                      onChange={(v) => updateField('paymentMethod', v)}
-                      options={[
-                        { value: 'Cash', label: 'Cash' },
-                        { value: 'Card', label: 'Credit Card' },
-                        { value: 'Online', label: 'Online/Bank' },
-                      ]}
-                    />
-                    <Field label="Previous Balance" className="sm:col-span-2">
-                      <div className="relative">
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={form.previousBalance}
-                          onChange={(e) => updateField('previousBalance', e.target.value)}
-                          placeholder="0.00"
-                          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 pr-10 text-[11px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                        />
-                        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                          PKR
-                        </span>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <SectionCard color="teal" title="Personal Details">
+                      <div className="grid gap-3">
+                        <Field label="Customer Name" required>
+                          <input
+                            type="text"
+                            value={form.customerName}
+                            onChange={(e) => updateField('customerName', e.target.value)}
+                            placeholder="Full name"
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Mobile No / WhatsApp">
+                          <input
+                            type="tel"
+                            value={form.mobileNumber}
+                            onChange={(e) => updateField('mobileNumber', e.target.value)}
+                            placeholder="e.g. 0300-1234567"
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Address">
+                          <textarea
+                            value={form.address}
+                            onChange={(e) => updateField('address', e.target.value)}
+                            placeholder="Current residential or billing address"
+                            className={`${inputCls} h-16 py-1.5`}
+                          />
+                        </Field>
                       </div>
-                    </Field>
-                  </div>
-                </SectionCard>
+                    </SectionCard>
 
-                <SectionCard color="cyan" title="Actions">
-                  <div className="flex justify-center gap-2 pt-1">
+                    <SectionCard color="emerald" title="Accounting & Area">
+                      <div className="grid gap-3">
+                        <Field label="Opening Balance" hint="Positive for debit, negative for credit">
+                          <input
+                            type="number"
+                            value={form.previousBalance}
+                            onChange={(e) => updateField('previousBalance', e.target.value)}
+                            placeholder="0.00"
+                            className={`${inputCls} font-bold text-teal-700`}
+                          />
+                        </Field>
+                        <Field label="Nearby Landmark">
+                          <input
+                            type="text"
+                            value={form.nearby}
+                            onChange={(e) => updateField('nearby', e.target.value)}
+                            placeholder="e.g. Near Metro Station"
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Preferred Payment">
+                          <select
+                            value={form.paymentMethod}
+                            onChange={(e) => updateField('paymentMethod', e.target.value)}
+                            className={inputCls}
+                          >
+                            <option value="Cash">Cash Basis</option>
+                            <option value="Credit">Credit / Ledger</option>
+                            <option value="Gift">Gift Card</option>
+                          </select>
+                        </Field>
+                      </div>
+                    </SectionCard>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2 pt-4">
                     <button
                       type="button"
-                      onClick={resetForm}
-                      className="inline-flex min-w-[100px] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                      onClick={() => {
+                        resetForm()
+                        setIsFormOpen(false)
+                      }}
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                     >
-                      Clear
+                      Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex min-w-[120px] items-center justify-center rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm shadow-teal-100"
                     >
                       {submitting ? 'Saving...' : editId ? 'Update' : 'Save'}
                     </button>
                   </div>
-                </SectionCard>
-              </div>
-            </div>
-          </form>
-        </Card>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Customer List Card */}
-        <Card className="mx-auto max-w-5xl p-3">
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Customer Registry"
             description={`${customers.length} registered clients`}
@@ -286,13 +302,15 @@ export default function CustomerPage() {
               </svg>
             }
             action={
-              <button
-                type="button"
-                onClick={fetchCustomers}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
+              <div className="p-4">
+                <button
+                  type="button"
+                  onClick={fetchCustomers}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Refresh
+                </button>
+              </div>
             }
           />
 
@@ -301,41 +319,49 @@ export default function CustomerPage() {
           ) : customers.length === 0 ? (
             <TableState message="No customers found yet." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto lg:max-h-[500px] lg:overflow-y-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                      <th className="px-3 py-2.5">Name</th>
-                      <th className="px-3 py-2.5">Mobile Number</th>
-                      <th className="px-3 py-2.5">Address & Area</th>
-                      <th className="px-3 py-2.5 text-right">Balance</th>
-                      <th className="px-3 py-2.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {customers.map((c) => (
-                      <tr key={c.id} className="text-[12px] border-t border-slate-50 transition hover:bg-slate-50/50">
-                        <td className="px-3 py-2 font-medium text-slate-900">{c.customer_name}</td>
-                        <td className="px-3 py-2 text-slate-600">{c.mobile_number || '-'}</td>
-                        <td className="px-3 py-2 text-slate-600">
-                          {c.address ? <div className="max-w-[150px] truncate text-[11px]">{c.address}</div> : '-'}
-                          {c.nearby && <span className="mt-0.5 block text-[9px] text-teal-600">Near: {c.nearby}</span>}
-                        </td>
-                        <td className="px-3 py-2 text-right font-medium text-slate-700 text-[11px]">
-                          {c.previous_balance ? `PKR ${parseFloat(c.previous_balance).toFixed(2)}` : '0.00'}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(c)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(c.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Contact Details</th>
+                    <th className="px-5 py-3">Address & Area</th>
+                    <th className="px-5 py-3 text-right">Balance</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {customers.map((c) => (
+                    <motion.tr 
+                      key={c.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
+                      <td className="px-5 py-4 font-bold text-slate-800">{c.customer_name}</td>
+                      <td className="px-5 py-4">
+                         <span className="text-[12px] font-medium text-slate-600">{c.mobile_number || '-'}</span>
+                         <span className="block text-[10px] text-slate-400 font-bold tracking-tighter uppercase">{c.payment_method}</span>
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {c.address ? <div className="max-w-[200px] truncate text-[12px]">{c.address}</div> : '-'}
+                        {c.nearby && <span className="mt-0.5 block text-[10px] font-bold text-teal-600 uppercase tracking-tighter">Near: {c.nearby}</span>}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                         <span className={`text-[12px] font-black ${parseFloat(c.previous_balance) > 0 ? 'text-teal-600' : 'text-slate-700'}`}>
+                           PKR {parseFloat(c.previous_balance || 0).toLocaleString()}
+                         </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(c)} />
+                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(c.id)} />
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

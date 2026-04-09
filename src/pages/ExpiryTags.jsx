@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
+import { MdAdd, MdRemove, MdRefresh, MdLabel, MdHistory, MdInventory, MdCategory, MdShoppingBag } from 'react-icons/md'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -23,11 +25,7 @@ function SectionCard({ title, children }) {
 function TagIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M7 7h.01M3 11l8.586 8.586a2 2 0 002.828 0L21 13.414a2 2 0 000-2.828L12.414 2H5a2 2 0 00-2 2v7z"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M3 11l8.586 8.586a2 2 0 002.828 0L21 13.414a2 2 0 000-2.828L12.414 2H5a2 2 0 00-2 2v7z" />
     </svg>
   )
 }
@@ -51,10 +49,10 @@ export default function ExpiryTagsPage() {
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [expiryTags, setExpiryTags] = useState([])
-
   const [loading, setLoading] = useState(false)
   const [loadingTags, setLoadingTags] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   const [receiptNumber, setReceiptNumber] = useState('')
   const [categoryId, setCategoryId] = useState('')
@@ -99,16 +97,10 @@ export default function ExpiryTagsPage() {
         axiosInstance.get('/categories').catch(() => null),
         axiosInstance.get('/item-details').catch(() => null),
       ])
-
-      if (catRes?.data) {
-        setCategories(toOptionArray(catRes.data))
-      }
-
-      if (itmRes?.data) {
-        setItems(toOptionArray(itmRes.data))
-      }
+      if (catRes?.data) setCategories(toOptionArray(catRes.data))
+      if (itmRes?.data) setItems(toOptionArray(itmRes.data))
     } catch {
-      toast.error('Unable to load dropdown options. Please try again.')
+      toast.error('Unable to load lookup data.')
     } finally {
       setLoading(false)
     }
@@ -142,11 +134,12 @@ export default function ExpiryTagsPage() {
     setSupplier(tag.supplier || '')
     setManufacturerDate(tag.manufacturer_date || tag.mfg_date || '')
     setExpiryDate(tag.expiry_date || tag.exp_date || '')
+    setIsFormOpen(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Are you sure you want to delete this expiry tag?')) return
+    if (!window.confirm('Delete this expiry tag?')) return
     try {
       await axiosInstance.delete(`/expiry-tags/${id}`)
       toast.success('Expiry tag deleted successfully.')
@@ -178,21 +171,8 @@ export default function ExpiryTagsPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-
-    if (!receiptNumber.trim()) {
-      toast.error('Receipt Number is required.')
-      return
-    }
-    if (!categoryId) {
-      toast.error('Category selection is required.')
-      return
-    }
-    if (!itemId) {
-      toast.error('Item selection is required.')
-      return
-    }
-    if (!expiryDate) {
-      toast.error('Expiry Date is required.')
+    if (!receiptNumber.trim() || !categoryId || !itemId || !expiryDate) {
+      toast.error('Receipt, Category, Item, and Expiry Date are required.')
       return
     }
 
@@ -210,268 +190,217 @@ export default function ExpiryTagsPage() {
         manufacturer_date: manufacturerDate || null,
         expiry_date: expiryDate,
       }
-
       if (editId) {
         await axiosInstance.put(`/expiry-tags/${editId}`, payload)
-        toast.success('Expiry tag updated successfully.')
+        toast.success('Expiry tag updated.')
       } else {
         await axiosInstance.post('/expiry-tags', payload)
-        toast.success('Expiry tag saved successfully.')
+        toast.success('Expiry tag saved.')
       }
       resetForm()
+      setIsFormOpen(false)
       fetchExpiryTags()
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to save expiry tag.')
+      toast.error('Failed to save expiry tag.')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <PageShell title="Expiry Tags" description="Track manufacturer and expiry dates for inventory." accent="from-teal-600 via-emerald-600 to-cyan-700">
-      <div className="space-y-6">
-        <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-4">
+    <PageShell>
+      <div className="space-y-4">
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+           <div>
+            <h1 className="text-xl font-bold text-slate-900">Expiry Date Tracking</h1>
+            <p className="text-sm text-slate-500">Monitor batch manufacturer and expiry dates for inventory items.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isFormOpen && editId) {
+                resetForm()
+              } else {
+                setIsFormOpen(!isFormOpen)
+                if (!isFormOpen) resetForm()
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen 
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+            }`}
+          >
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> Add Expiry Tag
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+                <SectionHeader
+                  title={editId ? 'Modify Tracking Tag' : 'New Tracking Tag'}
+                  description="Register manufacturer and expiry timeline for local stock batches."
+                  icon={<MdLabel className="h-6 w-6 text-teal-600" />}
+                />
+
+                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                  <SectionCard title="Batch Identification">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Field label="Receipt Number" required>
+                          <input type="text" value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} placeholder="Batch Code / ID" className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                        </Field>
+                        <Field label="Item Category" required>
+                          <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100">
+                             <option value="">Select Category</option>
+                             {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Specific Product" required>
+                          <select value={itemId} onChange={(e) => handleSelectItem(e.target.value)} disabled={!categoryId} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100">
+                             <option value="">Select Product...</option>
+                             {filteredItems.map(i => <option key={i.id} value={i.id}>{i.item_name}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Barcode / Code">
+                          <input type="text" value={itemCode} readOnly className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono text-slate-500" />
+                        </Field>
+                     </div>
+                  </SectionCard>
+
+                  <SectionCard title="Financials & Timeline">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Field label="Purchase Cost">
+                          <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] text-right font-bold focus:border-teal-400" />
+                        </Field>
+                        <Field label="Target Sale Price">
+                          <input type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="0.00" className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] text-right font-bold focus:border-teal-400" />
+                        </Field>
+                        <Field label="Manufacturing Date">
+                          <input type="date" value={manufacturerDate} onChange={(e) => setManufacturerDate(e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400" />
+                        </Field>
+                        <Field label="Expiry Date" required>
+                          <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} className="h-8 w-full rounded-md border border-teal-300 bg-teal-50 px-2.5 text-[12px] outline-none focus:ring-2 focus:ring-teal-100 font-bold" />
+                        </Field>
+                     </div>
+                  </SectionCard>
+
+                  <div className="grid lg:grid-cols-2 gap-4">
+                     <Field label="Manufacturer Entity">
+                        <input type="text" value={manufacturer} readOnly className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] text-slate-500 font-medium" />
+                     </Field>
+                     <Field label="Sourcing Supplier">
+                        <input type="text" value={supplier} readOnly className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] text-slate-500 font-medium" />
+                     </Field>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                    <button type="submit" disabled={submitting} className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                       <MdLabel /> {submitting ? 'Syncing...' : editId ? 'Update Tag' : 'Create Tag'}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tags Registry */}
+        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
-            title="Expiry Tags"
-            description="Register expiry tracking tags for items."
-            icon={<TagIcon className="h-6 w-6" />}
+            title="Registry of Tracking Tags"
+            description={`${expiryTags.length} active batches detected in system.`}
+            icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
-              <button
-                type="button"
-                onClick={() => {
-                  fetchLookups()
-                  fetchExpiryTags()
-                }}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
-            }
-          />
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <SectionCard title="Add Expiry Tag">
-              <div className="grid gap-4 lg:grid-cols-4">
-                <Field label="Receipt Number" required>
-                  <input
-                    type="text"
-                    value={receiptNumber}
-                    onChange={(e) => setReceiptNumber(e.target.value)}
-                    placeholder="e.g. RCPT-0001"
-                    className="h-8 w-full max-w-[12rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label={`Category (${categories.length})`} required>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
-                    disabled={loading}
-                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.category_name ?? c.name ?? c.id}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-
-                <Field label={`Item Name (${filteredItems.length})`} required>
-                  <select
-                    value={itemId}
-                    onChange={(e) => handleSelectItem(e.target.value)}
-                    disabled={!categoryId || loading}
-                    className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50"
-                  >
-                    <option value="">Select Item</option>
-                    {filteredItems.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.item_name ?? i.name ?? i.id}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-
-                <Field label="Item Code">
-                  <input
-                    type="text"
-                    value={itemCode}
-                    onChange={(e) => setItemCode(e.target.value)}
-                    placeholder="Barcode / code"
-                    className="h-8 w-full max-w-[14rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-mono outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Price">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="0.00"
-                    className="h-8 w-full max-w-[10rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Sale Price">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={salePrice}
-                    onChange={(e) => setSalePrice(e.target.value)}
-                    placeholder="0.00"
-                    className="h-8 w-full max-w-[10rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Manufacturer">
-                  <input
-                    type="text"
-                    value={manufacturer}
-                    onChange={(e) => setManufacturer(e.target.value)}
-                    placeholder="e.g. Unilever"
-                    className="h-8 w-full max-w-[14rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Supplier">
-                  <input
-                    type="text"
-                    value={supplier}
-                    onChange={(e) => setSupplier(e.target.value)}
-                    placeholder="e.g. Metro Supplier"
-                    className="h-8 w-full max-w-[14rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Manufacturer Date">
-                  <input
-                    type="date"
-                    value={manufacturerDate}
-                    onChange={(e) => setManufacturerDate(e.target.value)}
-                    className="h-8 w-full max-w-[12rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
-
-                <Field label="Expiry Date" required>
-                  <input
-                    type="date"
-                    value={expiryDate}
-                    onChange={(e) => setExpiryDate(e.target.value)}
-                    className="h-8 w-full max-w-[12rem] rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                  />
-                </Field>
+              <div className="p-4">
+                <button type="button" onClick={fetchExpiryTags} className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"><MdRefresh className="inline mr-1" /> Refresh Data</button>
               </div>
-
-              <div className="mt-4 flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="inline-flex min-w-[130px] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-50"
-                >
-                  Clear
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex min-w-[170px] items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {submitting ? 'Saving...' : editId ? 'Update Expiry Tag' : 'Save Expiry Tag'}
-                </button>
-              </div>
-            </SectionCard>
-          </form>
-        </Card>
-
-        <Card className="mx-auto max-w-5xl">
-          <SectionHeader
-            title="Expiry Tags List"
-            description={`${expiryTags.length} tags recorded`}
-            icon={<TagIcon className="h-6 w-6" />}
-            action={
-              <button
-                type="button"
-                onClick={fetchExpiryTags}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Refresh
-              </button>
             }
           />
 
           {loadingTags ? (
-            <TableState message="Loading expiry tags..." />
+            <TableState message="Syncing with inventory database..." />
           ) : expiryTags.length === 0 ? (
-            <TableState message="No expiry tags found yet." />
+            <TableState message="No expiry tracking tags defined." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50">
-                    <tr className="text-[12px] font-bold uppercase tracking-widest text-slate-500">
-                      <th className="px-4 py-4 w-12 text-center">#</th>
-                      <th className="px-4 py-4">RECEIPT</th>
-                      <th className="px-4 py-4">CATEGORY</th>
-                      <th className="px-4 py-4">ITEM</th>
-                      <th className="px-4 py-4">CODE</th>
-                      <th className="px-4 py-4 text-right">PRICE</th>
-                      <th className="px-4 py-4 text-right">SALE PRICE</th>
-                      <th className="px-4 py-4">MANUFACTURER</th>
-                      <th className="px-4 py-4">SUPPLIER</th>
-                      <th className="px-4 py-4">MFG DATE</th>
-                      <th className="px-4 py-4 whitespace-nowrap">EXPIRY DATE</th>
-                      <th className="px-4 py-4 whitespace-nowrap">ADDED</th>
-                      <th className="px-4 py-4 text-right w-24">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {expiryTags.map((t, idx) => (
-                      <tr key={t.id || idx} className="text-[12px] transition hover:bg-slate-50/50">
-                        <td className="px-4 py-3 text-center text-slate-400">{idx + 1}</td>
-                        <td className="px-4 py-3 font-semibold text-slate-800">{t.receipt_number ?? t.receipt ?? '-'}</td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {(() => {
-                            const catId = t.category_id ?? t.categoryId
-                            const cat = categories.find((c) => String(c.id) === String(catId))
-                            return cat?.category_name ?? t.category_name ?? '-'
-                          })()}
+            <div className="overflow-x-auto w-full">
+              <table className="min-width-full divide-y divide-slate-100 text-left">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-4">Receipt/Batch</th>
+                    <th className="px-5 py-4">Product Info</th>
+                    <th className="px-5 py-4 text-right">Pricing</th>
+                    <th className="px-5 py-4">Life Cycle</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {expiryTags.map((t, idx) => {
+                     const isExpired = t.expiry_date && new Date(t.expiry_date) < new Date();
+                     return (
+                      <motion.tr key={t.id || idx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`group transition-colors hover:bg-teal-50/20 ${editId === t.id ? 'bg-teal-50/50' : ''}`}>
+                        <td className="px-5 py-4">
+                           <div className="flex flex-col">
+                              <span className="font-bold text-slate-800 text-[12px]">{t.receipt_number || 'No Receipt'}</span>
+                              <span className="text-[10px] text-slate-400 font-mono italic">#TAG-{String(t.id).slice(-4)}</span>
+                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {(() => {
-                            const id = t.item_id ?? t.itemId
-                            const itm = items.find((i) => String(i.id) === String(id))
-                            return itm?.item_name ?? t.item_name ?? '-'
-                          })()}
+                        <td className="px-5 py-4">
+                           <div className="flex flex-col">
+                              <span className="font-bold text-slate-700 text-[12px]">
+                                 {(() => {
+                                     const id = t.item_id || t.itemId;
+                                     const itm = items.find((i) => String(i.id) === String(id));
+                                     return itm?.item_name || t.item_name || 'Generic Item';
+                                 })()}
+                              </span>
+                              <span className="text-[10px] font-bold text-teal-600 uppercase tracking-tighter">
+                                 {t.item_code || '-'}
+                              </span>
+                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600 font-mono">{t.item_code ?? t.code ?? '-'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(t.price || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(t.sale_price || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-slate-600">{t.manufacturer || '-'}</td>
-                        <td className="px-4 py-3 text-slate-600">{t.supplier || '-'}</td>
-                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{t.manufacturer_date ?? t.mfg_date ?? '-'}</td>
-                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{t.expiry_date ?? t.exp_date ?? '-'}</td>
-                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                          {t.created_at
-                            ? new Date(t.created_at)
-                                .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                                .replace(/ /g, '-')
-                            : '-'}
+                        <td className="px-5 py-4 text-right">
+                           <div className="flex flex-col">
+                              <span className="text-[12px] font-black text-slate-800">PKR {Number(t.sale_price || 0).toLocaleString()}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">Cost: {Number(t.price || 0).toLocaleString()}</span>
+                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-1.5">
-                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(t)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(t.id)} />
-                          </div>
+                        <td className="px-5 py-4">
+                           <div className="flex flex-col gap-1">
+                              <span className={`inline-flex w-fit px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isExpired ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                 {isExpired ? 'Expired' : 'Valid'}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">EXP: {t.expiry_date || '-'}</span>
+                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        <td className="px-5 py-4">
+                           <div className="flex justify-end gap-2 text-right">
+                              <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(t)} />
+                              <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(t.id)} />
+                           </div>
+                        </td>
+                      </motion.tr>
+                     )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>
