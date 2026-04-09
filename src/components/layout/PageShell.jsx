@@ -94,21 +94,17 @@ export function TableState({ message }) {
   )
 }
 
-export function StatusChip({ enabled, label, colorClass }) {
-  if (label) {
-    return (
-      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${colorClass}`}>
-        {label}
-      </span>
-    )
+export function StatusChip({ label, tone = 'slate' }) {
+  const tones = {
+    emerald: 'bg-emerald-50 text-emerald-700',
+    rose: 'bg-rose-50 text-rose-700',
+    amber: 'bg-amber-50 text-amber-700',
+    teal: 'bg-teal-50 text-teal-700',
+    slate: 'bg-slate-100 text-slate-700',
   }
   return (
-    <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-        enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
-      }`}
-    >
-      {enabled ? 'Enabled' : 'Disabled'}
+    <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${tones[tone] || tones.slate}`}>
+      {label}
     </span>
   )
 }

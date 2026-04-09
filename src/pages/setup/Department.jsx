@@ -98,7 +98,7 @@ export default function Department() {
     setEditId(dept.id)
     setForm({ departmentName: dept.department_name || '', description: dept.description || '' })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

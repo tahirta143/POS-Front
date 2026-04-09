@@ -143,7 +143,7 @@ export default function SalesReturnPage() {
     setSelectedInvoice(invoice);
     setReturnItems(itemsWithUniqueId);
     setIsFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function handleDelete(returnId) {

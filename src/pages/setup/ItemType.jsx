@@ -92,7 +92,7 @@ export default function ItemTypePage() {
       is_enable: itemType.is_enable === 1 || itemType.is_enable === true,
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

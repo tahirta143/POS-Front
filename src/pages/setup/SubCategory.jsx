@@ -110,7 +110,7 @@ export default function SubCategory() {
             is_enable: subcategory.is_enable === 1 || subcategory.is_enable === true,
         })
         setIsFormOpen(true)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     function resetForm() {

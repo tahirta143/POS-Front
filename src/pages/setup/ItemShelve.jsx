@@ -90,7 +90,7 @@ export default function ItemShelvePage() {
       description: shelf.description || '',
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

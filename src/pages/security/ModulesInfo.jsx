@@ -80,7 +80,7 @@ export default function ModuleInfo() {
       description: moduleRow.description || '',
     })
     setMessage('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleDelete(moduleRow) {

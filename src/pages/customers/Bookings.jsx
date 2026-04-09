@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, StatusAlert, TableState, ActionButton, StatusChip } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
-import { MdAdd, MdRemove, MdRefresh, MdEventAvailable, MdHistory, MdPayment, MdDeleteOutline, MdOutlineEdit, MdSearch } from 'react-icons/md'
+import { MdAdd, MdRemove, MdRefresh, MdEventAvailable, MdHistory, MdPayment, MdSearch } from 'react-icons/md'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -132,7 +132,7 @@ export default function Bookings() {
       setInvoiceItems([createEmptyRow()])
     }
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const matchingCustomers = useMemo(() => {
@@ -175,10 +175,12 @@ export default function Bookings() {
 
   const remaining = useMemo(() => {
     const given = Number(givenAmount) || 0
+    // If it's overpaid, remaining is 0
     return Math.max(0, payable - given)
   }, [payable, givenAmount])
 
   const isAllPaid = payable > 0 && Number(givenAmount) >= payable
+  const isPartiallyPaid = payable > 0 && Number(givenAmount) > 0 && Number(givenAmount) < payable
 
   const addRow = () => setInvoiceItems([...invoiceItems, createEmptyRow()])
   const removeRow = (id) => {
@@ -235,7 +237,7 @@ export default function Bookings() {
       payment_method: paymentMethod,
       booking_date: bookingDate,
       booking_time: bookingTime,
-      status: editId ? undefined : 'Pending'
+      status: editId ? undefined : (isAllPaid ? 'Paid' : isPartiallyPaid ? 'Partially Paid' : 'Pending')
     }
 
     try {
@@ -283,9 +285,14 @@ export default function Bookings() {
             onClick={() => {
               if (isFormOpen && editId) {
                 resetForm()
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
               } else {
-                setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) resetForm()
+                const opening = !isFormOpen
+                setIsFormOpen(opening)
+                if (opening) {
+                  resetForm()
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                }
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
@@ -393,7 +400,11 @@ export default function Bookings() {
                             <input type="number" min="1" value={row.quantity} onChange={(e) => updateRow(row.id, 'quantity', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-center" />
                             <div className="flex items-center justify-end font-bold text-slate-700 text-[12px]">PKR {Number(row.total || 0).toLocaleString()}</div>
                             <div className="flex justify-center">
-                              <button type="button" onClick={() => removeRow(row.id)} className="text-rose-500 hover:text-rose-700"><MdDeleteOutline className="h-5 w-5"/></button>
+                              <button type="button" onClick={() => removeRow(row.id)} className="text-rose-400 hover:text-rose-600 transition-colors" title="Remove Item">
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         )
@@ -493,35 +504,41 @@ export default function Bookings() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
-                  {bookingsRecord.map((s) => (
-                    <motion.tr key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? 'bg-teal-50/50' : ''}`}>
-                      <td className="px-5 py-4 font-mono text-[11px] font-bold text-slate-400">#BK-{String(s.id).slice(-4)}</td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                           <span className="font-bold text-slate-800 text-[12px]">{s.customer_name}</span>
-                           <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{s.mobile_number || 'No Contact'}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                           <span className="text-[12px] font-semibold text-slate-600">{s.booking_date}</span>
-                           <span className="text-[10px] text-slate-400">{s.booking_time || 'No time set'}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                         <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                         <StatusChip enabled={s.paid >= s.payable} labels={{ on: 'PAID', off: 'DUE' }} />
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                           <button onClick={() => handleEdit(s)} className="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition"><MdOutlineEdit className="h-4 w-4"/></button>
-                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition"><MdDeleteOutline className="h-4 w-4"/></button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  {bookingsRecord.map((s) => {
+                    const statusPayload = s.paid >= s.payable 
+                      ? { label: 'PAID', tone: 'emerald' } 
+                      : (s.paid > 0 ? { label: 'PARTIAL', tone: 'amber' } : { label: 'PENDING', tone: 'rose' })
+                    
+                    return (
+                      <motion.tr key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? 'bg-teal-50/50' : ''}`}>
+                        <td className="px-5 py-4 font-mono text-[11px] font-bold text-slate-400">#BK-{String(s.id).slice(-4)}</td>
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex flex-col">
+                             <span className="font-bold text-slate-800 text-[12px]">{s.customer_name}</span>
+                             <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{s.mobile_number || 'No Contact'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col">
+                             <span className="text-[12px] font-semibold text-slate-600">{s.booking_date}</span>
+                             <span className="text-[10px] text-slate-400">{s.booking_time || 'No time set'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                           <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                           <StatusChip label={statusPayload.label} tone={statusPayload.tone} />
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                             <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
+                             <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

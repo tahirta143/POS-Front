@@ -144,7 +144,7 @@ export default function Manufacturers() {
       status: m.status === 1 || m.status === true,
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

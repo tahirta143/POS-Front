@@ -88,7 +88,7 @@ export default function CategoryPage() {
       is_enable: category.is_enable === 1 || category.is_enable === true,
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

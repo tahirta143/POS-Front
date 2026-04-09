@@ -84,7 +84,7 @@ export default function ModuleFunctions() {
       name: row.name || '',
     })
     setMessage('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleDelete(row) {

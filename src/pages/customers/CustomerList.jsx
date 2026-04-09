@@ -129,7 +129,7 @@ export default function CustomerPage() {
       paymentMethod: customer.payment_method || 'Cash',
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {
@@ -156,9 +156,13 @@ export default function CustomerPage() {
             onClick={() => {
               if (isFormOpen && editId) {
                 resetForm()
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
               } else {
                 setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) resetForm()
+                if (!isFormOpen) {
+                  resetForm()
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                }
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${

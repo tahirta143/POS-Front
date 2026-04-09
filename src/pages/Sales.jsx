@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton, StatusChip } from '../components/layout/PageShell.jsx'
 import axiosInstance from '../services/axiosInstance'
-import { MdAdd, MdRemove, MdArrowBack, MdReceipt, MdPerson, MdPhone, MdDescription, MdOutlineEdit, MdDeleteOutline } from 'react-icons/md'
+import { MdAdd, MdRemove, MdReceipt, MdPerson, MdSearch } from 'react-icons/md'
 
 const sectionStyles = {
   indigo: { accent: 'bg-indigo-500', header: 'border-indigo-100 bg-indigo-50/80' },
@@ -21,14 +21,6 @@ function SectionCard({ color, title, children }) {
       </div>
       {children}
     </div>
-  )
-}
-
-function PlusIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
   )
 }
 
@@ -76,9 +68,9 @@ export default function Sales() {
         axiosInstance.get('/categories').catch(() => ({ data: null })),
         axiosInstance.get('/item-details').catch(() => ({ data: null })),
       ])
-      if (cusRes.data) setCustomers(Array.isArray(cusRes.data) ? cusRes.data : cusRes.data.data || [])
-      if (catRes.data) setCategories(Array.isArray(catRes.data) ? catRes.data : catRes.data.data || [])
-      if (itmRes.data) setItems(Array.isArray(itmRes.data) ? itmRes.data : itmRes.data.data || [])
+      if (cusRes?.data) setCustomers(Array.isArray(cusRes.data) ? cusRes.data : cusRes.data.data || [])
+      if (catRes?.data) setCategories(Array.isArray(catRes.data) ? catRes.data : catRes.data.data || [])
+      if (itmRes?.data) setItems(Array.isArray(itmRes.data) ? itmRes.data : itmRes.data.data || [])
     } catch (e) {
       toast.error('Failed to load initial data')
     }
@@ -88,7 +80,7 @@ export default function Sales() {
     setLoading(true)
     try {
       const res = await axiosInstance.get('/sale-invoices')
-      if (res.data) setSalesRecord(Array.isArray(res.data) ? res.data : res.data.data || [])
+      if (res?.data) setSalesRecord(Array.isArray(res.data) ? res.data : res.data.data || [])
     } catch {
       setSalesRecord([])
     } finally {
@@ -131,7 +123,6 @@ export default function Sales() {
     Math.max(0, payable - (Number(givenAmount) || 0)),
     [payable, givenAmount]
   )
-  const isAllPaid = payable > 0 && Number(givenAmount) >= payable
 
   const addRow = () => setInvoiceItems(prev => [...prev, createEmptyRow()])
   const removeRow = (id) => {
@@ -187,7 +178,19 @@ export default function Sales() {
       setInvoiceItems([createEmptyRow()])
     }
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this sale record?')) return
+    try {
+      await axiosInstance.delete(`/sale-invoices/${id}`)
+      toast.success('Sale record deleted successfully')
+      if (editId === id) resetForm()
+      fetchSales()
+    } catch (err) {
+      toast.error('Failed to delete sale record.')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -248,45 +251,37 @@ export default function Sales() {
         })
         toast.success('Invoice saved successfully!')
       }
-
       resetForm()
       setIsFormOpen(false)
       fetchSales()
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to save invoice.')
+      toast.error('Failed to save sale invoice.')
     } finally {
       setSubmitting(false)
-    }
-  }
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this sales record?')) return
-    try {
-      await axiosInstance.delete(`/sale-invoices/${id}`)
-      toast.success('Sale deleted successfully')
-      if (editId === id) resetForm()
-      fetchSales()
-    } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to delete invoice')
     }
   }
 
   return (
     <PageShell>
       <div className="space-y-4">
-        {/* Top Action Bar */}
+        {/* Header Section */}
         <div className="flex items-center justify-between">
            <div>
-            <h1 className="text-xl font-bold text-slate-900">Sales Invoice</h1>
-            <p className="text-sm text-slate-500">Create and manage customer invoices.</p>
+            <h1 className="text-xl font-bold text-slate-900">Sales Invoices</h1>
+            <p className="text-sm text-slate-500">Create new sale receipts and track payment history.</p>
           </div>
           <button
             onClick={() => {
               if (isFormOpen && editId) {
                 resetForm()
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
               } else {
-                setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) resetForm()
+                const opening = !isFormOpen
+                setIsFormOpen(opening)
+                if (opening) {
+                  resetForm()
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                }
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
@@ -301,7 +296,7 @@ export default function Sales() {
               </>
             ) : (
               <>
-                <MdAdd className="h-5 w-5" /> New Sale
+                <MdAdd className="h-5 w-5" /> New Invoice
               </>
             )}
           </button>
@@ -317,167 +312,141 @@ export default function Sales() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-3 mb-6">
+              <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-6 mb-6">
                 <SectionHeader
-                  title={editId ? 'Modify Invoice' : 'Create New Invoice'}
-                  description="Process a new customer order."
+                  title={editId ? 'Edit Invoice' : 'New Sales Invoice'}
+                  description="Register a new sale for record keeping and reporting."
                   icon={<MdReceipt className="h-6 w-6 text-teal-600" />}
                 />
 
-                <form onSubmit={handleSubmit} className="space-y-3 mt-2">
-                  <SectionCard color="teal" title="Customer Identification">
-                    <div className="flex flex-wrap gap-4 items-end py-1">
-                      <Field label="Mobile Number" required>
-                        <div className="relative">
-                          <input
-                            type="tel"
-                            value={mobileNumber}
-                            onChange={handleMobileChange}
-                            onFocus={() => { if (mobileNumber.length >= 4) setShowCustomerDropdown(true) }}
-                            onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
-                            placeholder="Search or Enter Mobile"
-                            className="h-8 w-52 rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-                          />
-                          <MdPhone className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                          {showCustomerDropdown && matchingCustomers.length > 0 && (
-                            <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
-                              {matchingCustomers.map(c => (
-                                <li key={c.id} onClick={() => handleSelectCustomer(c)}
-                                  className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition">
-                                  <p className="text-[12px] font-semibold text-slate-800">{c.customer_name}</p>
-                                  <p className="text-[10px] text-slate-500">{c.mobile_number}</p>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                     <SectionCard color="teal" title="Customer Identification">
+                        <div className="flex flex-wrap gap-4 items-end">
+                             <Field label="Mobile / Search" required className="flex-1 min-w-[200px]">
+                                <div className="relative">
+                                     <input type="tel" value={mobileNumber} onChange={handleMobileChange} onFocus={() => mobileNumber.length >= 4 && setShowCustomerDropdown(true)} onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)} placeholder="Enter mobile..." className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10" />
+                                     <MdSearch className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
+                                     {showCustomerDropdown && matchingCustomers.length > 0 && (
+                                        <ul className="absolute left-0 top-full mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
+                                          {matchingCustomers.map(c => (
+                                            <li key={c.id} onClick={() => handleSelectCustomer(c)} className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition">
+                                              <p className="text-[12px] font-semibold text-slate-800">{c.customer_name}</p>
+                                              <p className="text-[10px] text-slate-500">{c.mobile_number}</p>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                     )}
+                                </div>
+                             </Field>
+                             <Field label="Customer Name" required className="flex-1 min-w-[200px]">
+                                <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Walk-in Customer" className={`h-8 w-full rounded-md border text-[12px] outline-none transition px-2.5 ${customerId ? 'border-emerald-300 bg-emerald-50 font-bold text-emerald-800' : 'border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100'}`} />
+                             </Field>
                         </div>
-                      </Field>
-                      <Field label="Customer Name" required>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={customerName}
-                            onChange={e => setCustomerName(e.target.value)}
-                            placeholder="Full Name"
-                            className={`h-8 w-64 rounded-md border text-[12px] outline-none transition px-2.5 pr-8 ${customerId
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold'
-                                : 'border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 shadow-sm'
-                              }`}
-                          />
-                          <MdPerson className={`absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 ${customerId ? 'text-emerald-500' : 'text-slate-400'}`} />
-                        </div>
-                      </Field>
-                    </div>
-                  </SectionCard>
-
-                  <SectionCard color="teal" title="Invoice Items">
-                    <div className="space-y-2 mt-1">
-                      <div className="hidden grid-cols-[180px_1fr_100px_80px_120px_50px] gap-3 px-2 sm:grid">
-                         {['Category', 'Item Search', 'Unit Price', 'Qty', 'Subtotal', ''].map((h, i) => (
-                           <div key={i} className={`text-[10px] font-bold text-slate-400 uppercase tracking-widest ${i === 2 || i === 4 ? 'text-right' : i === 3 ? 'text-center' : ''}`}>{h}</div>
-                         ))}
-                      </div>
-
-                      {invoiceItems.map(row => {
-                        const catItems = items.filter(i => String(i.item_category_id) === String(row.categoryId))
-                        return (
-                          <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_100px_80px_120px_50px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0">
-                            <div className="col-span-2 sm:col-span-1">
-                              <select value={row.categoryId}
-                                onChange={e => updateRow(row.id, 'categoryId', e.target.value)}
-                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none border-t-0 border-x-0 sm:border-t sm:border-x">
-                                <option value="">Category</option>
-                                {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
-                              </select>
-                            </div>
-                            <div className="col-span-2 sm:col-span-1">
-                              <select value={row.itemId}
-                                onChange={e => updateRow(row.id, 'itemId', e.target.value)}
-                                disabled={!row.categoryId}
-                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none disabled:bg-slate-50">
-                                <option value="">Select Item</option>
-                                {catItems.map(i => <option key={i.id} value={i.id}>{i.item_name}</option>)}
-                              </select>
-                            </div>
-                            <input type="number" step="0.01" value={row.price}
-                              onChange={e => updateRow(row.id, 'price', e.target.value)}
-                              placeholder="0.00"
-                              className="col-span-1 h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-right focus:border-teal-400" />
-                            <input type="number" min="1" value={row.quantity}
-                              onChange={e => updateRow(row.id, 'quantity', e.target.value)}
-                              className="col-span-1 h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-center focus:border-teal-400" />
-                            <div className="col-span-1 flex items-center justify-end font-bold text-slate-700 text-[12px]">
-                              PKR {Number(row.total || 0).toLocaleString()}
-                            </div>
-                            <div className="col-span-1 flex justify-center">
-                              <button type="button" onClick={() => removeRow(row.id)} className="text-rose-500 hover:text-rose-700 transition">
-                                <MdDeleteOutline className="h-5 w-5" />
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      })}
-
-                      <div className="pt-2">
-                        <button type="button" onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition">
-                          <MdAdd className="h-4 w-4" /> Add Row
-                        </button>
-                      </div>
-                    </div>
-                  </SectionCard>
-
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <SectionCard color="teal" title="Order Summary">
-                       <div className="space-y-3 py-1">
-                          <div className="flex justify-between items-center text-sm">
-                             <span className="text-slate-500">Gross Total</span>
-                             <span className="font-bold text-slate-800">PKR {subTotal.toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                             <span className="text-slate-500 text-sm flex-1">Discount Amount</span>
-                             <div className="relative">
-                                <input type="number" step="0.01" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="0.00" className="h-8 w-32 rounded border border-slate-300 text-right pr-6 px-2 text-[12px] focus:border-teal-400" />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">PKR</span>
-                             </div>
-                          </div>
-                          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                             <span className="font-bold text-slate-700 text-sm">Net Payable</span>
-                             <span className="text-xl font-black text-teal-600 font-mono">PKR {payable.toLocaleString()}</span>
-                          </div>
-                       </div>
-                    </SectionCard>
-
-                    <SectionCard color="teal" title="Payment Control">
-                       <div className="space-y-3 py-1">
-                         <div className="space-y-1">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Customer Given Amount</p>
-                           <input type="number" step="0.01" value={givenAmount} onChange={e => setGivenAmount(e.target.value)} className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-slate-800 focus:border-emerald-500 focus:bg-white transition outline-none" placeholder="0.00" />
+                     </SectionCard>
+                     <SectionCard color="indigo" title="Internal Reference">
+                         <div className="flex gap-4">
+                            <Field label="Receipt Number" className="flex-1">
+                                <input type="text" value={receiptNo} readOnly className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono font-bold text-slate-500" />
+                            </Field>
+                            <Field label="Description / Note" className="flex-1">
+                                <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Internal remarks..." className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                            </Field>
                          </div>
-                         {payable > 0 && givenAmount > 0 && (
-                            <div className={`p-3 rounded-xl border-2 flex items-center justify-between ${isAllPaid ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                               <span className={`text-[11px] font-black uppercase tracking-widest ${isAllPaid ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                 {isAllPaid ? 'FULLY PAID' : 'REMAINING'}
-                               </span>
-                               <span className={`font-mono font-bold text-sm ${isAllPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                 PKR {isAllPaid ? (Number(givenAmount) - payable).toLocaleString() : remaining.toLocaleString()}
-                               </span>
-                            </div>
-                         )}
-                       </div>
-                    </SectionCard>
+                     </SectionCard>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <div className="text-[10px] text-slate-400 font-medium">
-                        {editId ? <span>Ref ID: <span className="font-mono">#{editId}</span></span> : <span>RCP ID: <span className="font-mono">{receiptNo}</span></span>}
-                    </div>
-                    <div className="flex gap-3">
-                      <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
-                      <button type="submit" disabled={submitting || payable <= 0} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
-                        <MdReceipt className="h-5 w-5" /> {submitting ? 'Saving...' : editId ? 'Update & Print' : 'Confirm & Print'}
-                      </button>
-                    </div>
+                  <SectionCard title="Cart Items">
+                     <div className="space-y-2">
+                        <div className="hidden grid-cols-[180px_1fr_100px_80px_100px_50px] gap-3 px-2 sm:grid uppercase tracking-widest text-[10px] font-bold text-slate-400">
+                           <div>Category</div>
+                           <div>Select Item</div>
+                           <div className="text-right">Price</div>
+                           <div className="text-center">Qty</div>
+                           <div className="text-right">Total</div>
+                           <div></div>
+                        </div>
+                        {invoiceItems.map(row => {
+                           const availableItems = items.filter(i => String(i.item_category_id) === String(row.categoryId))
+                           return (
+                             <div key={row.id} className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_100px_80px_100px_50px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0 transition-all hover:bg-slate-50">
+                                <div className="col-span-2 sm:col-span-1">
+                                    <select value={row.categoryId} onChange={(e) => updateRow(row.id, 'categoryId', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none focus:border-indigo-400">
+                                       <option value="">Category</option>
+                                       {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="col-span-2 sm:col-span-1">
+                                    <select value={row.itemId} onChange={(e) => updateRow(row.id, 'itemId', e.target.value)} disabled={!row.categoryId} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none disabled:bg-slate-100 focus:border-indigo-400">
+                                       <option value="">Select Item</option>
+                                       {availableItems.map(i => <option key={i.id} value={i.id}>{i.item_name}</option>)}
+                                    </select>
+                                </div>
+                                <input type="number" step="0.01" value={row.price} onChange={(e) => updateRow(row.id, 'price', e.target.value)} placeholder="0.00" className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-right text-[12px] font-medium" />
+                                <input type="number" min="1" value={row.quantity} onChange={(e) => updateRow(row.id, 'quantity', e.target.value)} className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-center text-[12px] font-bold" />
+                                <div className="text-right font-black text-slate-800 text-[12px]">PKR {Number(row.total || 0).toLocaleString()}</div>
+                                <div className="flex justify-center">
+                                   <button type="button" onClick={() => removeRow(row.id)} className="text-rose-400 hover:text-rose-600 transition-colors" title="Remove Item">
+                                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                   </button>
+                                </div>
+                             </div>
+                           )
+                        })}
+                        <div className="pt-2">
+                           <button type="button" onClick={addRow} className="group inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition">
+                              <MdAdd className="h-4 w-4 group-hover:rotate-90 transition duration-300" /> Add Product Line
+                           </button>
+                        </div>
+                     </div>
+                  </SectionCard>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                     <SectionCard title="Financial Summary">
+                        <div className="space-y-3 py-1">
+                           <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                              <span className="text-slate-500">Gross Total</span>
+                              <span className="font-bold text-slate-800">PKR {subTotal.toLocaleString()}</span>
+                           </div>
+                           <div className="flex items-center gap-3">
+                              <span className="text-slate-500 text-xs flex-1">Discount Amount</span>
+                              <input type="number" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="h-8 w-32 rounded-lg border border-slate-300 text-right px-2 text-[12px] font-bold outline-none focus:border-teal-400" />
+                           </div>
+                           <div className="pt-2 flex justify-between items-center">
+                              <span className="font-black text-slate-700 text-sm">TOTAL PAYABLE</span>
+                              <span className="text-lg font-black text-teal-600 font-mono tracking-tighter">PKR {payable.toLocaleString()}</span>
+                           </div>
+                        </div>
+                     </SectionCard>
+                     <SectionCard color="emerald" title="Settlement Details" className="lg:col-span-2">
+                        <div className="flex flex-wrap gap-6 items-end py-1">
+                           <Field label="Payment Received" className="flex-1 min-w-[150px]">
+                              <input type="number" value={givenAmount} onChange={(e) => setGivenAmount(e.target.value)} placeholder="0.00" className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-emerald-700 outline-none focus:border-emerald-500 focus:bg-white transition" />
+                           </Field>
+                           <div className="flex-1 min-w-[200px]">
+                              {payable > 0 && givenAmount > 0 && (
+                                <div className={`p-3 rounded-xl border-2 flex items-center justify-between ${Number(givenAmount) >= payable ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                                   <div className="flex flex-col">
+                                      <span className={`text-[10px] font-black uppercase tracking-widest ${Number(givenAmount) >= payable ? 'text-emerald-700' : 'text-rose-700'}`}>{Number(givenAmount) >= payable ? 'COMPLETE' : 'PARTIAL DUE'}</span>
+                                      <span className={`font-mono font-black text-lg ${Number(givenAmount) >= payable ? 'text-emerald-600' : 'text-rose-600'}`}>PKR {Math.abs(Number(givenAmount) - payable).toLocaleString()}</span>
+                                   </div>
+                                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${Number(givenAmount) >= payable ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}`}>
+                                      {Number(givenAmount) >= payable ? '✓' : '!'}
+                                   </div>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                     </SectionCard>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Discard Changes</button>
+                    <button type="submit" disabled={submitting || payable <= 0} className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-black text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
+                       <MdReceipt className="h-5 w-5" /> {submitting ? 'Authenticating...' : editId ? 'Save & Sync' : 'Generate Invoice'}
+                    </button>
                   </div>
                 </form>
               </Card>
@@ -485,23 +454,23 @@ export default function Sales() {
           )}
         </AnimatePresence>
 
-        {/* Sales Log Table */}
-        <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
+        {/* List Section */}
+        <Card className="mx-auto max-w-6xl p-0 overflow-hidden">
           <SectionHeader
-            title="Sales Log"
-            description="Recent invoices and customer transaction history."
+            title="Sales History Log"
+            description="Chronological record of completed transactions and billing."
             icon={<MdReceipt className="h-6 w-6 text-teal-600" />}
             action={
               <div className="p-4">
-                <button type="button" onClick={fetchSales} className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">Refresh Log</button>
+                <button type="button" onClick={fetchSales} className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50">Sync Records</button>
               </div>
             }
           />
 
           {loading ? (
-            <TableState message="Loading sales history..." />
+            <TableState message="Syncing with master sales database..." />
           ) : salesRecord.length === 0 ? (
-            <TableState message="No sales recorded yet." />
+            <TableState message="No sales records detected in history." />
           ) : (
             <div className="overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-slate-100 text-left">
@@ -516,42 +485,48 @@ export default function Sales() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
-                  {salesRecord.map((s) => (
-                    <motion.tr 
-                      key={s.id} 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? 'bg-teal-50/50' : ''}`}
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                           <span className="font-mono text-[11px] font-bold text-slate-700">{s.receipt_no}</span>
-                           <span className="text-[10px] text-slate-400 font-semibold">{s.created_at || 'Recently'}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800 text-[12px]">{s.customer_name || 'Walk-in Customer'}</span>
-                          <span className="text-[10px] text-teal-600 font-bold tracking-tighter">{s.mobile || '—'}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                         <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                         <span className="text-[12px] font-bold text-emerald-600">PKR {Number(s.paid || 0).toLocaleString()}</span>
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                          <StatusChip enabled={s.paid >= s.payable} labels={{ on: 'PAID', off: 'DUE' }} />
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2">
-                           <button onClick={() => handleEdit(s)} className="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition"><MdOutlineEdit className="h-4 w-4"/></button>
-                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition"><MdDeleteOutline className="h-4 w-4"/></button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  {salesRecord.map((s) => {
+                    const statusPayload = s.paid >= s.payable 
+                      ? { label: 'PAID', tone: 'emerald' } 
+                      : (s.paid > 0 ? { label: 'PARTIAL', tone: 'amber' } : { label: 'DUE', tone: 'rose' })
+
+                    return (
+                      <motion.tr 
+                        key={s.id} 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? 'bg-teal-50/50' : ''}`}
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col">
+                             <span className="font-mono text-[11px] font-bold text-slate-700">{s.receipt_no}</span>
+                             <span className="text-[10px] text-slate-400 font-semibold">{s.created_at || 'Recently'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800 text-[12px]">{s.customer_name || 'Walk-in Customer'}</span>
+                            <span className="text-[10px] text-teal-600 font-bold tracking-tighter">{s.mobile || '—'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                           <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                           <span className="text-[12px] font-bold text-emerald-600">PKR {Number(s.paid || 0).toLocaleString()}</span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                           <StatusChip label={statusPayload.label} tone={statusPayload.tone} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex justify-end gap-2">
+                             <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
+                             <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

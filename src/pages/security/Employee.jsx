@@ -145,7 +145,7 @@ export default function EmployeePage() {
     setError('')
     setSuccess('')
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {

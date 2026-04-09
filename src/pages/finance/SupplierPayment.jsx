@@ -104,7 +104,7 @@ export default function SupplierPaymentPage() {
       remarks: payment.remarks || '',
     });
     setIsFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function handleDelete(paymentId) {
@@ -132,9 +132,14 @@ export default function SupplierPaymentPage() {
             onClick={() => {
               if (isFormOpen && editId) {
                 resetForm()
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
               } else {
-                setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) resetForm()
+                const opening = !isFormOpen
+                setIsFormOpen(opening)
+                if (opening) {
+                  resetForm()
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                }
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${

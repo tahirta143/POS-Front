@@ -238,7 +238,7 @@ export default function ItemBarcodePage() {
       sale_price: barcode.sale_price ?? '',
     })
     setIsFormOpen(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const getItemName = (id) => {
