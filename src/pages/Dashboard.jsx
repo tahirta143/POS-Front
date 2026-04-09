@@ -134,7 +134,7 @@ export default function Dashboard() {
     setLoading(true)
     try {
       const [customersRes, productsRes, staffRes, salesRes, bookingsRes, revenueRes] = await Promise.all([
-        axiosInstance.get('/customers/count').catch(() => ({ data: { count: 203 } })),
+        axiosInstance.get('/customers/count').catch(() => ({ data: { totalCustomers: 0 } })),
         axiosInstance.get('/item-details/count').catch(() => ({ data: { count: 16 } })),
         axiosInstance.get('/staff/count').catch(() => ({ data: { count: 0 } })),
         axiosInstance.get('/sale-invoices/total').catch(() => ({ data: { total: 9 } })),
@@ -142,7 +142,7 @@ export default function Dashboard() {
         axiosInstance.get('/sale-invoices/revenue').catch(() => ({ data: { revenue: 11650 } })),
       ])
       setStats({
-        totalCustomers: { value: customersRes.data?.totalCustomers || customersRes.data?.count || 203, change: 12 },
+        totalCustomers: { value: customersRes.data?.totalCustomers ?? 0, change: 12 },
         totalProducts: { value: productsRes.data?.count || 16, change: 5 },
         totalStaff: { value: staffRes.data?.data?.total || 0, change: 2 },
         totalSales: { value: salesRes.data?.total || 0, change: 18 },
