@@ -53,6 +53,7 @@ import AmountReceivablePage from './pages/finance/AmountReceivable';
 import SalesReturnPage from './pages/stock/SalesReturn';
 import PurchaseReturnPage from './pages/stock/PurchaseReturn';
 import GoodsReceiptNotePage from './pages/stock/GoodsReceiptNote';
+import StockTransferPage from './pages/stock/StockTransfer';
 
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -79,6 +80,8 @@ const App = () => {
         <Route path="/stock/sales-return" element={<SalesReturnPage />} />
         <Route path="/stock/purchase-return" element={<PurchaseReturnPage />} />
         <Route path="/stock/grn" element={<GoodsReceiptNotePage />} />
+        <Route path="/stock/transfer" element={<StockTransferPage />} />
+
 
         {/* Items */}
         <Route path="/items" element={<ItemList />} />
