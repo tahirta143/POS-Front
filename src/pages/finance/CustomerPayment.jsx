@@ -40,9 +40,12 @@ export default function CustomerPaymentPage() {
     const salesReturns = getSalesReturns();
     return customers.map((customer) => {
       const opening = Number(customer.previous_balance || 0);
+      
+      // UPDATED: Use to_be_paid instead of calculating from payable - given_amount
       const invoicesDue = sales
         .filter((sale) => String(sale.customer_id) === String(customer.id))
-        .reduce((sum, sale) => sum + Math.max(0, Number(sale.payable || 0) - Number(sale.given_amount || 0)), 0);
+        .reduce((sum, sale) => sum + Number(sale.to_be_paid || 0), 0); // Directly use to_be_paid
+      
       const collected = paymentHistory
         .filter((payment) => String(payment.customerId) === String(customer.id))
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
@@ -126,7 +129,7 @@ export default function CustomerPaymentPage() {
   return (
     <PageShell>
       <div className="space-y-4">
-        {/* Top Header */}
+        {/* Top Header - Keeping your original design */}
         <div className="flex items-center justify-between">
            <div>
             <h1 className="text-xl font-bold text-slate-900">Customer Payments</h1>
@@ -164,7 +167,7 @@ export default function CustomerPaymentPage() {
           </button>
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Keeping your original design */}
         <AnimatePresence>
           {isFormOpen && (
             <motion.div
@@ -282,7 +285,7 @@ export default function CustomerPaymentPage() {
           )}
         </AnimatePresence>
 
-        {/* History Table */}
+        {/* History Table - Keeping your original design */}
         <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Collection Registry"
@@ -329,14 +332,14 @@ export default function CustomerPaymentPage() {
                            <span className="text-[12px] font-medium text-slate-600">{payment.date}</span>
                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">{payment.method}</span>
                         </div>
-                      </td>
+                       </td>
                       <td className="px-5 py-4 text-right font-black text-teal-700">PKR {Number(payment.amount).toLocaleString()}</td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2 text-right">
                           <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(payment)} />
                           <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(payment.id)} />
                         </div>
-                      </td>
+                       </td>
                     </motion.tr>
                   ))}
                 </tbody>

@@ -203,19 +203,19 @@ export default function ItemPage() {
   function handleEdit(item) {
     setEditId(item.id)
     setForm({
-      category_id: item.itemCategoryId || item.category_id || '',
-      item_type_id: item.itemTypeId || item.item_type_id || '',
-      subcategory_id: item.itemSubcategoryId || item.subcategory_id || '',
+      category_id: item.item_category_id || item.category_id || '',
+      item_type_id: item.item_type_id || item.itemTypeId || '',
+      subcategory_id: item.item_subcategory_id || item.subcategory_id || '',
       item_name: item.itemName || item.item_name || '',
-      manufacturer: item.manufacturerId || item.manufacturer || '',
-      supplier: item.supplierId || item.supplier || '',
+      manufacturer: item.manufacturer_id || item.manufacturer || '',
+      supplier: item.supplier_id || item.supplier || '',
       purchase_price: item.purchasePrice || item.purchase_price || '',
       sale_price: item.salePrice || item.sale_price || '',
       opening_stock: item.stock || item.opening_stock || '',
-      barcode: item.barCode || item.barcode || '',
-      description: item.description || '',
-      store_location: item.shelveLocationId || item.store_location || '',
-      item_unit: item.itemUnitId || item.item_unit || '',
+      barcode: item.label_barcode || item.barcode || '',
+      description: item.details || '',
+      store_location: item.shelve_location_id || item.store_location || '',
+      item_unit: item.item_unit_id || item.item_unit || '',
       per_unit: item.perUnit || item.per_unit || '',
       reorder_level: item.reorder || item.reorder_level || '',
       is_enable: item.isEnable === 1 || item.is_enable === 1 || item.is_enable === true,
@@ -267,11 +267,10 @@ export default function ItemPage() {
                 }
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
-            }`}
+              }`}
           >
             {isFormOpen ? (
               <>
@@ -535,8 +534,8 @@ export default function ItemPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
                   {items.map((item, index) => (
-                    <motion.tr 
-                      key={item.id} 
+                    <motion.tr
+                      key={item.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="group transition-colors hover:bg-teal-50/30"
@@ -545,7 +544,7 @@ export default function ItemPage() {
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="text-[13px] font-bold text-slate-800">{item.itemName || item.item_name}</span>
-                          <span className="text-[10px] text-slate-400">{item.barcode || item.barCode || 'No Barcode'}</span>
+                          <span className="text-[10px] text-slate-400">{item.label_barcode || item.barCode || 'No Barcode'}</span>
                         </div>
                       </td>
                       <td className="px-5 py-4">
@@ -557,24 +556,27 @@ export default function ItemPage() {
                         {parseFloat(item.salePrice || item.sale_price || 0).toLocaleString()} PKR
                       </td>
                       <td className="px-5 py-4">
-                         <span className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <= (item.reorder || item.reorder_level || 0) ? 'text-rose-600' : 'text-slate-700'}`}>
-                           {item.stock || item.opening_stock || 0}
-                         </span>
+                        <span className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <= (item.reorder || item.reorder_level || 0) ? 'text-rose-600' : 'text-slate-700'}`}>
+                          {item.stock || item.opening_stock || 0}
+                        </span>
                       </td>
                       <td className="px-5 py-4">
-                        <StatusChip enabled={item.isEnable === 1 || item.is_enable === 1 || item.is_enable === true} />
+                        <StatusChip
+                          label={item.isEnable === 1 || item.isEnable === true || item.is_enable === 1 || item.is_enable === true ? 'Active' : 'Inactive'}
+                          tone={item.isEnable === 1 || item.isEnable === true || item.is_enable === 1 || item.is_enable === true ? 'teal' : 'rose'}
+                        />
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton 
-                            label="Edit" 
-                            tone="teal" 
-                            onClick={() => handleEdit(item)} 
+                          <ActionButton
+                            label="Edit"
+                            tone="teal"
+                            onClick={() => handleEdit(item)}
                           />
-                          <ActionButton 
-                            label="Delete" 
-                            tone="rose" 
-                            onClick={() => handleDelete(item.id)} 
+                          <ActionButton
+                            label="Delete"
+                            tone="rose"
+                            onClick={() => handleDelete(item.id)}
                           />
                         </div>
                       </td>

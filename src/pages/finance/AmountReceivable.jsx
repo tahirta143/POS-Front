@@ -2,12 +2,19 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
 import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
 import axiosInstance from '../../services/axiosInstance';
-import { getCustomerPayments, getSalesReturns } from '../../utils/transactionStore.js';
 
 function MoneyIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function CustomerIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   );
 }
@@ -24,41 +31,83 @@ export default function AmountReceivablePage() {
   async function fetchReceivables() {
     setLoading(true);
     try {
+      // Fetch customers and sales invoices in parallel
       const [customersResponse, salesResponse] = await Promise.all([
         axiosInstance.get('/customers'),
-        axiosInstance.get('/sale-invoices').catch(() => ({ data: [] })),
+        axiosInstance.get('/sale-invoices'),
       ]);
-      const data = customersResponse.data;
-      const salesData = salesResponse.data;
-      const customers = Array.isArray(data) ? data : data.data || [];
-      const salesList = Array.isArray(salesData) ? salesData : salesData.data || [];
-      const collected = getCustomerPayments();
-      const returns = getSalesReturns();
-      
-      const list = customers
-        .map(c => ({
-          id: c.id,
-          customer_name: c.customer_name,
-          mobile_number: c.mobile_number,
-          opening_balance: parseFloat(c.previous_balance || 0),
-          invoices_due: salesList
-            .filter((sale) => String(sale.customer_id) === String(c.id))
-            .reduce((sum, sale) => sum + Math.max(0, Number(sale.payable || 0) - Number(sale.given_amount || 0)), 0),
-          collected_frontend: collected
-            .filter((payment) => String(payment.customerId) === String(c.id))
-            .reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-          return_credit: returns
-            .filter((record) => String(record.customerId) === String(c.id))
-            .reduce((sum, record) => sum + Number(record.totalReturn || 0), 0),
-        }))
-        .map((customer) => ({
-          ...customer,
-          amount: Math.max(0, customer.opening_balance + customer.invoices_due - customer.collected_frontend - customer.return_credit),
-        }))
-        .filter(c => c.amount > 0);
-      
-      setReceivables(list);
-    } catch {
+
+      const customers = customersResponse.data || [];
+      const salesInvoices = salesResponse.data || [];
+
+      // Calculate dues per customer
+      const customerDuesMap = new Map();
+
+      // Initialize map with customer data
+      customers.forEach(customer => {
+        customerDuesMap.set(customer.id, {
+          id: customer.id,
+          customerName: customer.customer_name,
+          mobileNumber: customer.mobile_number,
+          openingBalance: parseFloat(customer.previous_balance || 0),
+          totalToBePaid: 0,
+          totalPaid: 0,
+          invoices: []
+        });
+      });
+
+      // Process each sale invoice
+      salesInvoices.forEach(invoice => {
+        const customerId = invoice.customer_id;
+        if (!customerId) return;
+
+        const customerData = customerDuesMap.get(customerId);
+        if (!customerData) return;
+
+        // Extract amounts from invoice
+        const toBePaid = parseFloat(invoice.to_be_paid || 0);
+        const paid = parseFloat(invoice.paid || 0);
+        const payable = parseFloat(invoice.payable || 0);
+        const discount = parseFloat(invoice.discount || 0);
+        const subTotal = parseFloat(invoice.sub_total || 0);
+
+        // Track total to_be_paid for this customer
+        customerData.totalToBePaid += toBePaid;
+        customerData.totalPaid += paid;
+        
+        // Store invoice details for reference
+        customerData.invoices.push({
+          id: invoice.id,
+          receiptNo: invoice.receipt_no,
+          subTotal: subTotal,
+          discount: discount,
+          payable: payable,
+          paid: paid,
+          toBePaid: toBePaid,
+          createdAt: invoice.created_at,
+          items: invoice.items || []
+        });
+      });
+
+      // Calculate final outstanding amount
+      const receivablesList = Array.from(customerDuesMap.values())
+        .map(customer => {
+          // Outstanding = Opening Balance + Total To Be Paid
+          const outstanding = customer.openingBalance + customer.totalToBePaid;
+          
+          return {
+            ...customer,
+            outstanding: outstanding,
+            totalInvoices: customer.invoices.length,
+            unpaidInvoices: customer.invoices.filter(inv => inv.toBePaid > 0).length
+          };
+        })
+        .filter(customer => customer.outstanding > 0) // Only show customers with dues
+        .sort((a, b) => b.outstanding - a.outstanding); // Sort by highest dues first
+
+      setReceivables(receivablesList);
+    } catch (error) {
+      console.error('Error fetching receivables:', error);
       setReceivables([]);
     } finally {
       setLoading(false);
@@ -66,37 +115,44 @@ export default function AmountReceivablePage() {
   }
 
   const totalReceivable = useMemo(() => {
-    return receivables.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    return receivables.reduce((sum, r) => sum + (Number(r.outstanding) || 0), 0);
   }, [receivables]);
 
   const filteredReceivables = useMemo(() => {
-    return receivables.filter(r => r.customer_name.toLowerCase().includes(search.toLowerCase()));
+    if (!search.trim()) return receivables;
+    return receivables.filter(r => 
+      r.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      r.mobileNumber?.includes(search)
+    );
   }, [receivables, search]);
 
   return (
     <PageShell
       title="Amount Receivable"
-      description="Overview of outstanding dues from customers."
+      description="Overview of outstanding dues from customers based on unpaid invoices."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-teal-50/30">
+      <div className="space-y-6 max-w-6xl mx-auto">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-gradient-to-br from-teal-50/50 to-white">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-teal-100 rounded-xl text-teal-600">
                 <MoneyIcon className="h-8 w-8" />
               </div>
               <div>
-                <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Total Amount Receivable</p>
-                <p className="mt-2 text-2xl font-bold text-teal-700">PKR {totalReceivable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Total Receivable</p>
+                <p className="mt-2 text-2xl font-bold text-teal-700">
+                  PKR {totalReceivable.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-white">
+          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-gradient-to-br from-teal-50/50 to-white">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-teal-100 rounded-xl text-teal-600">
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <CustomerIcon className="h-8 w-8" />
               </div>
               <div>
                 <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Customers with Dues</p>
@@ -104,70 +160,192 @@ export default function AmountReceivablePage() {
               </div>
             </div>
           </Card>
+
+          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-gradient-to-br from-teal-50/50 to-white">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-teal-100 rounded-xl text-teal-600">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Average Due per Customer</p>
+                <p className="mt-2 text-2xl font-bold text-teal-700">
+                  PKR {receivables.length > 0 ? (totalReceivable / receivables.length).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '0.00'}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
 
-        <Card className="p-4 border-l-[6px] border-l-teal-500">
-          <FallbackNotice message="Receivable balances are currently derived in the frontend from customer balances, invoices, returns, and local payment history." />
+        {/* Info Notice */}
+        <Card className="p-4 border-l-[6px] border-l-teal-500 bg-teal-50/30">
+          <div className="flex items-start gap-3">
+            <div className="text-teal-600 mt-0.5">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-teal-800">Receivable Calculation</p>
+              <p className="text-[12px] text-teal-700 mt-1">
+                Outstanding amount = Opening Balance + Sum of "To Be Paid" from unpaid invoices.
+                The "To Be Paid" field represents the remaining amount after customer payment.
+              </p>
+            </div>
+          </div>
         </Card>
 
+        {/* Search Bar */}
         <Card className="p-4 border-l-[6px] border-l-teal-500">
-           <input 
-            type="text" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-            placeholder="Search customer..." 
-            className="h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] outline-none focus:border-teal-400" 
-           />
+          <div className="relative">
+            <input 
+              type="text" 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              placeholder="Search by customer name or mobile number..." 
+              className="h-10 w-full rounded-lg border border-slate-300 bg-white px-4 pl-10 text-[13px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+            />
+            <svg className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </Card>
 
-        <Card className="overflow-hidden">
-          <div className="p-4 border-b border-slate-100">
+        {/* Receivables Table */}
+        <Card className="overflow-hidden shadow-md">
+          <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-teal-50/30 to-white">
             <SectionHeader
-              title="Customer Dues"
-              description="Outstanding receivable balances grouped by customer."
+              title="Customer Dues Details"
+              description="List of customers with outstanding payments"
               icon={<MoneyIcon className="h-5 w-5" />}
               action={
                 <button
                   type="button"
                   onClick={fetchReceivables}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  disabled={loading}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50 hover:border-teal-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Refresh
+                  {loading ? 'Refreshing...' : 'Refresh'}
                 </button>
               }
             />
           </div>
-          <div className="overflow-x-auto w-full max-h-[400px]">
-            <table className="min-w-full divide-y divide-slate-100 text-left">
+          
+          <div className="overflow-x-auto w-full max-h-[500px]">
+            <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50 sticky top-0">
-                <tr className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-4">Customer Name</th>
-                  <th className="px-6 py-4">Contact</th>
-                  <th className="px-6 py-4 text-right">Invoices Due</th>
-                  <th className="px-6 py-4 text-right">Outstanding Amount</th>
-                </tr>
+                <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-6 py-4 text-left">Customer Name</th>
+                  <th className="px-6 py-4 text-left">Contact</th>
+                  <th className="px-6 py-4 text-right">Opening Balance</th>
+                  <th className="px-6 py-4 text-right">Unpaid Invoices</th>
+                  <th className="px-6 py-4 text-right">Total Outstanding</th>
+                  <th className="px-6 py-4 text-center">Status</th>
+                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredReceivables.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan="4">
-                      <TableState message={loading ? 'Loading...' : 'No outstanding receivables.'} />
+                    <td colSpan="6">
+                      <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                        <span className="ml-3 text-slate-600">Loading receivables...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredReceivables.length === 0 ? (
+                  <tr>
+                    <td colSpan="6">
+                      <TableState message={search ? 'No matching customers found.' : 'No outstanding receivables found.'} />
                     </td>
                   </tr>
                 ) : (
-                  filteredReceivables.map((r, idx) => (
-                    <tr key={idx} className="text-sm transition hover:bg-slate-50">
-                      <td className="px-6 py-4 font-semibold text-slate-800">{r.customer_name}</td>
-                      <td className="px-6 py-4 text-slate-600 text-xs">{r.mobile_number || '-'}</td>
-                      <td className="px-6 py-4 text-right font-medium text-slate-700">PKR {Number(r.invoices_due).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-teal-600">PKR {Number(r.amount).toFixed(2)}</td>
+                  filteredReceivables.map((customer, idx) => (
+                    <tr key={customer.id || idx} className="text-sm transition-all hover:bg-teal-50/30 group">
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-slate-800">{customer.customerName}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {customer.totalInvoices} invoice{customer.totalInvoices !== 1 ? 's' : ''}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 text-[12px] font-mono">
+                        {customer.mobileNumber || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-700">
+                        PKR {customer.openingBalance.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="font-bold text-amber-600">{customer.unpaidInvoices}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {customer.unpaidInvoices > 0 && `(${customer.totalToBePaid.toFixed(2)})`}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="font-bold text-teal-600 text-base">
+                          PKR {customer.outstanding.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                          customer.outstanding > 1000 
+                            ? 'bg-red-100 text-red-700' 
+                            : customer.outstanding > 0 
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {customer.outstanding > 0 ? 'PENDING' : 'PAID'}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
+              {!loading && filteredReceivables.length > 0 && (
+                <tfoot className="bg-slate-50 border-t border-slate-200">
+                  <tr className="text-sm font-semibold">
+                    <td colSpan="4" className="px-6 py-4 text-right text-slate-700">
+                      Total Receivable:
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-lg font-bold text-teal-700">
+                        PKR {totalReceivable.toFixed(2)}
+                      </span>
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </Card>
+
+        {/* Detailed View Section - Optional */}
+        {receivables.some(c => c.invoices?.length > 0) && (
+          <Card className="p-4 border-l-[6px] border-l-teal-500 bg-white">
+            <details className="group">
+              <summary className="cursor-pointer flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <span className="text-[13px] font-semibold text-slate-700">View Detailed Invoice Breakdown</span>
+                </div>
+                <span className="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="mt-4 p-4 bg-slate-50 rounded-lg">
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Detailed invoice-wise breakdown is available. Click on any customer row to see their unpaid invoices.
+                </p>
+                <div className="text-[11px] text-slate-400">
+                  Tip: The "To Be Paid" field in each invoice represents the exact outstanding amount for that transaction.
+                </div>
+              </div>
+            </details>
+          </Card>
+        )}
       </div>
     </PageShell>
   );
