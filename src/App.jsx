@@ -1,59 +1,57 @@
-import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import Layout from './components/layout/Layout';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import ItemList from './pages/items/ItemList';
-import SupplierList from './pages/setup/SupplierList';
-import CustomerList from './pages/customers/CustomerList';
-import SubCategory from './pages/setup/SubCategory';
-import ItemType from './pages/setup/ItemType';
-import ItemCategory from './pages/setup/ItemCategory';
-import ItemUnit from './pages/setup/ItemUnit';
-import ItemShelve from './pages/setup/ItemShelve';
-import ExpenseHead from './pages/expense/ExpenseHead';
-import ExpenseVoucher from './pages/expense/ExpenseVoucher';
-import ExpenseReport from './pages/expense/ExpenseReport';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import Manufacturers from './pages/setup/Manufacturers';
-import Bookings from './pages/customers/Bookings';
-import Sales from './pages/Sales';
-import OpeningStock from './pages/stock/OpeningStock';
-import PurchasePage from './pages/Purchase';
-import ItemBarcode from './pages/setup/ItemBarcode';
-import ExpiryTagsPage from './pages/ExpiryTags';
-import ReOrderStock from './pages/stock/ReOrderStock';
-import ClosingStock from './pages/stock/ClosingStock';
-import Security from './pages/Security';
-import UserModule from './pages/security/UserModule';
-import GroupRights from './pages/security/GroupRights';
-import ModuleFunctions from './pages/security/ModuleFunctions';
-import ModulesInfo from './pages/security/ModulesInfo';
-import SecurityLog from './pages/security/SecurityLog';
-import GroupUsers from './pages/security/GroupUsers';
-import Company from './pages/security/Company';
-import Employee from './pages/security/Employee';
-import User from './pages/security/User';
-import SoftwareGroup from './pages/security/Software';
-import UserToGroup from './pages/security/UserToGroup';
-import Department from './pages/setup/Department';
-import Designation from './pages/setup/Designation';
-import CustomerLedger from './pages/customers/CustomerLedger';
-import Daybook from './pages/expense/Daybook';
+import React, { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import Layout from "./components/layout/Layout";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import ItemList from "./pages/items/ItemList";
+import SupplierList from "./pages/setup/SupplierList";
+import CustomerList from "./pages/customers/CustomerList";
+import SubCategory from "./pages/setup/SubCategory";
+import ItemType from "./pages/setup/ItemType";
+import ItemCategory from "./pages/setup/ItemCategory";
+import ItemUnit from "./pages/setup/ItemUnit";
+import ItemShelve from "./pages/setup/ItemShelve";
+import ExpenseHead from "./pages/expense/ExpenseHead";
+import ExpenseVoucher from "./pages/expense/ExpenseVoucher";
+import ExpenseReport from "./pages/expense/ExpenseReport";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Manufacturers from "./pages/setup/Manufacturers";
+import Bookings from "./pages/customers/Bookings";
+import Sales from "./pages/Sales";
+import OpeningStock from "./pages/stock/OpeningStock";
+import PurchasePage from "./pages/Purchase";
+import ItemBarcode from "./pages/setup/ItemBarcode";
+import ExpiryTagsPage from "./pages/ExpiryTags";
+import ReOrderStock from "./pages/stock/ReOrderStock";
+import ClosingStock from "./pages/stock/ClosingStock";
+import Security from "./pages/Security";
+import UserModule from "./pages/security/UserModule";
+import GroupRights from "./pages/security/GroupRights";
+import ModuleFunctions from "./pages/security/ModuleFunctions";
+import ModulesInfo from "./pages/security/ModulesInfo";
+import SecurityLog from "./pages/security/SecurityLog";
+import GroupUsers from "./pages/security/GroupUsers";
+import Company from "./pages/security/Company";
+import Employee from "./pages/security/Employee";
+import User from "./pages/security/User";
+import SoftwareGroup from "./pages/security/Software";
+import UserToGroup from "./pages/security/UserToGroup";
+import Department from "./pages/setup/Department";
+import Designation from "./pages/setup/Designation";
+import CustomerLedger from "./pages/customers/CustomerLedger";
+import Daybook from "./pages/expense/Daybook";
 
-
-
-import SupplierPaymentPage from './pages/finance/SupplierPayment';
-import AmountPayablePage from './pages/finance/AmountPayable';
-import SupplierLedgerPage from './pages/finance/SupplierLedger';
-import CustomerPaymentPage from './pages/finance/CustomerPayment';
-import AmountReceivablePage from './pages/finance/AmountReceivable';
-import SalesReturnPage from './pages/stock/SalesReturn';
-import PurchaseReturnPage from './pages/stock/PurchaseReturn';
-import GoodsReceiptNotePage from './pages/stock/GoodsReceiptNote';
-import StockTransferPage from './pages/stock/StockTransfer';
+import SupplierPaymentPage from "./pages/finance/SupplierPayment";
+import AmountPayablePage from "./pages/finance/AmountPayable";
+import SupplierLedgerPage from "./pages/finance/SupplierLedger";
+import CustomerPaymentPage from "./pages/finance/CustomerPayment";
+import AmountReceivablePage from "./pages/finance/AmountReceivable";
+import SalesReturnPage from "./pages/stock/SalesReturn";
+import PurchaseReturnPage from "./pages/stock/PurchaseReturn";
+import GoodsReceiptNotePage from "./pages/stock/GoodsReceiptNote";
+import StockTransferPage from "./pages/stock/StockTransfer";
 
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -82,7 +80,6 @@ const App = () => {
         <Route path="/stock/grn" element={<GoodsReceiptNotePage />} />
         <Route path="/stock/transfer" element={<StockTransferPage />} />
 
-
         {/* Items */}
         <Route path="/items" element={<ItemList />} />
 
@@ -91,11 +88,23 @@ const App = () => {
         <Route path="/sale" element={<Sales />} />
 
         {/* Finance Routes */}
-        <Route path="/finance/supplier-payment" element={<SupplierPaymentPage />} />
+        <Route
+          path="/finance/supplier-payment"
+          element={<SupplierPaymentPage />}
+        />
         <Route path="/finance/amount-payable" element={<AmountPayablePage />} />
-        <Route path="/finance/supplier-ledger" element={<SupplierLedgerPage />} />
-        <Route path="/finance/customer-payment" element={<CustomerPaymentPage />} />
-        <Route path="/finance/amount-receivable" element={<AmountReceivablePage />} />
+        <Route
+          path="/finance/supplier-ledger"
+          element={<SupplierLedgerPage />}
+        />
+        <Route
+          path="/finance/customer-payment"
+          element={<CustomerPaymentPage />}
+        />
+        <Route
+          path="/finance/amount-receivable"
+          element={<AmountReceivablePage />}
+        />
 
         {/* Customer Routes */}
         <Route path="/customer/registration" element={<CustomerList />} />
@@ -125,7 +134,10 @@ const App = () => {
         {/* Security Routes */}
         <Route path="/security/user-module" element={<UserModule />} />
         <Route path="/security/group-rights" element={<GroupRights />} />
-        <Route path="/security/module-functions" element={<ModuleFunctions />} />
+        <Route
+          path="/security/module-functions"
+          element={<ModuleFunctions />}
+        />
         <Route path="/security/module-info" element={<ModulesInfo />} />
         <Route path="/security/security-log" element={<SecurityLog />} />
         <Route path="/security/group-users" element={<GroupUsers />} />
@@ -137,7 +149,6 @@ const App = () => {
       </Route>
     </Routes>
   );
-
 };
 
 export default App;

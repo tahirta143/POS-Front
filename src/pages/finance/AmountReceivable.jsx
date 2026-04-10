@@ -178,23 +178,6 @@ export default function AmountReceivablePage() {
           </Card>
         </div>
 
-        {/* Info Notice */}
-        <Card className="p-4 border-l-[6px] border-l-teal-500 bg-teal-50/30">
-          <div className="flex items-start gap-3">
-            <div className="text-teal-600 mt-0.5">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold text-teal-800">Receivable Calculation</p>
-              <p className="text-[12px] text-teal-700 mt-1">
-                Outstanding amount = Opening Balance + Sum of "To Be Paid" from unpaid invoices.
-                The "To Be Paid" field represents the remaining amount after customer payment.
-              </p>
-            </div>
-          </div>
-        </Card>
 
         {/* Search Bar */}
         <Card className="p-4 border-l-[6px] border-l-teal-500">
@@ -322,30 +305,7 @@ export default function AmountReceivablePage() {
           </div>
         </Card>
 
-        {/* Detailed View Section - Optional */}
-        {receivables.some(c => c.invoices?.length > 0) && (
-          <Card className="p-4 border-l-[6px] border-l-teal-500 bg-white">
-            <details className="group">
-              <summary className="cursor-pointer flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition">
-                <div className="flex items-center gap-2">
-                  <svg className="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                  <span className="text-[13px] font-semibold text-slate-700">View Detailed Invoice Breakdown</span>
-                </div>
-                <span className="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-                <p className="text-[11px] text-slate-500 mb-3">
-                  Detailed invoice-wise breakdown is available. Click on any customer row to see their unpaid invoices.
-                </p>
-                <div className="text-[11px] text-slate-400">
-                  Tip: The "To Be Paid" field in each invoice represents the exact outstanding amount for that transaction.
-                </div>
-              </div>
-            </details>
-          </Card>
-        )}
+
       </div>
     </PageShell>
   );
