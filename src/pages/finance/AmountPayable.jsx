@@ -1,8 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Card, PageShell, TableState } from '../../components/layout/PageShell.jsx';
-import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
+import { Card, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
 import axiosInstance from '../../services/axiosInstance';
-import { getPurchaseReturns, getSupplierPayments } from '../../utils/transactionStore.js';
 
 function MoneyIcon({ className }) {
   return (
@@ -14,50 +12,39 @@ function MoneyIcon({ className }) {
 
 export default function AmountPayablePage() {
   const [payables, setPayables] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [search, setSearch]     = useState('');
 
-  useEffect(() => {
-    fetchPayables();
-  }, []);
+  useEffect(() => { fetchPayables(); }, []);
 
   async function fetchPayables() {
     setLoading(true);
     try {
-      const [suppliersResponse, purchasesResponse] = await Promise.all([
-        axiosInstance.get('/suppliers'),
-        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
-      ]);
-      const data = suppliersResponse.data;
-      const purchasesData = purchasesResponse.data;
-      const suppliers = Array.isArray(data) ? data : data.data || [];
-      const purchaseList = Array.isArray(purchasesData) ? purchasesData : purchasesData.data || [];
-      const supplierPayments = getSupplierPayments();
-      const purchaseReturns = getPurchaseReturns();
-      
-      const list = suppliers
-        .map(s => ({
-          id: s.id,
-          supplier_name: s.supplier_name,
-          mobile_number: s.mobile_number,
-          opening_balance: parseFloat(s.previous_balance || 0),
-          invoice_due: purchaseList
-            .filter((purchase) => String(purchase.supplier_id) === String(s.id))
-            .reduce((sum, purchase) => sum + Math.max(0, Number(purchase.payable || 0) - Number(purchase.paid_amount || 0)), 0),
-          paid_frontend: supplierPayments
-            .filter((payment) => String(payment.supplierId) === String(s.id))
-            .reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-          return_credit: purchaseReturns
-            .filter((record) => String(record.supplierId) === String(s.id))
-            .reduce((sum, record) => sum + Number(record.totalReturn || 0), 0),
-        }))
-        .map((supplier) => ({
-          ...supplier,
-          amount: Math.max(0, supplier.opening_balance + supplier.invoice_due - supplier.paid_frontend - supplier.return_credit),
-        }))
-        .filter(s => s.amount > 0);
+      const response = await axiosInstance.get('/purchases');
+      const purchases = Array.isArray(response.data) ? response.data : response.data?.data || [];
 
-      setPayables(list);
+      // Group by supplier, summing to_be_paid
+      const supplierMap = new Map();
+      for (const p of purchases) {
+        const due = parseFloat(p.to_be_paid || 0);
+        if (due <= 0) continue;
+
+        const id = p.supplier_id;
+        if (!supplierMap.has(id)) {
+          supplierMap.set(id, {
+            supplier_id:    id,
+            supplier_name:  p.supplier_name || `Supplier #${id}`,
+            phone:          p.phone || '—',
+            total_due:      0,
+            invoice_count:  0,
+          });
+        }
+        const entry = supplierMap.get(id);
+        entry.total_due     += due;
+        entry.invoice_count += 1;
+      }
+
+      setPayables([...supplierMap.values()].sort((a, b) => b.total_due - a.total_due));
     } catch {
       setPayables([]);
     } finally {
@@ -65,97 +52,134 @@ export default function AmountPayablePage() {
     }
   }
 
-  const totalPayable = useMemo(() => {
-    return payables.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  }, [payables]);
+  const totalPayable = useMemo(
+    () => payables.reduce((sum, p) => sum + p.total_due, 0),
+    [payables]
+  );
 
-  const filteredPayables = useMemo(() => {
-    return payables.filter(p => p.supplier_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return payables.filter(
+      p => p.supplier_name.toLowerCase().includes(q) ||
+           (p.phone && p.phone.includes(q))
+    );
   }, [payables, search]);
 
   return (
     <PageShell
       title="Amount Payable"
-      description="Overview of outstanding liabilities to suppliers."
+      description="Outstanding liabilities to suppliers based on unpaid purchases."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Card className="p-6 border-l-[6px] border-l-teal-500 bg-teal-50/30">
+      <div className="space-y-5 max-w-5xl mx-auto">
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="p-5 border-l-[6px] border-l-teal-500 bg-teal-50/30">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-teal-100 rounded-xl text-teal-600">
-                <MoneyIcon className="h-8 w-8" />
+                <MoneyIcon className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Total Amount Payable</p>
-                <p className="mt-2 text-2xl font-bold text-teal-700">PKR {totalPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total Payable</p>
+                <p className="mt-1 text-2xl font-bold text-teal-700">
+                  PKR {totalPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
               </div>
             </div>
           </Card>
-          
-          <Card className="p-6 border-l-[6px] border-l-slate-400 bg-slate-50">
+
+          <Card className="p-5 border-l-[6px] border-l-amber-400 bg-amber-50/20">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-200 rounded-xl text-slate-600">
-                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </div>
               <div>
-                <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">Suppliers to Pay</p>
-                <p className="mt-2 text-2xl font-bold text-slate-700">{payables.length}</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Suppliers to Pay</p>
+                <p className="mt-1 text-2xl font-bold text-amber-600">{payables.length}</p>
               </div>
             </div>
           </Card>
         </div>
 
-        <Card className="p-4 border-l-[6px] border-l-teal-500">
-          <FallbackNotice message="Payable balances are currently derived in the frontend from supplier balances, purchases, and local payment history." />
-        </Card>
+        {/* Search + Table */}
+        <Card className="overflow-hidden p-0">
+          <SectionHeader
+            title="Supplier Balances"
+            description="Grouped outstanding dues from unpaid purchase orders."
+            icon={<MoneyIcon className="h-5 w-5" />}
+            action={
+              <div className="flex items-center gap-2 p-4">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name or mobile..."
+                  className="h-8 w-52 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
+                />
+                <button
+                  type="button"
+                  onClick={fetchPayables}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Refresh
+                </button>
+              </div>
+            }
+          />
 
-        <Card className="p-4 border-l-[6px] border-l-teal-500">
-           <input 
-            type="text" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-            placeholder="Search supplier..." 
-            className="h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] outline-none focus:border-teal-400" 
-           />
-        </Card>
-
-        <Card className="overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-slate-700">Supplier Balances</h3>
-            <button onClick={fetchPayables} className="text-xs font-semibold text-teal-600 hover:text-teal-700">Refresh List</button>
-          </div>
-          <div className="overflow-x-auto w-full max-h-[400px]">
+          <div className="overflow-x-auto max-h-[480px]">
             <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead className="bg-slate-50 sticky top-0">
-                <tr className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-4">Supplier Name</th>
-                  <th className="px-6 py-4">Contact</th>
-                  <th className="px-6 py-4 text-right">Invoices Due</th>
-                  <th className="px-6 py-4 text-right">Outstanding Balance</th>
+              <thead className="bg-slate-50/80 sticky top-0">
+                <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-6 py-3">#</th>
+                  <th className="px-6 py-3">Supplier</th>
+                  <th className="px-6 py-3">Contact</th>
+                  <th className="px-6 py-3 text-center">Unpaid Orders</th>
+                  <th className="px-6 py-3 text-right">Outstanding Due</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredPayables.length === 0 ? (
-                  <tr>
-                    <td colSpan="4">
-                      <TableState message={loading ? 'Loading...' : 'No outstanding payables.'} />
-                    </td>
-                  </tr>
+              <tbody className="divide-y divide-slate-50 bg-white">
+                {loading ? (
+                  <tr><td colSpan="5"><TableState message="Loading payables..." /></td></tr>
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan="5"><TableState message="No outstanding dues found." /></td></tr>
                 ) : (
-                  filteredPayables.map((p, idx) => (
-                    <tr key={idx} className="text-sm transition hover:bg-slate-50">
-                      <td className="px-6 py-4 font-semibold text-slate-800">{p.supplier_name}</td>
-                      <td className="px-6 py-4 text-slate-600 text-xs">{p.mobile_number || '-'}</td>
-                      <td className="px-6 py-4 text-right font-medium text-slate-700">PKR {Number(p.invoice_due).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-teal-600">PKR {Number(p.amount).toFixed(2)}</td>
+                  filtered.map((p, idx) => (
+                    <tr key={p.supplier_id} className="hover:bg-teal-50/20 transition-colors">
+                      <td className="px-6 py-3.5 text-[11px] text-slate-400 font-mono">{idx + 1}</td>
+                      <td className="px-6 py-3.5 font-semibold text-slate-800 text-[13px]">{p.supplier_name}</td>
+                      <td className="px-6 py-3.5 text-[12px] text-slate-500">{p.phone}</td>
+                      <td className="px-6 py-3.5 text-center">
+                        <span className="inline-flex items-center justify-center rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-600">
+                          {p.invoice_count}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-right font-bold text-teal-700 font-mono text-[13px]">
+                        PKR {p.total_due.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
+              {filtered.length > 0 && (
+                <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                  <tr>
+                    <td colSpan="4" className="px-6 py-3 text-[11px] font-bold uppercase text-slate-500 text-right">
+                      Grand Total
+                    </td>
+                    <td className="px-6 py-3 text-right font-black text-teal-700 font-mono text-[14px]">
+                      PKR {totalPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </Card>
+
       </div>
     </PageShell>
   );

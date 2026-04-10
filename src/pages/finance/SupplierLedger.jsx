@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
-import FallbackNotice from '../../components/layout/FallbackNotice.jsx';
 import axiosInstance from '../../services/axiosInstance';
 import { toast } from 'react-toastify';
-import { getPurchaseReturns, getSupplierPayments } from '../../utils/transactionStore.js';
 
 function LedgerIcon({ className }) {
   return (
@@ -14,118 +12,56 @@ function LedgerIcon({ className }) {
 }
 
 export default function SupplierLedgerPage() {
-  const [suppliers, setSuppliers] = useState([]);
-  const [purchases, setPurchases] = useState([]);
+  const [suppliers, setSuppliers]           = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
+  const [ledgerData, setLedgerData]         = useState(null); // { supplier, ledger, closingBalance }
+  const [loading, setLoading]               = useState(false);
+  const [search, setSearch]                 = useState('');
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
+  useEffect(() => { fetchSuppliers(); }, []);
 
   async function fetchSuppliers() {
     try {
-      const [suppliersResponse, purchasesResponse] = await Promise.all([
-        axiosInstance.get('/suppliers'),
-        axiosInstance.get('/purchases').catch(() => ({ data: [] })),
-      ]);
-      const suppliersData = suppliersResponse.data;
-      const purchasesData = purchasesResponse.data;
-      setSuppliers(Array.isArray(suppliersData) ? suppliersData : suppliersData.data || []);
-      setPurchases(Array.isArray(purchasesData) ? purchasesData : purchasesData.data || []);
+      const res = await axiosInstance.get('/suppliers');
+      setSuppliers(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch {
       toast.error('Failed to load suppliers.');
     }
   }
 
   const fetchLedger = useCallback(async (id) => {
+    if (!id) { setLedgerData(null); return; }
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`/supplier-ledger/${id}`);
-      const data = response.data;
-      setTransactions(Array.isArray(data) ? data : data.data || []);
-    } catch {
-      const selectedSupplier = suppliers.find((supplier) => String(supplier.id) === String(id));
-      const opening = Number(selectedSupplier?.previous_balance || 0);
-
-      const purchaseRows = purchases
-        .filter((purchase) => String(purchase.supplier_id) === String(id))
-        .map((purchase) => ({
-          date: purchase.grn_date,
-          reference: purchase.grn_no || purchase.invoice_no || `PUR-${purchase.id}`,
-          description: `Purchase invoice${purchase.invoice_no ? ` ${purchase.invoice_no}` : ''}`,
-          debit: Math.max(0, Number(purchase.payable || 0) - Number(purchase.paid_amount || 0)),
-          credit: 0,
-        }));
-
-      const paymentRows = getSupplierPayments()
-        .filter((payment) => String(payment.supplierId) === String(id))
-        .map((payment) => ({
-          date: payment.date,
-          reference: payment.id,
-          description: `Supplier payment by ${payment.method}`,
-          debit: 0,
-          credit: Number(payment.amount || 0),
-        }));
-
-      const returnRows = getPurchaseReturns()
-        .filter((record) => String(record.supplierId) === String(id))
-        .map((record) => ({
-          date: record.date,
-          reference: record.id,
-          description: `Purchase return against ${record.grnNo || record.invoiceNo || 'purchase'}`,
-          debit: 0,
-          credit: Number(record.totalReturn || 0),
-        }));
-
-      const merged = [
-        {
-          date: selectedSupplier?.created_at || new Date().toISOString().slice(0, 10),
-          reference: 'OPENING',
-          description: 'Opening balance',
-          debit: opening,
-          credit: 0,
-        },
-        ...purchaseRows,
-        ...paymentRows,
-        ...returnRows,
-      ]
-        .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
-      let runningBalance = 0
-      const withBalances = merged.map((row) => {
-        runningBalance += Number(row.debit || 0) - Number(row.credit || 0)
-        return { ...row, balance: runningBalance }
-      })
-
-      setTransactions(withBalances);
+      const res = await axiosInstance.get(`/supplier-ledger/${id}`);
+      setLedgerData(res.data);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load ledger.');
+      setLedgerData(null);
     } finally {
       setLoading(false);
     }
-  }, [purchases, suppliers])
+  }, []);
 
   useEffect(() => {
-    if (selectedSupplierId) {
-      fetchLedger(selectedSupplierId);
-    } else {
-      setTransactions([]);
-    }
-  }, [fetchLedger, selectedSupplierId]);
+    fetchLedger(selectedSupplierId);
+    setSearch('');
+  }, [selectedSupplierId, fetchLedger]);
 
-  const filteredTransactions = transactions.filter(t =>
-    t.reference?.toLowerCase().includes(search.toLowerCase()) || 
-    t.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredLedger = useMemo(() => {
+    if (!ledgerData?.ledger) return [];
+    const q = search.toLowerCase();
+    if (!q) return ledgerData.ledger;
+    return ledgerData.ledger.filter(
+      t => t.reference?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
+    );
+  }, [ledgerData, search]);
 
-  const selectedSupplier = useMemo(
-    () => suppliers.find((supplier) => String(supplier.id) === String(selectedSupplierId)),
-    [selectedSupplierId, suppliers]
-  );
+  const closingBalance = ledgerData?.closingBalance ?? 0;
 
-  const closingBalance = filteredTransactions.length > 0
-    ? Number(filteredTransactions[filteredTransactions.length - 1]?.balance || 0)
-    : Number(selectedSupplier?.previous_balance || 0);
+  // Summary totals
+  const totalDebit  = useMemo(() => filteredLedger.reduce((s, r) => s + (r.debit  || 0), 0), [filteredLedger]);
+  const totalCredit = useMemo(() => filteredLedger.reduce((s, r) => s + (r.credit || 0), 0), [filteredLedger]);
 
   return (
     <PageShell
@@ -133,90 +69,164 @@ export default function SupplierLedgerPage() {
       description="Detailed transaction history for individual suppliers."
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <Card className="p-4 border-l-[6px] border-l-teal-500 bg-white shadow-sm">
-          <SectionHeader title="Account Selection" description="Select a supplier to view their financial statement." icon={<LedgerIcon className="h-5 w-5" />} />
-          <div className="mt-4">
-            <FallbackNotice message="Supplier ledger falls back to frontend-calculated balances when the backend supplier-ledger route is unavailable." />
-          </div>
-          <div className="mt-4 max-w-md">
-            <Field label="Supplier Name">
+      <div className="space-y-5 max-w-6xl mx-auto">
+
+        {/* Supplier Selector */}
+        <Card className="p-5 border-l-[6px] border-l-teal-500">
+          <SectionHeader
+            title="Account Selection"
+            description="Select a supplier to view their statement of account."
+            icon={<LedgerIcon className="h-5 w-5" />}
+          />
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            <Field label="Supplier">
               <select
                 value={selectedSupplierId}
-                onChange={(e) => setSelectedSupplierId(e.target.value)}
+                onChange={e => setSelectedSupplierId(e.target.value)}
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-500"
               >
-                <option value="">-- Select Supplier --</option>
-                {suppliers.map((s) => (
+                <option value="">— Select Supplier —</option>
+                {suppliers.map(s => (
                   <option key={s.id} value={s.id}>{s.supplier_name}</option>
                 ))}
               </select>
             </Field>
+            {selectedSupplierId && (
+              <button
+                type="button"
+                onClick={() => fetchLedger(selectedSupplierId)}
+                className="h-9 rounded-md border border-slate-200 px-4 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+              >
+                ↻ Reload Ledger
+              </button>
+            )}
           </div>
         </Card>
 
-        {selectedSupplierId && (
-          <>
-            <Card className="p-4 border-l-[6px] border-l-teal-500">
-               <input 
-                type="text" 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                placeholder="Search reference or description..." 
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-[12px] outline-none focus:border-teal-400" 
-               />
-            </Card>
+        {/* Summary Cards — shown only when data is loaded */}
+        {ledgerData && !loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { label: 'Total Purchases (Debit)',  value: totalDebit,   color: 'border-l-rose-400',    text: 'text-rose-600'    },
+              { label: 'Total Payments (Credit)',  value: totalCredit,  color: 'border-l-emerald-400', text: 'text-emerald-600' },
+              { label: 'Net Outstanding Balance',  value: Math.abs(closingBalance), color: 'border-l-teal-500', text: closingBalance > 0 ? 'text-rose-600' : 'text-emerald-600' },
+            ].map(({ label, value, color, text }) => (
+              <Card key={label} className={`p-4 border-l-[6px] ${color}`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+                <p className={`mt-1 text-xl font-black font-mono ${text}`}>
+                  PKR {value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+                {label.includes('Outstanding') && (
+                  <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                    {closingBalance > 0 ? 'Amount owed to supplier' : closingBalance < 0 ? 'Overpaid / credit' : 'Fully settled'}
+                  </p>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
 
-            <Card className="overflow-hidden">
-              <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-700">Statement of Account</h3>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-widest">Outstanding Balance</span>
-                  <span className={`text-xl font-black ${closingBalance >= 0 ? 'text-teal-600' : 'text-emerald-600'}`}>
-                    PKR {Math.abs(closingBalance).toFixed(2)} {closingBalance >= 0 ? '(DR)' : '(CR)'}
+        {/* Ledger Table */}
+        {selectedSupplierId && (
+          <Card className="overflow-hidden p-0">
+            {/* Table Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-slate-50">
+              <div>
+                <h3 className="text-[14px] font-bold text-slate-800">
+                  Statement of Account — {ledgerData?.supplier?.supplier_name || ''}
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {filteredLedger.length} transaction{filteredLedger.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Filter by reference or description..."
+                  className="h-8 w-56 rounded-lg border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-teal-400 transition"
+                />
+                {/* Closing balance badge */}
+                <div className="text-right shrink-0">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-widest">Balance</span>
+                  <span className={`text-base font-black font-mono ${closingBalance > 0 ? 'text-rose-600' : closingBalance < 0 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    PKR {Math.abs(closingBalance).toFixed(2)}
+                    <span className="ml-1 text-[10px] font-bold">{closingBalance > 0 ? 'DR' : closingBalance < 0 ? 'CR' : ''}</span>
                   </span>
                 </div>
               </div>
-              
-              <div className="overflow-x-auto w-full max-h-[450px]">
-                <table className="min-w-full divide-y divide-slate-100 text-left">
-                  <thead className="bg-slate-50 sticky top-0">
-                    <tr className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                      <th className="px-6 py-4">Date</th>
-                      <th className="px-6 py-4">Reference / Invoice</th>
-                      <th className="px-6 py-4">Description</th>
-                      <th className="px-6 py-4 text-right">Debit (+)</th>
-                      <th className="px-6 py-4 text-right">Credit (-)</th>
-                      <th className="px-6 py-4 text-right">Running Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {filteredTransactions.length === 0 ? (
-                      <tr>
-                        <td colSpan="6">
-                          <TableState message={loading ? 'Loading transactions...' : 'No transactions found.'} />
+            </div>
+
+            <div className="overflow-x-auto max-h-[500px]">
+              <table className="min-w-full divide-y divide-slate-100 text-left">
+                <thead className="bg-white sticky top-0 shadow-[0_1px_0_0_#f1f5f9]">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3">Reference</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3 text-right">Debit (+)</th>
+                    <th className="px-5 py-3 text-right">Credit (−)</th>
+                    <th className="px-5 py-3 text-right">Balance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 bg-white">
+                  {loading ? (
+                    <tr><td colSpan="6"><TableState message="Loading ledger..." /></td></tr>
+                  ) : filteredLedger.length === 0 ? (
+                    <tr><td colSpan="6"><TableState message="No transactions found." /></td></tr>
+                  ) : (
+                    filteredLedger.map((txn, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors text-sm">
+                        <td className="px-5 py-3 text-[11px] font-mono text-slate-500 whitespace-nowrap">
+                          {txn.date || '—'}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`text-[11px] font-bold font-mono ${txn.reference === 'OPENING' ? 'text-amber-600' : 'text-slate-700'}`}>
+                            {txn.reference}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[12px] text-slate-500">{txn.description}</td>
+                        <td className="px-5 py-3 text-right font-semibold text-rose-600 font-mono text-[12px]">
+                          {txn.debit  > 0 ? `PKR ${txn.debit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="px-5 py-3 text-right font-semibold text-emerald-600 font-mono text-[12px]">
+                          {txn.credit > 0 ? `PKR ${txn.credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className={`px-5 py-3 text-right font-bold font-mono text-[12px] ${txn.balance > 0 ? 'text-rose-700' : txn.balance < 0 ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          PKR {Math.abs(txn.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {txn.balance !== 0 && (
+                            <span className="ml-1 text-[9px] font-bold">{txn.balance > 0 ? 'DR' : 'CR'}</span>
+                          )}
                         </td>
                       </tr>
-                    ) : (
-                      filteredTransactions.map((txn, idx) => {
-                        return (
-                          <tr key={idx} className="text-sm transition hover:bg-slate-50">
-                            <td className="px-6 py-4 text-slate-600 font-mono text-xs">{txn.date}</td>
-                            <td className="px-6 py-4 font-bold text-slate-700">{txn.reference}</td>
-                            <td className="px-6 py-4 text-slate-600 text-xs">{txn.description}</td>
-                            <td className="px-6 py-4 text-right text-rose-600 font-semibold">{txn.debit > 0 ? txn.debit.toFixed(2) : '-'}</td>
-                            <td className="px-6 py-4 text-right text-emerald-600 font-semibold">{txn.credit > 0 ? txn.credit.toFixed(2) : '-'}</td>
-                            <td className="px-6 py-4 text-right font-bold text-slate-800">{txn.balance ? txn.balance.toFixed(2) : '-'}</td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </>
+                    ))
+                  )}
+                </tbody>
+                {filteredLedger.length > 0 && (
+                  <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                    <tr>
+                      <td colSpan="3" className="px-5 py-3 text-[11px] font-bold uppercase text-slate-500 text-right">
+                        Totals
+                      </td>
+                      <td className="px-5 py-3 text-right font-black text-rose-600 font-mono text-[12px]">
+                        PKR {totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-5 py-3 text-right font-black text-emerald-600 font-mono text-[12px]">
+                        PKR {totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className={`px-5 py-3 text-right font-black font-mono text-[13px] ${closingBalance > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
+                        PKR {Math.abs(closingBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        <span className="ml-1 text-[10px]">{closingBalance > 0 ? 'DR' : closingBalance < 0 ? 'CR' : ''}</span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </Card>
         )}
+
       </div>
     </PageShell>
   );
