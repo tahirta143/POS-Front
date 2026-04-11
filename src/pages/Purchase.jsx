@@ -63,7 +63,7 @@ function getPaymentStatus(record) {
 
 // Derive GRN/receipt status label
 function getReceiptStatus(record) {
-  if (record.status === "received") return { label: "RECEIVED", tone: "teal" };
+  if (record.order_status === "received") return { label: "RECEIVED", tone: "teal" };
   return { label: "PENDING", tone: "slate" };
 }
 
@@ -80,8 +80,6 @@ export default function PurchasePage() {
   // Form state
   const [supplierId, setSupplierId] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
-  // GRN No and Date are managed in the Goods Receipt Note form.
-  // They are removed from here as per the request.
   const [purchaseItems, setPurchaseItems] = useState([createEmptyRow()]);
 
   // Payment state
@@ -183,7 +181,7 @@ export default function PurchasePage() {
   const resetForm = () => {
     setEditId(null);
     setSupplierId("");
-    setInvoiceNo(""); // GRN No and Date are managed in the Goods Receipt Note form.
+    setInvoiceNo(""); 
     setPurchaseItems([createEmptyRow()]);
     setDiscountAmount("");
     setGivenAmount("");
@@ -192,8 +190,7 @@ export default function PurchasePage() {
   const handleEdit = (rec) => {
     setEditId(rec.id);
     setSupplierId(rec.supplier_id || "");
-    setInvoiceNo(rec.invoice_no || ""); // GRN No and Date are managed in the Goods Receipt Note form.
-    // GRN No and Date are removed from here as per the request.
+    setInvoiceNo(rec.invoice_no || ""); 
     setDiscountAmount(rec.discount_amount || "");
     setGivenAmount(rec.paid || rec.paid_amount || "");
 

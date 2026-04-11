@@ -35,6 +35,12 @@ export default function Bookings() {
   const [submitting, setSubmitting] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState(null)
+  
+  // Payment Modal State
+  const [payBooking, setPayBooking] = useState(null)
+  const [payAmount, setPayAmount] = useState('')
+  const [payMethod, setPayMethod] = useState('Cash')
+  const [payRemarks, setPayRemarks] = useState('')
 
   // Form State
   const [mobileNumber, setMobileNumber] = useState('')
@@ -253,6 +259,30 @@ export default function Bookings() {
       fetchBookings()
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save booking.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleRecordPayment = async (e) => {
+    e.preventDefault()
+    if (!payBooking || !payAmount || parseFloat(payAmount) <= 0) return
+
+    setSubmitting(true)
+    try {
+      await axiosInstance.post(`/bookings/${payBooking.id}/payments`, {
+        amount: payAmount,
+        paymentMethod: payMethod,
+        remarks: payRemarks,
+        paymentDate: new Date().toISOString().slice(0, 10)
+      })
+      toast.success('Payment recorded successfully')
+      setPayBooking(null)
+      setPayAmount('')
+      setPayRemarks('')
+      fetchBookings()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to record payment')
     } finally {
       setSubmitting(false)
     }
@@ -499,6 +529,8 @@ export default function Bookings() {
                     <th className="px-5 py-3">Customer Info</th>
                     <th className="px-5 py-3">Date & Time</th>
                     <th className="px-5 py-3 text-right">Payable</th>
+                    <th className="px-5 py-3 text-right">Paid</th>
+                    <th className="px-5 py-3 text-right">Remaining</th>
                     <th className="px-5 py-3 text-center">Status</th>
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
@@ -527,11 +559,20 @@ export default function Bookings() {
                         <td className="px-5 py-4 text-right">
                            <span className="text-[12px] font-bold text-slate-700">PKR {Number(s.payable || 0).toLocaleString()}</span>
                         </td>
+                        <td className="px-5 py-4 text-right">
+                           <span className="text-[12px] font-bold text-emerald-600">PKR {Number(s.paid || 0).toLocaleString()}</span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                           <span className="text-[12px] font-bold text-rose-600">PKR {Number(s.to_be_paid || 0).toLocaleString()}</span>
+                        </td>
                         <td className="px-5 py-4 text-center">
                            <StatusChip label={statusPayload.label} tone={statusPayload.tone} />
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                             {Number(s.to_be_paid) > 0 && (
+                               <ActionButton label="Pay" tone="emerald" icon={<MdPayment />} onClick={() => setPayBooking(s)} />
+                             )}
                              <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
                              <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
                           </div>
@@ -544,6 +585,54 @@ export default function Bookings() {
             </div>
           )}
         </Card>
+
+        {/* Record Payment Modal */}
+        <AnimatePresence>
+          {payBooking && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="bg-teal-600 p-4 text-white">
+                  <h3 className="text-lg font-bold">Record Payment</h3>
+                  <p className="text-xs text-teal-100">Booking #BK-{payBooking.id} — {payBooking.customer_name}</p>
+                </div>
+                <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
+                   <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 flex justify-between items-center text-sm font-bold">
+                     <span className="text-slate-500">Remaining Due:</span>
+                     <span className="text-rose-600 font-mono">PKR {Number(payBooking.to_be_paid).toLocaleString()}</span>
+                   </div>
+
+                   <Field label="Payment Amount" required>
+                      <input type="number" step="0.01" value={payAmount} onChange={e => setPayAmount(e.target.value)} max={payBooking.to_be_paid} className="h-10 w-full rounded-xl border-2 border-slate-100 bg-white px-4 text-lg font-black focus:border-emerald-500 outline-none transition" placeholder="0.00" autoFocus />
+                   </Field>
+
+                   <div className="grid grid-cols-2 gap-3">
+                     <Field label="Method">
+                        <select value={payMethod} onChange={e => setPayMethod(e.target.value)} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-bold outline-none focus:border-teal-400">
+                          <option value="Cash">Cash</option>
+                          <option value="Online">Online</option>
+                          <option value="Card">Card</option>
+                        </select>
+                     </Field>
+                     <Field label="Date">
+                        <input type="date" value={new Date().toISOString().slice(0, 10)} disabled className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none" />
+                     </Field>
+                   </div>
+
+                   <Field label="Remarks">
+                      <textarea value={payRemarks} onChange={e => setPayRemarks(e.target.value)} rows={2} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] outline-none focus:border-teal-400" placeholder="Optional notes..." />
+                   </Field>
+
+                   <div className="flex gap-3 pt-2">
+                     <button type="button" onClick={() => setPayBooking(null)} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition">Cancel</button>
+                     <button type="submit" disabled={submitting || !payAmount} className="flex-[2] rounded-xl bg-teal-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition">
+                       {submitting ? 'Recording...' : 'Record Payment'}
+                     </button>
+                   </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </PageShell>
   )

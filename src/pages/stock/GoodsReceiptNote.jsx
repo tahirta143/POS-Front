@@ -77,7 +77,7 @@ export default function GoodsReceiptNotePage() {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
-        "/purchases?status=pending_receipt",
+        "/purchases?status=pending",
       );
       const data = response.data;
       setPurchaseOrders(Array.isArray(data) ? data : data.data || []);

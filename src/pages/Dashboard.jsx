@@ -16,8 +16,7 @@ const STAT_CARDS = [
   { key: 'totalCustomers', label: 'Customers', icon: MdPeople, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-600' },
   { key: 'totalProducts', label: 'Products', icon: MdInventory, gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
   { key: 'totalStaff', label: 'Staff', icon: MdBadge, gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', text: 'text-amber-600' },
-  { key: 'totalSales', label: 'Sales', icon: MdReceipt, gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600' },
-  { key: 'totalRevenue', label: 'Revenue', icon: MdMonetizationOn, gradient: 'from-rose-500 to-pink-600', bg: 'bg-rose-50', text: 'text-rose-600', isCurrency: true },
+  { key: 'totalSales', label: 'Total Sales', icon: MdMonetizationOn, gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600', isCurrency: true },
   { key: 'totalBookings', label: 'Bookings', icon: MdCalendarToday, gradient: 'from-cyan-500 to-sky-600', bg: 'bg-cyan-50', text: 'text-cyan-600' },
 ]
 
@@ -133,24 +132,22 @@ export default function Dashboard() {
   async function fetchGlobalStats() {
     setLoading(true)
     try {
-      const [customersRes, productsRes, staffRes, salesRes, bookingsRes, revenueRes] = await Promise.all([
+      const [customersRes, productsRes, staffRes, bookingsRes, revenueRes] = await Promise.all([
         axiosInstance.get('/customers/count').catch(() => ({ data: { totalCustomers: 0 } })),
         axiosInstance.get('/item-details/count').catch(() => ({ data: { count: 16 } })),
         axiosInstance.get('/staff/count').catch(() => ({ data: { count: 0 } })),
-        axiosInstance.get('/sale-invoices/total').catch(() => ({ data: { total: 9 } })),
-        axiosInstance.get('/bookings/recent').catch(() => ({ data: [] })),
+        axiosInstance.get('/bookings').catch(() => ({ data: [] })),
         axiosInstance.get('/sale-invoices/revenue').catch(() => ({ data: { revenue: 11650 } })),
       ])
+      
+      const bList = Array.isArray(bookingsRes.data) ? bookingsRes.data : bookingsRes.data?.data || []
+
       setStats({
         totalCustomers: { value: customersRes.data?.totalCustomers ?? 0, change: 12 },
         totalProducts: { value: productsRes.data?.count || 16, change: 5 },
         totalStaff: { value: staffRes.data?.data?.total || 0, change: 2 },
-        totalSales: { value: salesRes.data?.total || 0, change: 18 },
-        totalRevenue: { value: revenueRes.data?.revenue || 0, change: 15 },
-        totalBookings: {
-          value: Array.isArray(bookingsRes.data) ? bookingsRes.data.length : bookingsRes.data?.total || bookingsRes.data?.length || 10,
-          change: 8
-        },
+        totalSales: { value: revenueRes.data?.revenue || 0, change: 18 },
+        totalBookings: { value: bList.length, change: 8 },
       })
       fetchBookingsStatus()
       fetchRecentSales()
@@ -170,8 +167,8 @@ export default function Dashboard() {
     if (res?.data) {
       const list = Array.isArray(res.data) ? res.data : res.data.data || []
       setOrderStatus({
-        pending: list.filter(b => b.status === 'Pending').length,
-        completed: list.filter(b => b.status === 'Completed').length,
+        pending: list.filter(b => b.status === 'Pending' || b.status === 'Partially Paid').length,
+        completed: list.filter(b => b.status === 'Completed' || b.status === 'Paid').length,
         rejected: list.filter(b => b.status === 'Rejected').length,
       })
       setRecentBookings(list.slice(0, 5))
@@ -195,9 +192,9 @@ export default function Dashboard() {
   }))
 
   const pieData = [
-    { name: 'Pending', value: orderStatus.pending, color: '#f59e0b' },
-    { name: 'Completed', value: orderStatus.completed, color: '#10b981' },
-    { name: 'Rejected', value: orderStatus.rejected, color: '#f43f5e' },
+    { name: 'Waitlist', value: orderStatus.pending, color: '#f59e0b' },
+    { name: 'Done', value: orderStatus.completed, color: '#10b981' },
+    { name: 'Cancelled', value: orderStatus.rejected, color: '#f43f5e' },
   ].filter(d => d.value > 0)
 
   const totalOrders = orderStatus.pending + orderStatus.completed + orderStatus.rejected
@@ -211,7 +208,7 @@ export default function Dashboard() {
       <div className="space-y-6">
 
         {/* ── Stat Cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
           {STAT_CARDS.map(card => (
             <StatCard
               key={card.key}
@@ -272,9 +269,9 @@ export default function Dashboard() {
             </SectionCard>
           </div>
 
-          {/* Order Status — col-span-1 */}
+          {/* Booking Distribution — col-span-1 */}
           <div className="lg:col-span-1">
-            <SectionCard title="Order Status" subtitle="Booking distribution">
+            <SectionCard title="Booking Distribution" subtitle="Status breakdown of advance orders">
               {loading || !isMounted ? <Spinner /> : totalOrders === 0 ? (
                 <div className="flex flex-col items-center justify-center h-52 text-slate-400">
                   <p className="text-sm">No order data</p>
