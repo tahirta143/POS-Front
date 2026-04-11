@@ -1,19 +1,37 @@
-import { useEffect, useState, useMemo } from 'react';
-import { toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ActionButton, Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
-import axiosInstance from '../../services/axiosInstance';
-import { MdAdd, MdRemove, MdRefresh, MdReceipt, MdAssignmentTurnedIn, MdHistory, MdInventory, MdSubtitles } from 'react-icons/md';
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ActionButton,
+  Card,
+  Field,
+  PageShell,
+  SectionHeader,
+  TableState,
+} from "../../components/layout/PageShell.jsx";
+import axiosInstance from "../../services/axiosInstance";
+import {
+  MdAdd,
+  MdRemove,
+  MdRefresh,
+  MdReceipt,
+  MdAssignmentTurnedIn,
+  MdHistory,
+  MdInventory,
+  MdSubtitles,
+} from "react-icons/md";
 
 const sectionStyles = {
-  teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
+  teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
 };
 
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-100/50">
-      <div className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}>
+      <div
+        className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}
+      >
         <span className={`h-4 w-1 rounded-full ${style.accent}`} />
         <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
       </div>
@@ -24,8 +42,18 @@ function SectionCard({ title, children }) {
 
 function ReceiptIcon({ className }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+      />
     </svg>
   );
 }
@@ -33,8 +61,9 @@ function ReceiptIcon({ className }) {
 export default function GoodsReceiptNotePage() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [selectedPO, setSelectedPO] = useState(null);
-  const [grnDate, setGrnDate] = useState('');
-  const [remarks, setRemarks] = useState('');
+  const [grnNo, setGrnNo] = useState("");
+  const [grnDate, setGrnDate] = useState("");
+  const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -47,11 +76,13 @@ export default function GoodsReceiptNotePage() {
   async function fetchPurchaseOrders() {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/purchases?status=pending_receipt');
+      const response = await axiosInstance.get(
+        "/purchases?status=pending_receipt",
+      );
       const data = response.data;
       setPurchaseOrders(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
-      toast.error('Failed to load pending purchase orders.');
+      toast.error("Failed to load pending purchase orders.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +97,7 @@ export default function GoodsReceiptNotePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPO) {
-      toast.error('Please select a Purchase Order.');
+      toast.error("Please select a Purchase Order.");
       return;
     }
 
@@ -74,15 +105,16 @@ export default function GoodsReceiptNotePage() {
     try {
       await axiosInstance.post(`/purchases/receipts`, {
         purchaseOrderId: selectedPO.id,
-        grnDate,
+        grn_no: grnNo,
+        grn_date: grnDate,
         remarks,
       });
-      toast.success('Goods Receipt Note recorded successfully!');
+      toast.success("Goods Receipt Note recorded successfully!");
       resetForm();
       setIsFormOpen(false);
       fetchPurchaseOrders();
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to record GRN.');
+      toast.error(err?.response?.data?.message || "Failed to record GRN.");
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +122,8 @@ export default function GoodsReceiptNotePage() {
 
   function resetForm() {
     setSelectedPO(null);
-    setRemarks('');
+    setGrnNo("");
+    setRemarks("");
     setGrnDate(new Date().toISOString().slice(0, 10));
   }
 
@@ -99,19 +132,23 @@ export default function GoodsReceiptNotePage() {
       <div className="space-y-4">
         {/* Top Header */}
         <div className="flex items-center justify-between">
-           <div>
-            <h1 className="text-xl font-bold text-slate-900">Goods Receipt Note (GRN)</h1>
-            <p className="text-sm text-slate-500">Acknowledge arrivals and update stock levels against orders.</p>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">
+              Goods Receipt Note (GRN)
+            </h1>
+            <p className="text-sm text-slate-500">
+              Acknowledge arrivals and update stock levels against orders.
+            </p>
           </div>
           <button
             onClick={() => {
-              setIsFormOpen(!isFormOpen)
-              if (!isFormOpen) resetForm()
+              setIsFormOpen(!isFormOpen);
+              if (!isFormOpen) resetForm();
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
-                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+              isFormOpen
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
             }`}
           >
             {isFormOpen ? (
@@ -131,7 +168,7 @@ export default function GoodsReceiptNotePage() {
           {isFormOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
@@ -140,78 +177,150 @@ export default function GoodsReceiptNotePage() {
                 <SectionHeader
                   title="Inventory Acceptance"
                   description="Validate order accuracy and condition of received supplies."
-                  icon={<MdAssignmentTurnedIn className="h-6 w-6 text-teal-600" />}
+                  icon={
+                    <MdAssignmentTurnedIn className="h-6 w-6 text-teal-600" />
+                  }
                 />
 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <SectionCard title="Acceptance Protocol">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                       <Field label="Target Purchase Order" required>
-                          <div className="relative">
-                            <select
-                              value={selectedPO?.id || ''}
-                              onChange={handlePOSelection}
-                              className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 focus:ring-4 focus:ring-teal-50 outline-none transition"
-                              disabled={loading}
-                            >
-                              <option value="">Select Pending Order...</option>
-                              {purchaseOrders.map((po) => (
-                                <option key={po.id} value={po.id}>
-                                  {po.grn_no || po.invoice_no || `PO-${po.id}`} — {po.supplier_name}
-                                </option>
-                              ))}
-                            </select>
-                            <MdReceipt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          </div>
-                       </Field>
-                       <Field label="Acceptance Date" required>
-                          <input type="date" value={grnDate} onChange={(e) => setGrnDate(e.target.value)} className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 outline-none transition" />
-                       </Field>
-                       <Field label="Condition / Remarks">
-                          <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Damaged items, batch notes..." className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-teal-400 transition" />
-                       </Field>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Field label="Target Purchase Order" required>
+                        <div className="relative">
+                          <select
+                            value={selectedPO?.id || ""}
+                            onChange={handlePOSelection}
+                            className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 focus:ring-4 focus:ring-teal-50 outline-none transition"
+                            disabled={loading}
+                          >
+                            <option value="">Select Pending Order...</option>
+                            {purchaseOrders.map((po) => (
+                              <option key={po.id} value={po.id}>
+                                {po.grn_no || po.invoice_no || `PO-${po.id}`} —{" "}
+                                {po.supplier_name}
+                              </option>
+                            ))}
+                          </select>
+                          <MdReceipt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </Field>
+                      <Field label="GRN NO" required>
+                        <input
+                          type="text"
+                          value={grnNo}
+                          onChange={(e) => setGrnNo(e.target.value)}
+                          placeholder="GRN number"
+                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 focus:border-teal-400 outline-none transition"
+                        />
+                      </Field>
+                      <Field label="GRN Date" required>
+                        <input
+                          type="date"
+                          value={grnDate}
+                          onChange={(e) => setGrnDate(e.target.value)}
+                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 outline-none transition"
+                        />
+                      </Field>
+                      <Field label="Condition / Remarks">
+                        <input
+                          type="text"
+                          value={remarks}
+                          onChange={(e) => setRemarks(e.target.value)}
+                          placeholder="Damaged items, batch notes..."
+                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-teal-400 transition"
+                        />
+                      </Field>
                     </div>
                   </SectionCard>
 
                   {selectedPO && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                       <SectionCard title="Itemized Orders for Verification">
-                         <div className="rounded-2xl border border-slate-100 overflow-hidden">
-                           <table className="w-full text-left text-[12px]">
-                             <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                               <tr>
-                                 <th className="px-4 py-3">Catalog Item</th>
-                                 <th className="px-4 py-3">Category</th>
-                                 <th className="px-4 py-3 text-right">Inward Qty</th>
-                                 <th className="px-4 py-3 text-right">Acq. Rate</th>
-                                 <th className="px-4 py-3 text-right">Line Total</th>
-                               </tr>
-                             </thead>
-                             <tbody className="divide-y divide-slate-50 bg-white">
-                               {selectedPO.items.map((item, idx) => (
-                                 <tr key={idx} className="hover:bg-teal-50/20 transition-colors">
-                                   <td className="px-4 py-3 font-bold text-slate-800">{item.item_name}</td>
-                                   <td className="px-4 py-3 font-medium text-slate-500 uppercase tracking-tighter text-[10px]">{item.category_name}</td>
-                                   <td className="px-4 py-3 text-right font-black text-slate-700">{item.quantity}</td>
-                                   <td className="px-4 py-3 text-right font-mono text-slate-500">PKR {Number(item.purchase_price).toLocaleString()}</td>
-                                   <td className="px-4 py-3 text-right font-black text-teal-700">PKR {Number(item.total).toLocaleString()}</td>
-                                 </tr>
-                               ))}
-                               <tr className="bg-slate-50/50">
-                                 <td colSpan="4" className="px-4 py-4 text-right text-[11px] font-bold uppercase text-slate-500">Grand Total Valuation</td>
-                                 <td className="px-4 py-4 text-right font-black text-teal-700 text-base font-mono">PKR {Number(selectedPO.payable).toLocaleString()}</td>
-                               </tr>
-                             </tbody>
-                           </table>
-                         </div>
-                       </SectionCard>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <SectionCard title="Itemized Orders for Verification">
+                        <div className="rounded-2xl border border-slate-100 overflow-hidden">
+                          <table className="w-full text-left text-[12px]">
+                            <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              <tr>
+                                <th className="px-4 py-3">Catalog Item</th>
+                                <th className="px-4 py-3">Category</th>
+                                <th className="px-4 py-3 text-right">
+                                  Inward Qty
+                                </th>
+                                <th className="px-4 py-3 text-right">
+                                  Acq. Rate
+                                </th>
+                                <th className="px-4 py-3 text-right">
+                                  Line Total
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 bg-white">
+                              {selectedPO.items.map((item, idx) => (
+                                <tr
+                                  key={idx}
+                                  className="hover:bg-teal-50/20 transition-colors"
+                                >
+                                  <td className="px-4 py-3 font-bold text-slate-800">
+                                    {item.item_name}
+                                  </td>
+                                  <td className="px-4 py-3 font-medium text-slate-500 uppercase tracking-tighter text-[10px]">
+                                    {item.category_name}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-black text-slate-700">
+                                    {item.quantity}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-slate-500">
+                                    PKR{" "}
+                                    {Number(
+                                      item.purchase_price,
+                                    ).toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-black text-teal-700">
+                                    PKR {Number(item.total).toLocaleString()}
+                                  </td>
+                                </tr>
+                              ))}
+                              <tr className="bg-slate-50/50">
+                                <td
+                                  colSpan="4"
+                                  className="px-4 py-4 text-right text-[11px] font-bold uppercase text-slate-500"
+                                >
+                                  Grand Total Valuation
+                                </td>
+                                <td className="px-4 py-4 text-right font-black text-teal-700 text-base font-mono">
+                                  PKR{" "}
+                                  {Number(selectedPO.payable).toLocaleString()}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </SectionCard>
                     </motion.div>
                   )}
 
                   <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onClick={() => { resetForm(); setIsFormOpen(false) }} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
-                    <button type="submit" disabled={submitting || !selectedPO} className="inline-flex min-w-[200px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg focus:ring-4 focus:ring-teal-100 hover:bg-teal-700 transition disabled:opacity-50">
-                       <MdInventory className="h-5 w-5" /> {submitting ? 'Updating Stock...' : 'Confirm Goods Receipt'}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm();
+                        setIsFormOpen(false);
+                      }}
+                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || !selectedPO}
+                      className="inline-flex min-w-[200px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg focus:ring-4 focus:ring-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
+                    >
+                      <MdInventory className="h-5 w-5" />{" "}
+                      {submitting
+                        ? "Updating Stock..."
+                        : "Confirm Goods Receipt"}
                     </button>
                   </div>
                 </form>
@@ -228,7 +337,13 @@ export default function GoodsReceiptNotePage() {
             icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
               <div className="p-4">
-                <button type="button" onClick={fetchPurchaseOrders} className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition"><MdRefresh className="inline mr-1" /> Refresh Orders</button>
+                <button
+                  type="button"
+                  onClick={fetchPurchaseOrders}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  <MdRefresh className="inline mr-1" /> Refresh Orders
+                </button>
               </div>
             }
           />
@@ -250,17 +365,36 @@ export default function GoodsReceiptNotePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
                   {purchaseOrders.map((po) => (
-                    <motion.tr key={po.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="group transition-colors hover:bg-teal-50/30">
+                    <motion.tr
+                      key={po.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="group transition-colors hover:bg-teal-50/30"
+                    >
                       <td className="px-5 py-4">
-                         <div className="flex flex-col">
-                            <span className="font-bold text-slate-800 text-[12px]">{po.grn_no || po.invoice_no || `PO-${po.id}`}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">ID: {po.id}</span>
-                         </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800 text-[12px]">
+                            {po.grn_no || po.invoice_no || `PO-${po.id}`}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            ID: {po.id}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 font-bold text-slate-800 text-[13px]">{po.supplier_name}</td>
-                      <td className="px-5 py-4 text-[12px] text-slate-500">{new Date(po.created_at || Date.now()).toLocaleDateString()}</td>
-                      <td className="px-5 py-4 text-right font-black text-slate-700">{po.items?.length || 0}</td>
-                      <td className="px-4 py-4 text-right font-black text-teal-700">PKR {Number(po.payable || 0).toLocaleString()}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800 text-[13px]">
+                        {po.supplier_name}
+                      </td>
+                      <td className="px-5 py-4 text-[12px] text-slate-500">
+                        {new Date(
+                          po.created_at || Date.now(),
+                        ).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-4 text-right font-black text-slate-700">
+                        {po.items?.length || 0}
+                      </td>
+                      <td className="px-4 py-4 text-right font-black text-teal-700">
+                        PKR {Number(po.payable || 0).toLocaleString()}
+                      </td>
                     </motion.tr>
                   ))}
                 </tbody>

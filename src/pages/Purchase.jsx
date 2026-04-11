@@ -80,10 +80,8 @@ export default function PurchasePage() {
   // Form state
   const [supplierId, setSupplierId] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [grnNo, setGrnNo] = useState("");
-  const [grnDate, setGrnDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  // GRN No and Date are managed in the Goods Receipt Note form.
+  // They are removed from here as per the request.
   const [purchaseItems, setPurchaseItems] = useState([createEmptyRow()]);
 
   // Payment state
@@ -185,9 +183,7 @@ export default function PurchasePage() {
   const resetForm = () => {
     setEditId(null);
     setSupplierId("");
-    setInvoiceNo("");
-    setGrnNo("");
-    setGrnDate(new Date().toISOString().split("T")[0]);
+    setInvoiceNo(""); // GRN No and Date are managed in the Goods Receipt Note form.
     setPurchaseItems([createEmptyRow()]);
     setDiscountAmount("");
     setGivenAmount("");
@@ -196,13 +192,8 @@ export default function PurchasePage() {
   const handleEdit = (rec) => {
     setEditId(rec.id);
     setSupplierId(rec.supplier_id || "");
-    setInvoiceNo(rec.invoice_no || "");
-    setGrnNo(rec.grn_no || "");
-    setGrnDate(
-      rec.grn_date
-        ? new Date(rec.grn_date).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-    );
+    setInvoiceNo(rec.invoice_no || ""); // GRN No and Date are managed in the Goods Receipt Note form.
+    // GRN No and Date are removed from here as per the request.
     setDiscountAmount(rec.discount_amount || "");
     setGivenAmount(rec.paid || rec.paid_amount || "");
 
@@ -262,9 +253,8 @@ export default function PurchasePage() {
     setSubmitting(true);
     const payload = {
       supplier_id: supplierId,
-      invoice_number: invoiceNo,
-      grn_no: grnNo,
-      grn_date: grnDate,
+      invoice_number: invoiceNo, // GRN No and Date are managed in the Goods Receipt Note form.
+      // GRN No and Date are removed from here as per the request.
       items: validItems.map((i) => ({
         item_id: i.item_id,
         quantity: i.quantity,
@@ -387,23 +377,6 @@ export default function PurchasePage() {
                           value={invoiceNo}
                           onChange={(e) => setInvoiceNo(e.target.value)}
                           placeholder="Invoice number from supplier"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400"
-                        />
-                      </Field>
-                      <Field label="GRN NO" required>
-                        <input
-                          type="text"
-                          value={grnNo}
-                          onChange={(e) => setGrnNo(e.target.value)}
-                          placeholder="GRN number"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400"
-                        />
-                      </Field>
-                      <Field label="GRN Date" required>
-                        <input
-                          type="date"
-                          value={grnDate}
-                          onChange={(e) => setGrnDate(e.target.value)}
                           className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400"
                         />
                       </Field>
