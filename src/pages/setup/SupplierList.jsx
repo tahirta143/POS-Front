@@ -216,11 +216,10 @@ export default function SupplierPage() {
                 }
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
-                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
-            }`}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
+              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+              }`}
           >
             {isFormOpen ? (
               <>
@@ -437,8 +436,8 @@ export default function SupplierPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
                   {suppliers.map((s) => (
-                    <motion.tr 
-                      key={s.id} 
+                    <motion.tr
+                      key={s.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="group transition-colors hover:bg-teal-50/30"
@@ -452,15 +451,18 @@ export default function SupplierPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-center">
-                          <StatusChip 
-                            enabled={true} 
-                            label={s.payment_terms} 
-                            colorClass={s.payment_terms === 'Cash' ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700'} 
+                          <StatusChip
+                            enabled={true}
+                            label={s.payment_terms}
+                            colorClass={s.payment_terms === 'Cash' ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700'}
                           />
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <StatusChip enabled={s.status === 1 || s.status === true} />
+                        <StatusChip
+                          label={s.status === 1 ? "Active" : "Inactive"}
+                          tone={s.status === 1 ? "emerald" : "rose"}
+                        />
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
@@ -478,4 +480,4 @@ export default function SupplierPage() {
       </div>
     </PageShell>
   )
-}
+}

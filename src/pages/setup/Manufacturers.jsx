@@ -174,11 +174,10 @@ export default function Manufacturers() {
                 if (!isFormOpen) resetForm()
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
-            }`}
+              }`}
           >
             {isFormOpen ? (
               <>
@@ -395,8 +394,8 @@ export default function Manufacturers() {
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
                   {manufacturers.map((m) => (
-                    <motion.tr 
-                      key={m.id} 
+                    <motion.tr
+                      key={m.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="group transition-colors hover:bg-teal-50/30"
@@ -410,7 +409,10 @@ export default function Manufacturers() {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <StatusChip enabled={m.status === 1 || m.status === true} />
+                        <StatusChip
+                          label={m.status === 1 ? "Active" : "Inactive"}
+                          tone={m.status === 1 ? "emerald" : "rose"}
+                        />
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
@@ -428,4 +430,4 @@ export default function Manufacturers() {
       </div>
     </PageShell>
   )
-}
+}
