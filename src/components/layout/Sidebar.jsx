@@ -174,7 +174,6 @@ const NAV_ITEMS = [
         children: [
           { to: "/setup/department", label: "Department", icon: MdApartment },
           { to: "/setup/designation", label: "Designation", icon: MdBadge },
-          { to: "/security/employee", label: "Employee", icon: MdPerson },
         ],
       },
     ],
