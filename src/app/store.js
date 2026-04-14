@@ -4,7 +4,7 @@ import supplierReducer from '../features/setup/supplierSlice';
 import customerReducer from '../features/customers/customerSlice';
 import authReducer from '../features/auth/authSlice';
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
     items: itemReducer,
     suppliers: supplierReducer,
@@ -12,3 +12,6 @@ export const store = configureStore({
     auth: authReducer,
   },
 });
+
+
+export default store; 
