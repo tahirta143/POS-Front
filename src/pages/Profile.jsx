@@ -11,12 +11,12 @@ import {
 // SectionCard Component
 function SectionCard({ title, icon: Icon, children }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-        <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center transition-colors">
           <Icon className="text-base" />
         </div>
-        <h3 className="text-[14px] font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
       </div>
       <div className="p-5">{children}</div>
     </div>
@@ -27,7 +27,7 @@ function SectionCard({ title, icon: Icon, children }) {
 function InputField({ label, type = 'text', value, onChange, disabled, placeholder, required }) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 transition-colors">
         {label} {required && <span className="text-rose-400">*</span>}
       </label>
       <input
@@ -36,10 +36,10 @@ function InputField({ label, type = 'text', value, onChange, disabled, placehold
         onChange={onChange}
         disabled={disabled}
         placeholder={placeholder}
-        className={`w-full h-10 rounded-xl border px-3 text-[13px] outline-none transition-all duration-150 ${
+        className={`w-full h-10 rounded-xl border px-3 text-[13px] outline-none transition-all duration-150 transition-colors ${
           disabled
-            ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed'
-            : 'bg-white border-slate-200 text-slate-800 focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
+            ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed'
+            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
         }`}
       />
     </div>
@@ -189,7 +189,7 @@ export default function Profile() {
       <div className="max-w-3xl mx-auto space-y-5 z-2">
 
         {/* Avatar Card */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
           {/* Gradient banner */}
           <div className="h-24 bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 relative">
             <div className="absolute inset-0 opacity-20"
@@ -200,12 +200,12 @@ export default function Profile() {
           <div className="px-6 pb-5 relative z-2">
             {/* Avatar overlapping banner */}
             <div className="flex items-end gap-4 -mt-10 mb-4">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg border-4 border-white">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-900 transition-colors">
                 <span className="text-white text-2xl font-bold">{initials}</span>
               </div>
               <div className="pb-1">
-                <h2 className="text-lg font-bold text-slate-800">{profileData?.name || user?.name || 'User'}</h2>
-                <p className="text-[12px] text-slate-400 capitalize">{profileData?.role || user?.role || 'User'}</p>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 transition-colors">{profileData?.name || user?.name || 'User'}</h2>
+                <p className="text-[12px] text-slate-400 dark:text-slate-500 capitalize transition-colors">{profileData?.role || user?.role || 'User'}</p>
               </div>
             </div>
 
@@ -216,9 +216,9 @@ export default function Profile() {
                 { icon: MdBadge, label: profileData?.role || user?.role || 'User', capitalize: true },
                 { icon: MdCalendarToday, label: profileData?.created_at ? `Joined ${new Date(profileData.created_at).toLocaleDateString('en-PK', { month: 'short', year: 'numeric' })}` : 'Active Member' },
               ].map((pill, i) => (
-                <div key={i} className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
+                <div key={i} className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1 transition-colors">
                   <pill.icon className="text-teal-500 text-sm" />
-                  <span className={`text-[11px] text-slate-600 font-medium ${pill.capitalize ? 'capitalize' : ''}`}>
+                  <span className={`text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors ${pill.capitalize ? 'capitalize' : ''}`}>
                     {pill.label}
                   </span>
                 </div>

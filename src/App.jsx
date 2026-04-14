@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Layout from "./components/layout/Layout";
@@ -56,6 +56,23 @@ import StockTransferPage from "./pages/stock/StockTransfer";
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [showRegister, setShowRegister] = useState(false);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    if (!isAuthenticated) {
+      root.classList.remove("dark");
+      root.style.colorScheme = "light";
+      return;
+    }
+
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+    root.classList.toggle("dark", shouldUseDark);
+    root.style.colorScheme = shouldUseDark ? "dark" : "light";
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     if (showRegister) {

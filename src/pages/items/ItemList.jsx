@@ -651,32 +651,24 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
 
 function ItemStatusToggle({ enabled, onChange, label, description }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 transition-colors">
       <div>
-        <p className="text-[12px] font-semibold text-slate-800">{label}</p>
-        <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
+        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200">{label}</p>
+        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{description}</p>
       </div>
       <button
         type="button"
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
-        className={`inline-flex items-center gap-2 rounded-full border px-1.5 py-0.5 transition ${enabled
-          ? 'border-teal-200 bg-teal-50 text-teal-700'
-          : 'border-slate-200 bg-white text-slate-500'
-          }`}
+        className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
+          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+        }`}
       >
-        <span className="min-w-8 text-[10px] font-semibold uppercase tracking-[0.12em]">
-          {enabled ? 'On' : 'Off'}
-        </span>
         <span
-          className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${enabled ? 'bg-teal-500' : 'bg-slate-300'
-            }`}
-        >
-          <span
-            className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition ${enabled ? 'translate-x-5' : 'translate-x-0.5'
-              }`}
-          />
-        </span>
+          className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${
+            enabled ? "translate-x-7" : "translate-x-1"
+          }`}
+        />
       </button>
     </div>
   )

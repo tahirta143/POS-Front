@@ -26,12 +26,12 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
       <div
-        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700 transition-colors`}
       >
         <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
       </div>
       {children}
     </div>
@@ -63,7 +63,8 @@ function getPaymentStatus(record) {
 
 // Derive GRN/receipt status label
 function getReceiptStatus(record) {
-  if (record.order_status === "received") return { label: "RECEIVED", tone: "teal" };
+  if (record.order_status === "received")
+    return { label: "RECEIVED", tone: "teal" };
   return { label: "PENDING", tone: "slate" };
 }
 
@@ -181,7 +182,7 @@ export default function PurchasePage() {
   const resetForm = () => {
     setEditId(null);
     setSupplierId("");
-    setInvoiceNo(""); 
+    setInvoiceNo("");
     setPurchaseItems([createEmptyRow()]);
     setDiscountAmount("");
     setGivenAmount("");
@@ -190,7 +191,7 @@ export default function PurchasePage() {
   const handleEdit = (rec) => {
     setEditId(rec.id);
     setSupplierId(rec.supplier_id || "");
-    setInvoiceNo(rec.invoice_no || ""); 
+    setInvoiceNo(rec.invoice_no || "");
     setDiscountAmount(rec.discount_amount || "");
     setGivenAmount(rec.paid || rec.paid_amount || "");
 
@@ -290,10 +291,10 @@ export default function PurchasePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
               Inventory Acquisitions
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Log purchases and restock inventory via Goods Receipt.
             </p>
           </div>
@@ -317,7 +318,7 @@ export default function PurchasePage() {
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
               isFormOpen
-                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
             }`}
           >
@@ -358,7 +359,7 @@ export default function PurchasePage() {
                         <select
                           value={supplierId}
                           onChange={(e) => setSupplierId(e.target.value)}
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none focus:border-teal-400 transition-colors"
                         >
                           <option value="">Select Supplier...</option>
                           {suppliers.map((s) => (
@@ -374,7 +375,7 @@ export default function PurchasePage() {
                           value={invoiceNo}
                           onChange={(e) => setInvoiceNo(e.target.value)}
                           placeholder="Invoice number from supplier"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-400"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none focus:border-teal-400 transition-colors"
                         />
                       </Field>
                     </div>
@@ -383,7 +384,7 @@ export default function PurchasePage() {
                   {/* Items */}
                   <SectionCard title="Items to Purchase">
                     <div className="space-y-2">
-                      <div className="hidden grid-cols-[140px_1fr_90px_90px_80px_100px_40px] gap-2 px-2 sm:grid uppercase tracking-widest text-[9px] font-bold text-slate-400">
+                      <div className="hidden grid-cols-[140px_1fr_90px_90px_80px_100px_40px] gap-2 px-2 sm:grid uppercase tracking-widest text-[9px] font-bold text-slate-400 dark:text-slate-500">
                         <div>Category</div>
                         <div>Product</div>
                         <div>Cost</div>
@@ -402,14 +403,14 @@ export default function PurchasePage() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0"
+                            className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px] items-center bg-slate-50/50 dark:bg-slate-800/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 dark:border-slate-800 sm:border-0 transition-colors"
                           >
                             <select
                               value={row.category_id}
                               onChange={(e) =>
                                 updateRow(row.id, "category_id", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px]"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] transition-colors"
                             >
                               <option value="">Category</option>
                               {categories.map((c) => (
@@ -424,7 +425,7 @@ export default function PurchasePage() {
                                 updateRow(row.id, "item_id", e.target.value)
                               }
                               disabled={!row.category_id}
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] disabled:bg-slate-100"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] disabled:bg-slate-100 dark:disabled:bg-slate-800/50 transition-colors"
                             >
                               <option value="">Select Item</option>
                               {availableItems.map((i) => (
@@ -445,7 +446,7 @@ export default function PurchasePage() {
                                 )
                               }
                               placeholder="Cost"
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] text-right"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] text-right transition-colors"
                             />
                             <input
                               type="number"
@@ -455,7 +456,7 @@ export default function PurchasePage() {
                                 updateRow(row.id, "sale_price", e.target.value)
                               }
                               placeholder="Sale"
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[11px] text-right"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] text-right transition-colors"
                             />
                             <input
                               type="number"
@@ -464,9 +465,9 @@ export default function PurchasePage() {
                               onChange={(e) =>
                                 updateRow(row.id, "quantity", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-center text-[11px] font-bold"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-center text-[11px] font-bold transition-colors"
                             />
-                            <div className="text-right font-black text-slate-800 text-[11px]">
+                            <div className="text-right font-black text-slate-800 dark:text-slate-200 text-[11px] transition-colors">
                               PKR {(Number(row.total) || 0).toLocaleString()}
                             </div>
                             <button
@@ -496,7 +497,7 @@ export default function PurchasePage() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"
+                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 dark:bg-teal-900/20 px-4 py-2 text-[12px] font-bold text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition"
                         >
                           <MdAdd className="h-4 w-4" /> Add Item Line
                         </button>
@@ -649,9 +650,9 @@ export default function PurchasePage() {
             <TableState message="No purchase records found. Click 'New Acquisition' to begin." />
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="px-5 py-4">#</th>
                     <th className="px-5 py-4">Supplier / Invoice</th>
                     <th className="px-5 py-4 text-right">Payable</th>
@@ -662,7 +663,7 @@ export default function PurchasePage() {
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {purchasesRecord.map((s, index) => {
                     const payStatus = getPaymentStatus(s);
                     const receiptStatus = getReceiptStatus(s);
@@ -674,14 +675,14 @@ export default function PurchasePage() {
                         key={s.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`group transition-colors hover:bg-teal-50/20 ${editId === s.id ? "bg-teal-50/50" : ""}`}
+                        className={`group transition-colors hover:bg-teal-50/20 dark:hover:bg-teal-900/10 ${editId === s.id ? "bg-teal-50/50 dark:bg-teal-900/20" : ""}`}
                       >
                         <td className="px-5 py-4 text-[11px] text-slate-400 font-mono">
                           {index + 1}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-800 text-[12px]">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 text-[12px]">
                               {s.supplier_name || `Supplier #${s.supplier_id}`}
                             </span>
                             <span className="text-[10px] text-teal-600 font-mono">

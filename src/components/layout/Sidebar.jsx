@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import ThemeToggle from "./ThemeToggle";
 import {
   MdDashboard,
   MdSettings,
@@ -256,18 +257,19 @@ function NestedDropdown({ item, openId, setOpenId }) {
     <div>
       <button
         onClick={toggle}
+        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
           isActive
-            ? "bg-teal-50 text-teal-700 font-medium"
-            : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            ? "bg-teal-500 text-white font-medium shadow-sm"
+            : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
         }`}
       >
         <div className="flex items-center gap-2.5">
           <span
-            className={`flex items-center justify-center w-6 h-6 rounded-md text-xs ${
+            className={`flex items-center justify-center w-6 h-6 rounded-md text-xs transition-colors ${
               isActive
-                ? "bg-teal-100 text-teal-600"
-                : "bg-gray-100 text-gray-500"
+                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             }`}
           >
             {item.icon && <item.icon />}
@@ -285,11 +287,16 @@ function NestedDropdown({ item, openId, setOpenId }) {
             <NavLink
               key={child.to}
               to={child.to}
+              style={({ isActive }) =>
+                isActive
+                  ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+                  : undefined
+              }
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
+                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 transition-colors ${
                   isActive
                     ? "bg-teal-500 text-white font-medium shadow-sm"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                    : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
                 }`
               }
             >
@@ -315,21 +322,24 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
       <NavLink
         to={item.to}
         onClick={onNavigate}
+        style={({ isActive }) =>
+          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
+        }
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
+          `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 transition-colors ${
             isActive
               ? "bg-teal-500 text-white shadow-sm"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-900 dark:hover:text-slate-100"
           }`
         }
       >
         {({ isActive }) => (
           <>
             <span
-              className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 ${
+              className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
                 isActive
-                  ? "bg-teal-400 text-white"
-                  : "bg-gray-100 text-gray-500"
+                  ? "bg-teal-400 dark:bg-teal-600 text-white"
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
               }`}
             >
               {item.icon && <item.icon />}
@@ -350,18 +360,19 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
     <div className="mb-0.5">
       <button
         onClick={toggle}
-        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
+        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 transition-colors ${
           isActive
-            ? "bg-teal-50 text-teal-700"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            ? "bg-teal-500 text-white shadow-sm"
+            : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-900 dark:hover:text-slate-100"
         }`}
       >
         <div className="flex items-center gap-3">
           <span
-            className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 ${
+            className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
               isActive
-                ? "bg-teal-100 text-teal-600"
-                : "bg-gray-100 text-gray-500"
+                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             }`}
           >
             {item.icon && <item.icon />}
@@ -369,12 +380,12 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
           <span className="font-medium text-[13px]">{item.label}</span>
         </div>
         <MdExpandMore
-          className={`text-base text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`text-base transition-transform duration-200 ${isActive ? "text-white" : "text-gray-400"} ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {isOpen && (
-        <div className="ml-3 mt-1 mb-1 space-y-0.5 border-l-2 border-gray-100 pl-2">
+        <div className="ml-3 mt-1 mb-1 space-y-0.5 border-l-2 border-gray-100 dark:border-slate-800 pl-2">
           {/* Track nested open state independently per level-1 parent */}
           <NestedChildren children={item.children} onNavigate={onNavigate} />
         </div>
@@ -407,11 +418,14 @@ function NestedChildren({ children, onNavigate }) {
         key={child.to}
         to={child.to}
         onClick={onNavigate}
+        style={({ isActive }) =>
+          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
+        }
         className={({ isActive }) =>
-          `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
+          `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 transition-colors ${
             isActive
               ? "bg-teal-500 text-white font-medium shadow-sm"
-              : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
           }`
         }
       >
@@ -442,20 +456,21 @@ function SidebarContent({ onNavigate }) {
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-100 h-full flex flex-col shadow-md">
+    <div className="w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none transition-colors duration-300">
       {/* Logo */}
-      <div className="h-16 flex items-center px-5 border-b border-gray-100 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-sm">
+      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 dark:border-slate-800 shrink-0 transition-colors duration-300">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center shadow-sm shrink-0">
             <MdStorefront className="text-white text-lg" />
           </div>
-          <div>
-            <h1 className="text-sm font-bold text-gray-800 leading-none">
+          <div className="truncate">
+            <h1 className="text-sm font-bold text-gray-800 dark:text-slate-100 leading-none">
               POS System
             </h1>
-            <p className="text-[10px] text-gray-400 mt-0.5">Management Suite</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">Management Suite</p>
           </div>
         </div>
+        <ThemeToggle />
       </div>
 
       {/* Nav */}
@@ -472,12 +487,12 @@ function SidebarContent({ onNavigate }) {
       </div>
 
       {/* Logout */}
-      <div className="border-t border-gray-100 p-3 shrink-0">
+      <div className="border-t border-gray-100 dark:border-slate-800 p-3 shrink-0 transition-colors duration-300">
         <button
           onClick={() => dispatch(logout())}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-150 group"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-900/20 transition-colors duration-150 group"
         >
-          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 text-red-400 group-hover:bg-red-100 transition-colors">
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 dark:bg-rose-900/40 text-red-400 dark:text-rose-300 group-hover:bg-red-100 transition-colors">
             <MdLogout className="text-base" />
           </span>
           <span className="font-medium text-[13px]">Logout</span>

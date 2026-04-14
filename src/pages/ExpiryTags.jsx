@@ -28,12 +28,12 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm shadow-slate-100/50">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2.5 shadow-sm transition-colors">
       <div
-        className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}
+        className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header} dark:bg-slate-800 dark:border-slate-700`}
       >
         <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
       </div>
       {children}
     </div>
@@ -464,7 +464,7 @@ export default function ExpiryTagsPage() {
                 <button
                   type="button"
                   onClick={fetchExpiryTags}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <MdRefresh className="inline mr-1" /> Refresh Data
                 </button>
@@ -478,9 +478,9 @@ export default function ExpiryTagsPage() {
             <TableState message="No expiry tracking tags defined." />
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="min-width-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <table className="min-width-full divide-y divide-slate-100 dark:divide-slate-800 text-left transition-colors">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="px-5 py-4">Receipt/Batch</th>
                     <th className="px-5 py-4">Product Info</th>
                     <th className="px-5 py-4 text-right">Pricing</th>
@@ -488,7 +488,7 @@ export default function ExpiryTagsPage() {
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {expiryTags.map((t, idx) => {
                     const isExpired =
                       t.expiry_date && new Date(t.expiry_date) < new Date();

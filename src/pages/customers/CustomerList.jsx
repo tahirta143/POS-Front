@@ -13,10 +13,10 @@ const sectionStyles = {
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
-      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700 transition-colors`}>
         <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
       </div>
       {children}
     </div>
@@ -141,7 +141,7 @@ export default function CustomerPage() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+  const inputCls = "h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
 
   return (
     <PageShell>
@@ -149,8 +149,8 @@ export default function CustomerPage() {
         {/* Top Action Bar */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Customers</h1>
-            <p className="text-sm text-slate-500">Register and manage clients for detailed billing and history.</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Customers</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Register and manage clients for detailed billing and history.</p>
           </div>
           <button
             onClick={() => {
@@ -167,7 +167,7 @@ export default function CustomerPage() {
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
               isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' 
                 : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
             }`}
           >
@@ -324,9 +324,9 @@ export default function CustomerPage() {
             <TableState message="No customers found yet." />
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="px-5 py-3">Name</th>
                     <th className="px-5 py-3">Contact Details</th>
                     <th className="px-5 py-3">Address & Area</th>
@@ -334,25 +334,25 @@ export default function CustomerPage() {
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {customers.map((c) => (
                     <motion.tr 
                       key={c.id} 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="group transition-colors hover:bg-teal-50/30"
+                      className="group transition-colors hover:bg-teal-50/30 dark:hover:bg-slate-800/50"
                     >
-                      <td className="px-5 py-4 font-bold text-slate-800">{c.customer_name}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800 dark:text-slate-200">{c.customer_name}</td>
                       <td className="px-5 py-4">
-                         <span className="text-[12px] font-medium text-slate-600">{c.mobile_number || '-'}</span>
+                         <span className="text-[12px] font-medium text-slate-600 dark:text-slate-200">{c.mobile_number || '-'}</span>
                          <span className="block text-[10px] text-slate-400 font-bold tracking-tighter uppercase">{c.payment_method}</span>
                       </td>
-                      <td className="px-5 py-4 text-slate-600">
+                      <td className="px-5 py-4 text-slate-600 dark:text-slate-200">
                         {c.address ? <div className="max-w-[200px] truncate text-[12px]">{c.address}</div> : '-'}
-                        {c.nearby && <span className="mt-0.5 block text-[10px] font-bold text-teal-600 uppercase tracking-tighter">Near: {c.nearby}</span>}
+                        {c.nearby && <span className="mt-0.5 block text-[10px] font-bold text-teal-600 dark:text-teal-300 uppercase tracking-tighter">Near: {c.nearby}</span>}
                       </td>
                       <td className="px-5 py-4 text-right">
-                         <span className={`text-[12px] font-black ${parseFloat(c.previous_balance) > 0 ? 'text-teal-600' : 'text-slate-700'}`}>
+                         <span className={`text-[12px] font-black ${parseFloat(c.previous_balance) > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-slate-700 dark:text-slate-300'}`}>
                            PKR {parseFloat(c.previous_balance || 0).toLocaleString()}
                          </span>
                       </td>

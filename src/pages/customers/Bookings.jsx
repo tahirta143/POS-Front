@@ -29,12 +29,14 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
       <div
-        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700`}
       >
         <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
+          {title}
+        </h3>
       </div>
       {children}
     </div>
@@ -210,7 +212,6 @@ export default function Bookings() {
 
   const remaining = useMemo(() => {
     const given = Number(givenAmount) || 0;
-    // If it's overpaid, remaining is 0
     return Math.max(0, payable - given);
   }, [payable, givenAmount]);
 
@@ -278,13 +279,6 @@ export default function Bookings() {
       payment_method: paymentMethod,
       booking_date: bookingDate,
       booking_time: bookingTime,
-      status: editId
-        ? undefined
-        : isAllPaid
-          ? "Paid"
-          : isPartiallyPaid
-            ? "Partially Paid"
-            : "Pending",
     };
 
     try {
@@ -349,10 +343,10 @@ export default function Bookings() {
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
               Customer Bookings
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Record advance orders and booking deposits.
             </p>
           </div>
@@ -376,7 +370,7 @@ export default function Bookings() {
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
               isFormOpen
-                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
             }`}
           >
@@ -429,19 +423,19 @@ export default function Bookings() {
                               )
                             }
                             placeholder="Search Mobile"
-                            className="h-8 w-44 rounded-md border border-slate-300 bg-white px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
+                            className="h-8 w-44 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 relative z-10"
                           />
                           <MdSearch className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
                           {showCustomerDropdown &&
                             matchingCustomers.length > 0 && (
-                              <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50">
+                              <ul className="absolute left-0 top-full mt-1 max-h-48 w-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 shadow-xl z-50 transition-colors">
                                 {matchingCustomers.map((c) => (
                                   <li
                                     key={c.id}
                                     onClick={() => handleSelectCustomer(c)}
-                                    className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 transition"
+                                    className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-teal-50 dark:hover:bg-teal-900/30 transition"
                                   >
-                                    <p className="text-[12px] font-semibold text-slate-800">
+                                    <p className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
                                       {c.customer_name}
                                     </p>
                                     <p className="text-[10px] text-slate-500">
@@ -459,7 +453,7 @@ export default function Bookings() {
                           value={customerName}
                           onChange={(e) => setCustomerName(e.target.value)}
                           placeholder="Full Name"
-                          className={`h-8 w-60 rounded-md border text-[12px] outline-none transition px-2.5 ${customerId ? "border-emerald-300 bg-emerald-50 text-emerald-800 font-bold" : "border-slate-300 bg-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100"}`}
+                          className={`h-8 w-60 rounded-md border text-[12px] outline-none transition px-2.5 transition-colors ${customerId ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400 font-bold" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"}`}
                         />
                       </Field>
                       <Field label="Booking Date" required>
@@ -467,7 +461,7 @@ export default function Bookings() {
                           type="date"
                           value={bookingDate}
                           onChange={(e) => setBookingDate(e.target.value)}
-                          className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-36 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         />
                       </Field>
                       <Field label="Time" required>
@@ -475,7 +469,7 @@ export default function Bookings() {
                           type="time"
                           value={bookingTime}
                           onChange={(e) => setBookingTime(e.target.value)}
-                          className="h-8 w-28 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-28 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         />
                       </Field>
                     </div>
@@ -513,7 +507,7 @@ export default function Bookings() {
                                     e.target.value,
                                   )
                                 }
-                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none"
+                                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] outline-none transition-colors"
                               >
                                 <option value="">Category</option>
                                 {categories.map((c) => (
@@ -530,7 +524,7 @@ export default function Bookings() {
                                   updateRow(row.id, "item_id", e.target.value)
                                 }
                                 disabled={!row.category_id}
-                                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none disabled:bg-slate-50"
+                                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800/50 transition-colors"
                               >
                                 <option value="">Select Item</option>
                                 {availableItems.map((i) => (
@@ -547,7 +541,7 @@ export default function Bookings() {
                               onChange={(e) =>
                                 updateRow(row.id, "price", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-right"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] text-right transition-colors"
                               placeholder="0.00"
                             />
                             <input
@@ -557,9 +551,9 @@ export default function Bookings() {
                               onChange={(e) =>
                                 updateRow(row.id, "quantity", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] text-center"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] text-center transition-colors"
                             />
-                            <div className="flex items-center justify-end font-bold text-slate-700 text-[12px]">
+                            <div className="flex items-center justify-end font-bold text-slate-700 dark:text-slate-300 text-[12px] transition-colors">
                               PKR {Number(row.total || 0).toLocaleString()}
                             </div>
                             <div className="flex justify-center">
@@ -592,7 +586,7 @@ export default function Bookings() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"
+                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 dark:bg-teal-900/20 px-4 py-2 text-[12px] font-bold text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition"
                         >
                           <MdAdd className="h-4 w-4" /> Add Line
                         </button>
@@ -605,7 +599,7 @@ export default function Bookings() {
                       <div className="space-y-3 py-1">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-500">Subtotal</span>
-                          <span className="font-bold text-slate-800">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">
                             PKR {subTotal.toLocaleString()}
                           </span>
                         </div>
@@ -619,11 +613,11 @@ export default function Bookings() {
                             value={discount}
                             onChange={(e) => setDiscount(e.target.value)}
                             placeholder="0.00"
-                            className="h-8 w-32 rounded border border-slate-300 text-right px-2 text-[12px] focus:border-teal-400"
+                            className="h-8 w-32 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-right px-2 text-[12px] focus:border-teal-400 transition-colors"
                           />
                         </div>
-                        <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                          <span className="font-bold text-slate-700 text-sm">
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center transition-colors">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 text-sm">
                             Payable Amount
                           </span>
                           <span className="text-xl font-black text-teal-600 font-mono">
@@ -643,7 +637,7 @@ export default function Bookings() {
                             <select
                               value={paymentMethod}
                               onChange={(e) => setPaymentMethod(e.target.value)}
-                              className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 text-[12px] font-bold outline-none focus:border-teal-500 transition"
+                              className="h-10 w-full rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 text-[12px] font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500 transition"
                             >
                               <option value="Cash">Cash</option>
                               <option value="Online">Online</option>
@@ -659,22 +653,22 @@ export default function Bookings() {
                               type="number"
                               value={givenAmount}
                               onChange={(e) => setGivenAmount(e.target.value)}
-                              className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-slate-800 focus:border-emerald-500 focus:bg-white transition outline-none"
+                              className="h-10 w-full rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-lg font-black text-slate-800 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition outline-none"
                               placeholder="0.00"
                             />
                           </div>
                         </div>
                         {payable > 0 && givenAmount > 0 && (
                           <div
-                            className={`p-3 rounded-xl border-2 flex items-center justify-between ${isAllPaid ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"}`}
+                            className={`p-3 rounded-xl border-2 flex items-center justify-between transition-colors ${isAllPaid ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30"}`}
                           >
                             <span
-                              className={`text-[11px] font-black uppercase tracking-widest ${isAllPaid ? "text-emerald-700" : "text-rose-700"}`}
+                              className={`text-[11px] font-black uppercase tracking-widest ${isAllPaid ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}
                             >
                               {isAllPaid ? "FULL DEPOSIT" : "PARTIAL"}
                             </span>
                             <span
-                              className={`font-mono font-bold text-sm ${isAllPaid ? "text-emerald-600" : "text-rose-600"}`}
+                              className={`font-mono font-bold text-sm ${isAllPaid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
                             >
                               PKR{" "}
                               {isAllPaid
@@ -694,7 +688,7 @@ export default function Bookings() {
                         resetForm();
                         setIsFormOpen(false);
                       }}
-                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     >
                       Cancel
                     </button>
@@ -742,9 +736,9 @@ export default function Bookings() {
             <TableState message="No booking records found." />
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors">
                     <th className="px-5 py-3">Booking ID</th>
                     <th className="px-5 py-3">Customer Info</th>
                     <th className="px-5 py-3">Date & Time</th>
@@ -755,7 +749,7 @@ export default function Bookings() {
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {bookingsRecord.map((s) => {
                     const statusPayload =
                       s.paid >= s.payable
@@ -769,14 +763,14 @@ export default function Bookings() {
                         key={s.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`group transition-colors hover:bg-teal-50/30 ${editId === s.id ? "bg-teal-50/50" : ""}`}
+                        className={`group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10 ${editId === s.id ? "bg-teal-50/50 dark:bg-teal-900/20" : ""}`}
                       >
                         <td className="px-5 py-4 font-mono text-[11px] font-bold text-slate-400">
                           #BK-{String(s.id).slice(-4)}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-800 text-[12px]">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 text-[12px]">
                               {s.customer_name}
                             </span>
                             <span className="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">
@@ -786,7 +780,7 @@ export default function Bookings() {
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex flex-col">
-                            <span className="text-[12px] font-semibold text-slate-600">
+                            <span className="text-[12px] font-semibold text-slate-600 dark:text-slate-400">
                               {s.booking_date}
                             </span>
                             <span className="text-[10px] text-slate-400">
@@ -795,7 +789,7 @@ export default function Bookings() {
                           </div>
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <span className="text-[12px] font-bold text-slate-700">
+                          <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300">
                             PKR {Number(s.payable || 0).toLocaleString()}
                           </span>
                         </td>
@@ -854,7 +848,7 @@ export default function Bookings() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+                className="w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl"
               >
                 <div className="bg-teal-600 p-4 text-white">
                   <h3 className="text-lg font-bold">Record Payment</h3>
@@ -863,9 +857,9 @@ export default function Bookings() {
                   </p>
                 </div>
                 <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-                  <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 flex justify-between items-center text-sm font-bold">
+                  <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 border border-slate-100 dark:border-slate-700 flex justify-between items-center text-sm font-bold transition-colors">
                     <span className="text-slate-500">Remaining Due:</span>
-                    <span className="text-rose-600 font-mono">
+                    <span className="text-rose-600 dark:text-rose-400 font-mono">
                       PKR {Number(payBooking.to_be_paid).toLocaleString()}
                     </span>
                   </div>
@@ -877,7 +871,7 @@ export default function Bookings() {
                       value={payAmount}
                       onChange={(e) => setPayAmount(e.target.value)}
                       max={payBooking.to_be_paid}
-                      className="h-10 w-full rounded-xl border-2 border-slate-100 bg-white px-4 text-lg font-black focus:border-emerald-500 outline-none transition"
+                      className="h-10 w-full rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-4 text-lg font-black focus:border-emerald-500 outline-none transition"
                       placeholder="0.00"
                       autoFocus
                     />
@@ -888,7 +882,7 @@ export default function Bookings() {
                       <select
                         value={payMethod}
                         onChange={(e) => setPayMethod(e.target.value)}
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-bold outline-none focus:border-teal-400"
+                        className="h-9 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 text-[12px] font-bold outline-none focus:border-teal-400 transition-colors"
                       >
                         <option value="Cash">Cash</option>
                         <option value="Online">Online</option>
@@ -900,7 +894,7 @@ export default function Bookings() {
                         type="date"
                         value={new Date().toISOString().slice(0, 10)}
                         disabled
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none"
+                        className="h-9 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-[12px] text-slate-500 outline-none transition-colors"
                       />
                     </Field>
                   </div>
@@ -910,7 +904,7 @@ export default function Bookings() {
                       value={payRemarks}
                       onChange={(e) => setPayRemarks(e.target.value)}
                       rows={2}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] outline-none focus:border-teal-400"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2 text-[12px] outline-none focus:border-teal-400 transition-colors"
                       placeholder="Optional notes..."
                     />
                   </Field>
@@ -919,7 +913,7 @@ export default function Bookings() {
                     <button
                       type="button"
                       onClick={() => setPayBooking(null)}
-                      className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
+                      className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                     >
                       Cancel
                     </button>

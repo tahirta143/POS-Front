@@ -7,11 +7,11 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const Layout = () => {
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-slate-950 font-sans text-gray-900 dark:text-slate-100 overflow-hidden transition-colors duration-300">
       <Sidebar />
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar />
-        <main className="app-shell flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 lg:p-6 custom-scrollbar">
+        <main className="app-shell flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-slate-950 p-4 lg:p-6 custom-scrollbar transition-colors duration-300">
           <div className="w-full lg:max-w-7xl xl:max-w-8xl 2xl:max-w-9xl mx-auto">
             <Outlet />
           </div>
