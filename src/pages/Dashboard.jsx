@@ -167,9 +167,9 @@ export default function Dashboard() {
     if (res?.data) {
       const list = Array.isArray(res.data) ? res.data : res.data.data || []
       setOrderStatus({
-        pending: list.filter(b => b.status === 'Pending' || b.status === 'Partially Paid').length,
-        completed: list.filter(b => b.status === 'Completed' || b.status === 'Paid').length,
-        rejected: list.filter(b => b.status === 'Rejected').length,
+        pending: list.filter(b => b.booking_status === 'Pending').length,
+        completed: list.filter(b => b.booking_status === 'Completed').length,
+        rejected: list.filter(b => b.booking_status === 'Rejected').length,
       })
       setRecentBookings(list.slice(0, 5))
     } else {
@@ -349,7 +349,7 @@ export default function Dashboard() {
                         <td className="py-2.5 text-[12px] text-slate-500">{formatDate(b.booking_date)}</td>
                         <td className="py-2.5 text-[12px] font-semibold text-slate-700">{formatCurrency(b.payable || 0)}</td>
                         <td className="py-2.5 text-right pr-1">
-                          <StatusBadge status={b.status || 'Pending'} />
+                          <StatusBadge status={b.booking_status || 'Pending'} />
                         </td>
                       </tr>
                     ))}
