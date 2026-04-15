@@ -14,9 +14,9 @@ function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
-      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700 transition-colors`}>
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`} />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
       </div>
       {children}
     </div>

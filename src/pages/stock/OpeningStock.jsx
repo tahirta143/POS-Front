@@ -22,9 +22,9 @@ function SearchIcon({ className }) {
 // Custom specialized Metric Card
 function MetricCard({ title, value, valueColor }) {
   return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-[12px] font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-      <p className={`mt-2 text-2xl font-bold ${valueColor}`}>{value}</p>
+    <div className="flex flex-col rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-sm ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:ring-slate-800/80">
+      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] dark:text-teal-400">{title}</p>
+      <p className={`mt-2 text-2xl font-bold ${valueColor} dark:text-slate-100`}>{value}</p>
     </div>
   )
 }
@@ -167,14 +167,15 @@ export default function OpeningStockPage() {
       <div className="mx-auto max-w-[1400px] space-y-6">
 
         {/* Header Ribbon identical to UI Screenshot */}
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-3xl border border-white/70 bg-white/70 px-5 py-5 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-900/60 dark:ring-slate-800/80">
           <div>
-            <h1 className="text-2xl font-bold text-teal-600">Opening Stock</h1>
-            <p className="text-sm text-slate-500">View and manage initial stock quantities</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-teal-600 dark:text-teal-400">Inventory Control</p>
+            <h1 className="mt-1 text-2xl font-bold text-teal-600">Opening Stock</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">View and manage initial stock quantities</p>
           </div>
           <button
             onClick={fetchData}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -190,15 +191,15 @@ export default function OpeningStockPage() {
         </div>
 
         {/* Filter Stock */}
-        <Card className="p-4 border-l-[6px] border-l-teal-500">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-4 w-1 bg-teal-500 rounded-full block"></span>
-            <h2 className="text-[12px] font-bold uppercase tracking-wide text-slate-800">Filter Stock</h2>
+        <Card className="border-l-[6px] border-l-teal-500 p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-teal-500/50 dark:bg-teal-600 transition-colors">
+            <span className="h-4 w-1 bg-teal-500 dark:bg-white rounded-full block"></span>
+            <h2 className="text-[12px] font-bold uppercase tracking-wide text-slate-800 dark:text-white">Filter Stock</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start p-5">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Search</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-400 uppercase tracking-wider mb-1.5">Search</label>
               <div className="relative">
                 <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
@@ -206,17 +207,17 @@ export default function OpeningStockPage() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Name, category, supplier, barcode..."
-                  className="h-8 w-full rounded-md border border-slate-300 bg-white pl-8 pr-3 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pl-8 pr-3 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category ({categories.length})</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-400 uppercase tracking-wider mb-1.5">Category ({categories.length})</label>
               <select
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               >
                 <option value="">All Categories</option>
                 {categories.map(c => (
@@ -226,11 +227,11 @@ export default function OpeningStockPage() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Supplier ({suppliers.length})</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-400 uppercase tracking-wider mb-1.5">Supplier ({suppliers.length})</label>
               <select
                 value={supplierFilter}
                 onChange={e => setSupplierFilter(e.target.value)}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               >
                 <option value="">All Suppliers</option>
                 {/* Fallback to unique item suppliers if supplier list is empty */}
@@ -245,13 +246,13 @@ export default function OpeningStockPage() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date Added</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-400 uppercase tracking-wider mb-1.5">Date Added</label>
               <input
                 type="date"
                 max={today}
                 value={dateFilter}
                 onChange={e => setDateFilter(e.target.value)}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               />
             </div>
           </div>
@@ -277,10 +278,10 @@ export default function OpeningStockPage() {
 
         {/* Data Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto w-full">
+          <div className="custom-scrollbar overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead className="bg-[#f8fafc]">
-                <tr className="text-[12px] font-bold uppercase tracking-widest text-slate-500">
+              <thead className="sticky top-0 z-10 bg-[#f8fafc]/95 backdrop-blur dark:bg-slate-800/80">
+                <tr className="text-[12px] font-bold uppercase tracking-widest text-slate-500 dark:text-teal-400">
                   <th className="px-4 py-4 w-12 text-center">#</th>
                   <th className="px-4 py-4 min-w-[180px]">ITEM NAME</th>
                   <th className="px-4 py-4">CATEGORY</th>
@@ -302,7 +303,7 @@ export default function OpeningStockPage() {
                   </tr>
                 ) : (
                   filteredItems.map((item, idx) => (
-                    <tr key={item.id || idx} className="text-[12px] transition hover:bg-slate-50/50">
+                    <tr key={item.id || idx} className="text-[12px] transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                       <td className="px-4 py-3 text-center text-slate-400">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="font-bold text-slate-800">{item.item_name}</div>

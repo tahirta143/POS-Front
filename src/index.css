@@ -43,6 +43,10 @@ code {
   @apply text-slate-900 dark:text-slate-50 transition-colors duration-300;
 }
 
+.app-shell .page-shell > div {
+  position: relative;
+}
+
 .app-shell .page-shell h1 {
   font-size: 1.625rem;
   line-height: 2rem;
@@ -97,6 +101,14 @@ code {
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
+.app-shell .page-shell button:focus-visible,
+.app-shell .page-shell input:focus-visible,
+.app-shell .page-shell select:focus-visible,
+.app-shell .page-shell textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+}
+
 .app-shell .app-card table {
   width: 100%;
   border-collapse: separate;
@@ -114,11 +126,19 @@ code {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   @apply text-slate-500 dark:text-slate-100;
+  position: relative;
 }
 
 .app-shell .app-card table tbody td {
   font-size: 0.75rem;
   @apply text-slate-600 dark:text-slate-50;
+  vertical-align: middle;
+}
+
+.app-shell .app-card table tbody tr {
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .app-shell .app-card table tbody tr:hover {

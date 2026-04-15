@@ -28,12 +28,16 @@ const sectionStyles = {
 function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-100/50">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
       <div
-        className={`mb-3 flex items-center gap-2.5 rounded-md border px-2.5 py-1.5 ${style.header}`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
       >
-        <span className={`h-4 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+        <span
+          className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
+        />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
+          {title}
+        </h3>
       </div>
       {children}
     </div>
@@ -76,9 +80,7 @@ export default function GoodsReceiptNotePage() {
   async function fetchPurchaseOrders() {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(
-        "/purchases?status=pending",
-      );
+      const response = await axiosInstance.get("/purchases?status=pending");
       const data = response.data;
       setPurchaseOrders(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
@@ -133,10 +135,10 @@ export default function GoodsReceiptNotePage() {
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
               Goods Receipt Note (GRN)
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Acknowledge arrivals and update stock levels against orders.
             </p>
           </div>
@@ -147,7 +149,7 @@ export default function GoodsReceiptNotePage() {
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
               isFormOpen
-                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
             }`}
           >
@@ -190,7 +192,7 @@ export default function GoodsReceiptNotePage() {
                           <select
                             value={selectedPO?.id || ""}
                             onChange={handlePOSelection}
-                            className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 focus:ring-4 focus:ring-teal-50 outline-none transition"
+                            className="h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 font-semibold text-slate-700 dark:text-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-50/10 outline-none transition"
                             disabled={loading}
                           >
                             <option value="">Select Pending Order...</option>
@@ -201,7 +203,7 @@ export default function GoodsReceiptNotePage() {
                               </option>
                             ))}
                           </select>
-                          <MdReceipt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <MdReceipt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                         </div>
                       </Field>
                       <Field label="GRN NO" required>
@@ -210,7 +212,7 @@ export default function GoodsReceiptNotePage() {
                           value={grnNo}
                           onChange={(e) => setGrnNo(e.target.value)}
                           placeholder="GRN number"
-                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 focus:border-teal-400 outline-none transition"
+                          className="h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-slate-800 dark:text-slate-200 focus:border-teal-400 outline-none transition"
                         />
                       </Field>
                       <Field label="GRN Date" required>
@@ -218,16 +220,18 @@ export default function GoodsReceiptNotePage() {
                           type="date"
                           value={grnDate}
                           onChange={(e) => setGrnDate(e.target.value)}
-                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 font-semibold text-slate-700 focus:border-teal-400 outline-none transition"
+                          className="h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 font-semibold text-slate-700 dark:text-slate-200 focus:border-teal-400 outline-none transition"
                         />
                       </Field>
-                      <Field label="Condition / Remarks">
-                        <input
-                          type="text"
+                      <Field
+                        label="Condition / Remarks"
+                        className="col-span-1 md:col-span-2 lg:col-span-4"
+                      >
+                        <textarea
                           value={remarks}
                           onChange={(e) => setRemarks(e.target.value)}
-                          placeholder="Damaged items, batch notes..."
-                          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-teal-400 transition"
+                          placeholder="Provide detailed notes regarding the physical condition, batch expiration, damage reports, or any special handling instructions..."
+                          className="h-24 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 text-sm focus:border-teal-400 outline-none transition"
                         />
                       </Field>
                     </div>
@@ -239,9 +243,9 @@ export default function GoodsReceiptNotePage() {
                       animate={{ opacity: 1, y: 0 }}
                     >
                       <SectionCard title="Itemized Orders for Verification">
-                        <div className="rounded-2xl border border-slate-100 overflow-hidden">
-                          <table className="w-full text-left text-[12px]">
-                            <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                          <table className="w-full text-left text-[12px] transition-colors">
+                            <thead className="bg-slate-50 dark:bg-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                               <tr>
                                 <th className="px-4 py-3">Catalog Item</th>
                                 <th className="px-4 py-3">Category</th>
@@ -256,13 +260,13 @@ export default function GoodsReceiptNotePage() {
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 bg-white">
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                               {selectedPO.items.map((item, idx) => (
                                 <tr
                                   key={idx}
-                                  className="hover:bg-teal-50/20 transition-colors"
+                                  className="hover:bg-teal-50/20 dark:hover:bg-teal-900/10 transition-colors"
                                 >
-                                  <td className="px-4 py-3 font-bold text-slate-800">
+                                  <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">
                                     {item.item_name}
                                   </td>
                                   <td className="px-4 py-3 font-medium text-slate-500 uppercase tracking-tighter text-[10px]">
@@ -301,14 +305,14 @@ export default function GoodsReceiptNotePage() {
                     </motion.div>
                   )}
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <button
                       type="button"
                       onClick={() => {
                         resetForm();
                         setIsFormOpen(false);
                       }}
-                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     >
                       Cancel
                     </button>
@@ -340,7 +344,7 @@ export default function GoodsReceiptNotePage() {
                 <button
                   type="button"
                   onClick={fetchPurchaseOrders}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                 >
                   <MdRefresh className="inline mr-1" /> Refresh Orders
                 </button>
@@ -352,10 +356,10 @@ export default function GoodsReceiptNotePage() {
           ) : purchaseOrders.length === 0 ? (
             <TableState message="No pending goods receipts found." />
           ) : (
-            <div className="overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="overflow-x-auto w-full transition-colors">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-4">Reference</th>
                     <th className="px-5 py-4">Sourcing Supplier</th>
                     <th className="px-5 py-4">Date Ordered</th>
@@ -363,17 +367,17 @@ export default function GoodsReceiptNotePage() {
                     <th className="px-4 py-4 text-right">Valuation</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {purchaseOrders.map((po) => (
                     <motion.tr
                       key={po.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="group transition-colors hover:bg-teal-50/30"
+                      className="group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10"
                     >
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-800 text-[12px]">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-[12px]">
                             {po.grn_no || po.invoice_no || `PO-${po.id}`}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono">

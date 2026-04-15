@@ -28,12 +28,14 @@ const sectionStyles = {
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 p-2.5 shadow-sm ring-1 ring-white/70 dark:ring-slate-800/70 transition-all duration-300 hover:shadow-md">
       <div
-        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700`}
+        className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
       >
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
+        <span
+          className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
+        />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
           {title}
         </h3>
       </div>
@@ -41,7 +43,6 @@ function SectionCard({ color, title, children }) {
     </div>
   );
 }
-
 function createEmptyRow() {
   return {
     id: Date.now() + Math.random(),
@@ -316,9 +317,14 @@ export default function Sales() {
 
   return (
     <PageShell>
-      <div className="space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+        className="space-y-4"
+      >
         {/* Header Section */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 dark:ring-slate-800/80">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
               Sales Invoices
@@ -364,7 +370,7 @@ export default function Sales() {
         </div>
 
         {/* Collapsible Form */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isFormOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
@@ -373,7 +379,7 @@ export default function Sales() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+              <Card className="mx-auto mb-6 max-w-6xl border-l-[6px] border-l-teal-500 p-6">
                 <SectionHeader
                   title={editId ? "Edit Invoice" : "New Sales Invoice"}
                   description="Register a new sale for record keeping and reporting."
@@ -410,7 +416,7 @@ export default function Sales() {
                             <MdSearch className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
                             {showCustomerDropdown &&
                               matchingCustomers.length > 0 && (
-                                <ul className="absolute left-0 top-full mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-xl z-50 transition-colors">
+                                <ul className="absolute left-0 top-full z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-xl ring-1 ring-slate-200/70 transition-colors">
                                   {matchingCustomers.map((c) => (
                                     <li
                                       key={c.id}
@@ -469,7 +475,7 @@ export default function Sales() {
 
                   <SectionCard title="Cart Items">
                     <div className="space-y-2">
-                      <div className="hidden grid-cols-[180px_1fr_100px_80px_100px_50px] gap-3 px-2 sm:grid uppercase tracking-widest text-[10px] font-bold text-slate-400">
+                      <div className="hidden grid-cols-[180px_1fr_100px_80px_100px_50px] gap-3 px-3 sm:grid uppercase tracking-[0.18em] text-[10px] font-bold text-teal-500/80 dark:text-teal-400">
                         <div>Category</div>
                         <div>Select Item</div>
                         <div className="text-right">Price</div>
@@ -486,7 +492,7 @@ export default function Sales() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_100px_80px_100px_50px] items-center bg-slate-50/50 dark:bg-slate-800/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 dark:border-slate-800 sm:border-0 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-sm transition-all duration-200 hover:border-teal-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-teal-900/50 dark:hover:bg-slate-900/70 sm:grid-cols-[180px_1fr_100px_80px_100px_50px]"
                           >
                             <div className="col-span-2 sm:col-span-1">
                               <select
@@ -544,14 +550,14 @@ export default function Sales() {
                               }
                               className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-center text-[12px] font-bold"
                             />
-                            <div className="text-right font-black text-slate-800 dark:text-slate-200 text-[12px]">
+                            <div className="rounded-xl bg-white/80 px-2 py-2 text-right text-[12px] font-black text-slate-800 ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:text-slate-200 dark:ring-slate-700/60">
                               PKR {Number(row.total || 0).toLocaleString()}
                             </div>
                             <div className="flex justify-center">
                               <button
                                 type="button"
                                 onClick={() => removeRow(row.id)}
-                                className="text-rose-400 hover:text-rose-600 transition-colors"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                                 title="Remove Item"
                               >
                                 <svg
@@ -576,7 +582,7 @@ export default function Sales() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="group inline-flex items-center gap-2 rounded-xl bg-teal-50 dark:bg-teal-900/20 px-4 py-2 text-[12px] font-bold text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition"
+                          className="group inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                         >
                           <MdAdd className="h-4 w-4 group-hover:rotate-90 transition duration-300" />{" "}
                           Add Product Line
@@ -706,7 +712,7 @@ export default function Sales() {
             description="Chronological record of completed transactions and billing."
             icon={<MdReceipt className="h-6 w-6 text-teal-600" />}
             action={
-              <div className="p-4">
+              <div className="pr-1">
                 <button
                   type="button"
                   onClick={fetchSales}
@@ -723,10 +729,10 @@ export default function Sales() {
           ) : salesRecord.length === 0 ? (
             <TableState message="No sales records detected in history." />
           ) : (
-            <div className="overflow-x-auto w-full">
+            <div className="custom-scrollbar overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
-                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur dark:bg-slate-800/80">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-3">Receipt & Date</th>
                     <th className="px-5 py-3">Customer Info</th>
                     <th className="px-5 py-3 text-right">Payable</th>
@@ -809,7 +815,7 @@ export default function Sales() {
             </div>
           )}
         </Card>
-      </div>
+      </motion.div>
     </PageShell>
   );
 }

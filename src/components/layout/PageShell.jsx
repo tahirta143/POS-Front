@@ -10,8 +10,9 @@ export function PageShell({ children }) {
 export function Card({ children, className = "" }) {
   return (
     <div
-      className={`app-card rounded-3xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-colors duration-300 ${className}`}
+      className={`app-card group relative overflow-hidden rounded-3xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)] ${className}`}
     >
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/70 to-transparent dark:via-teal-700/50" />
       {children}
     </div>
   );
@@ -19,21 +20,21 @@ export function Card({ children, className = "" }) {
 
 export function SectionHeader({ icon, title, description, action }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-teal-100 dark:border-teal-900/30 pb-3 transition-colors">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 shadow-sm transition-colors">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-teal-100 dark:border-teal-500/50 dark:bg-teal-600 px-5 py-4 rounded-t-3xl -mx-5 -mt-5 transition-colors">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-white/20 text-teal-600 dark:text-white shadow-sm ring-1 ring-white/70 dark:ring-teal-500/30 transition-colors">
           {icon}
         </div>
-        <div>
-          <h3 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-slate-50 transition-colors">
+        <div className="min-w-0">
+          <h3 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-white uppercase transition-colors">
             {title}
           </h3>
-          <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-200 transition-colors">
+          <p className="max-w-2xl text-[12px] leading-5 text-slate-500 dark:text-teal-50 transition-colors">
             {description}
           </p>
         </div>
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
@@ -63,8 +64,8 @@ export function Field({
   className = "",
 }) {
   return (
-    <label className={`block space-y-1 ${className}`}>
-      <span className="block text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-colors">
+    <label className={`block space-y-1.5 ${className}`}>
+      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400 transition-colors">
         {label}
         {required && <span className="ml-1 text-rose-500">*</span>}
       </span>
@@ -108,13 +109,34 @@ export function Toggle({ enabled, onChange, label, description }) {
 
 export function TableState({ message }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700">
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 7.5A2.5 2.5 0 016.5 5h11A2.5 2.5 0 0120 7.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 16.5v-9z"
+          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9h8M8 13h5" />
+        </svg>
+      </div>
       {message}
     </div>
   );
 }
 
-export function StatusChip({ label, tone = "slate" }) {
+export function StatusChip({
+  label,
+  tone = "slate",
+  enabled,
+  colorClass = "",
+}) {
   const tones = {
     emerald:
       "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
@@ -124,11 +146,20 @@ export function StatusChip({ label, tone = "slate" }) {
     teal: "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300",
     slate: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   };
+  const derivedLabel =
+    label ??
+    (typeof enabled === "boolean" ? (enabled ? "Active" : "Inactive") : "");
+  const derivedTone =
+    tone === "slate" && typeof enabled === "boolean"
+      ? enabled
+        ? "emerald"
+        : "rose"
+      : tone;
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors ${tones[tone] || tones.slate}`}
+      className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors ${colorClass || tones[derivedTone] || tones.slate}`}
     >
-      {label}
+      {derivedLabel}
     </span>
   );
 }
@@ -150,7 +181,7 @@ export function ActionButton({ label, tone, onClick, disabled }) {
       disabled={disabled}
       aria-label={label}
       title={label}
-      className={`${isIconOnly ? "inline-flex h-8 w-8 items-center justify-center rounded-lg p-0" : "rounded-xl px-3 py-2 text-xs font-semibold"} transition ${tones[tone] || tones.teal}`}
+      className={`${isIconOnly ? "inline-flex h-8 w-8 items-center justify-center rounded-lg p-0" : "rounded-xl px-3 py-2 text-xs font-semibold"} shadow-sm ring-1 ring-black/5 transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 ${tones[tone] || tones.teal}`}
     >
       {label === "Edit" ? (
         <svg

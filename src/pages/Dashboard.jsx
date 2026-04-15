@@ -118,14 +118,14 @@ function StatCard({
   return (
     <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden">
       <div
-        className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${gradient}`}
+        className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`}
       />
       <div className="flex items-start justify-between mb-3">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-400 transition-colors">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-teal-400 transition-colors">
           {label}
         </p>
         <div
-          className={`w-8 h-8 rounded-xl ${bg} dark:bg-slate-800 ${text} flex items-center justify-center transition-colors`}
+          className={`w-8 h-8 rounded-xl ${bg} dark:bg-white/10 ${text} dark:text-white flex items-center justify-center transition-colors`}
         >
           <IconComponent className="text-base" />
         </div>
@@ -149,15 +149,15 @@ function StatCard({
 function SectionCard({ title, subtitle, action, children, className = "" }) {
   return (
     <div
-      className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden h-full transition-colors ${className}`}
+      className={`bg-white/95 dark:bg-slate-900/85 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm ring-1 ring-white/70 dark:ring-slate-800/80 overflow-hidden h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${className}`}
     >
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 transition-colors">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-teal-500/50 dark:bg-teal-600 transition-colors">
         <div>
-          <h3 className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">
+          <h3 className="text-[14px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-400 dark:text-teal-100 mt-0.5">
               {subtitle}
             </p>
           )}
@@ -554,7 +554,7 @@ export default function Dashboard() {
               <div className="overflow-x-auto -mx-1">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">
+                    <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-teal-400 border-b border-slate-100 dark:border-slate-800">
                       <th className="pb-2.5 pl-1">Customer</th>
                       <th className="pb-2.5">Date</th>
                       <th className="pb-2.5">Amount</th>
@@ -615,7 +615,7 @@ export default function Dashboard() {
               <div className="overflow-x-auto -mx-1">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                    <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-teal-400 border-b border-slate-100 dark:border-slate-800">
                       <th className="pb-2.5 pl-1">Invoice</th>
                       <th className="pb-2.5">Customer</th>
                       <th className="pb-2.5">Amount</th>

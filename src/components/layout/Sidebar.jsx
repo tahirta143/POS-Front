@@ -455,18 +455,18 @@ function SidebarContent({ onNavigate }) {
   }
 
   return (
-    <div className="w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none transition-colors duration-300">
+    <div className="relative w-64 bg-white/92 dark:bg-slate-900/96 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none backdrop-blur transition-colors duration-300">
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/70 to-transparent dark:via-teal-800/40" />
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 dark:border-slate-800 shrink-0 transition-colors duration-300">
+      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 dark:border-slate-800 shrink-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm transition-colors duration-300">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center shadow-sm shrink-0">
-            <MdStorefront className="text-white text-lg" />
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/30 shrink-0">
+            <MdStorefront className="text-white text-xl" />
           </div>
           <div className="truncate">
-            <h1 className="text-sm font-bold text-gray-800 dark:text-slate-100 leading-none">
+            <h1 className="text-[15px] font-extrabold text-gray-900 dark:text-white leading-tight">
               POS System
             </h1>
-            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">Management Suite</p>
           </div>
         </div>
         <ThemeToggle />

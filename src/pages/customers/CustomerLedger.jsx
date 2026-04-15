@@ -248,10 +248,12 @@ export default function CustomerLedger() {
               },
             ].map(({ label, value, color }) => (
               <Card key={label} className="p-3">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest block">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-teal-400 uppercase tracking-widest block">
                   {label}
                 </span>
-                <p className={`text-[13px] font-bold truncate mt-0.5 ${color} dark:text-slate-50`}>
+                <p
+                  className={`text-[13px] font-bold truncate mt-0.5 ${color} dark:text-slate-50`}
+                >
                   {value}
                 </p>
               </Card>
@@ -283,15 +285,16 @@ export default function CustomerLedger() {
         {/* Ledger Table */}
         {selectedCustomer && (
           <Card className="overflow-hidden p-0">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 transition-colors">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 dark:border-teal-500/50 dark:bg-teal-600 transition-colors">
               <div>
-                <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">
+                <h3 className="text-[14px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
                   Statement —{" "}
                   {ledgerData?.customer?.customer_name ||
                     selectedCustomer.customer_name}
                 </h3>
-                <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">
-                  {filteredLedger.length} transaction{filteredLedger.length !== 1 ? 's' : ''}
+                <p className="text-[11px] text-slate-400 dark:text-teal-100 mt-0.5">
+                  {filteredLedger.length} transaction
+                  {filteredLedger.length !== 1 ? "s" : ""}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -303,7 +306,9 @@ export default function CustomerLedger() {
                   className="h-8 w-48 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3 text-[12px] outline-none focus:border-teal-400 transition"
                 />
                 <div className="text-right shrink-0">
-                  <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-400 block tracking-widest">Balance</span>
+                  <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-400 block tracking-widest">
+                    Balance
+                  </span>
                   <span
                     className={`text-base font-black font-mono transition-colors ${closingBalance > 0 ? "text-rose-600 dark:text-rose-400" : closingBalance < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}
                   >
@@ -321,7 +326,7 @@ export default function CustomerLedger() {
             <div className="overflow-x-auto max-h-[500px]">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left transition-colors">
                 <thead className="bg-white dark:bg-slate-900 sticky top-0 shadow-[0_1px_0_0_#f1f5f9] dark:shadow-[0_1px_0_0_#1e293b] z-10">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-100">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-3">Date</th>
                     <th className="px-5 py-3">Reference</th>
                     <th className="px-5 py-3 text-right">Credit (−)</th>
@@ -366,9 +371,9 @@ export default function CustomerLedger() {
                           {txn.description}
                         </td>
                         <td className="px-5 py-3 text-right font-semibold text-rose-600 dark:text-rose-400 font-mono text-[12px]">
-                          {txn.debit > 0 
-                            ? `PKR ${Number(txn.debit).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
-                            : '—'}
+                          {txn.debit > 0
+                            ? `PKR ${Number(txn.debit).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                            : "—"}
                         </td>
                         <td className="px-5 py-3 text-right font-semibold text-emerald-600 font-mono text-[12px]">
                           {txn.credit > 0

@@ -250,8 +250,8 @@ export default function ItemPage() {
         {/* Top Action Bar */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Item Management</h1>
-            <p className="text-sm text-slate-500">Manage your inventory, pricing, and stock levels.</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Item Management</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Manage your inventory, pricing, and stock levels.</p>
           </div>
           <button
             onClick={() => {
@@ -268,7 +268,7 @@ export default function ItemPage() {
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
                 : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
               }`}
           >
@@ -335,7 +335,7 @@ export default function ItemPage() {
                           value={form.item_name}
                           onChange={(event) => updateField('item_name', event.target.value)}
                           placeholder="Enter item name"
-                          className="h-8 w-full max-w-lg rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full max-w-lg rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                         />
                       </Field>
                     </div>
@@ -364,7 +364,7 @@ export default function ItemPage() {
                             value={form.barcode}
                             onChange={(event) => updateField('barcode', event.target.value)}
                             placeholder="Enter barcode"
-                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                            className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                           />
                         </Field>
                       </div>
@@ -403,7 +403,7 @@ export default function ItemPage() {
                             value={form.description}
                             onChange={(event) => updateField('description', event.target.value)}
                             placeholder="Enter item description..."
-                            className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                            className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                           />
                         </Field>
                         <SelectField
@@ -444,12 +444,12 @@ export default function ItemPage() {
                     <SectionCard color="emerald" title="Product image">
                       <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 py-1.5 transition hover:border-teal-300 hover:bg-teal-50/40">
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-teal-500 shadow-sm">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-teal-500 dark:text-teal-400 shadow-sm transition-colors">
                           <UploadIcon className="h-3.5 w-3.5" />
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-semibold text-teal-600">Upload image</p>
-                          <p className="mt-0.5 truncate text-[10px] text-slate-500">{form.image_name || 'PNG, JPG, SVG up to 10MB'}</p>
+                        <div className="min-w-0 transition-colors">
+                          <p className="text-[12px] font-semibold text-teal-600 dark:text-teal-400">Upload image</p>
+                          <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-500">{form.image_name || 'PNG, JPG, SVG up to 10MB'}</p>
                         </div>
                       </label>
                     </SectionCard>
@@ -459,7 +459,7 @@ export default function ItemPage() {
                         enabled={form.is_enable}
                         onChange={(value) => updateField('is_enable', value)}
                         label="Item status"
-                        description="Active items remain available across the system."
+                        description="Active items remain available across the system." // This component is local, so its dark mode styles are applied below
                       />
                     </SectionCard>
 
@@ -478,7 +478,7 @@ export default function ItemPage() {
                             resetForm()
                             setIsFormOpen(false)
                           }}
-                          className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                          className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
                           Cancel
                         </button>
@@ -496,7 +496,7 @@ export default function ItemPage() {
           <SectionHeader
             title="Item Records"
             description={`${items.length} items currently in inventory`}
-            icon={
+            icon={ // This icon is handled by the global SectionHeader in PageShell.jsx
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
@@ -506,7 +506,7 @@ export default function ItemPage() {
                 <button
                   type="button"
                   onClick={fetchItems}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   Refresh
                 </button>
@@ -522,8 +522,8 @@ export default function ItemPage() {
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50/50">
-                  <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-5 py-3 w-12">#</th>
+                  <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
+                    <th className="px-5 py-3 w-12 dark:text-teal-400">#</th>
                     <th className="px-5 py-3">Item Details</th>
                     <th className="px-5 py-3">Category</th>
                     <th className="px-5 py-3">Price (Sale)</th>
@@ -532,31 +532,31 @@ export default function ItemPage() {
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {items.map((item, index) => (
                     <motion.tr
                       key={item.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="group transition-colors hover:bg-teal-50/30"
+                      className="group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10"
                     >
-                      <td className="px-5 py-4 text-[11px] text-slate-400 font-mono">{index + 1}</td>
+                      <td className="px-5 py-4 text-[11px] text-slate-400 dark:text-slate-500 font-mono">{index + 1}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
-                          <span className="text-[13px] font-bold text-slate-800">{item.itemName || item.item_name}</span>
-                          <span className="text-[10px] text-slate-400">{item.label_barcode || item.barCode || 'No Barcode'}</span>
+                          <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200">{item.itemName || item.item_name}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">{item.label_barcode || item.barCode || 'No Barcode'}</span>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                        <span className="rounded-md bg-slate-100 dark:bg-teal-900/20 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-teal-300">
                           {item.category_name || 'Uncategorized'}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-[12px] font-bold text-teal-700">
+                      <td className="px-5 py-4 text-[12px] font-bold text-teal-700 dark:text-teal-400">
                         {parseFloat(item.salePrice || item.sale_price || 0).toLocaleString()} PKR
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <= (item.reorder || item.reorder_level || 0) ? 'text-rose-600' : 'text-slate-700'}`}>
+                        <span className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <= (item.reorder || item.reorder_level || 0) ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}>
                           {item.stock || item.opening_stock || 0}
                         </span>
                       </td>
@@ -596,10 +596,10 @@ function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.lime
 
   return (
-    <div className="bg-white p-2">
-      <div className={`mb-1.5 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+    <div className="bg-white dark:bg-slate-900/50 p-2 transition-colors">
+      <div className={`mb-1.5 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`} />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
       </div>
       {children}
     </div>
@@ -613,7 +613,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2 pr-7 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-7 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
@@ -622,7 +622,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-500 transition-colors">
           <ChevronDownIcon className="h-3.5 w-3.5" />
         </div>
       </div>
@@ -639,9 +639,9 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="h-7 w-full rounded-md border border-slate-300 bg-white px-2 pr-8 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-7 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-8 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
         />
-        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-medium uppercase tracking-[0.1em] text-slate-400">
+        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-medium uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 transition-colors">
           {suffix}
         </span>
       </div>
@@ -653,15 +653,15 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 transition-colors">
       <div>
-        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200">{label}</p>
-        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{description}</p>
+        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200 transition-colors">{label}</p>
+        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 transition-colors">{description}</p>
       </div>
       <button
         type="button"
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
         className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700 transition-colors"
         }`}
       >
         <span
@@ -675,14 +675,13 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
 }
 
 function ItemFormIcon({ className }) {
-  return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5M9 13h6M9 17h6M9 9h1" /></svg>
+  return <svg className={`${className} dark:text-white`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5M9 13h6M9 17h6M9 9h1" /></svg>
 }
 
 function UploadIcon({ className }) {
-  return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 014-4 5 5 0 019.7-1.5A3.5 3.5 0 1120.5 15H15" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 12v7m0-7l-3 3m3-3l3 3" /></svg>
+  return <svg className={`${className} dark:text-white`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 014-4 5 5 0 019.7-1.5A3.5 3.5 0 1120.5 15H15" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 12v7m0-7l-3 3m3-3l3 3" /></svg>
 }
 
 function ChevronDownIcon({ className }) {
-  return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+  return <svg className={`${className} dark:text-slate-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
 }
-

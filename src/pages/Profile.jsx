@@ -1,34 +1,51 @@
 // pages/Profile.jsx
-import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
-import { PageShell, StatusAlert } from '../components/layout/PageShell.jsx'
-import axiosInstance from '../services/axiosInstance'
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { PageShell, StatusAlert } from "../components/layout/PageShell.jsx";
+import axiosInstance from "../services/axiosInstance";
 import {
-  MdPerson, MdLock, MdEdit, MdSave, MdClose,
-  MdEmail, MdBadge, MdCalendarToday, MdShield
-} from 'react-icons/md'
+  MdPerson,
+  MdLock,
+  MdEdit,
+  MdSave,
+  MdClose,
+  MdEmail,
+  MdBadge,
+  MdCalendarToday,
+  MdShield,
+} from "react-icons/md";
 
 // SectionCard Component
 function SectionCard({ title, icon: Icon, children }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-        <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center transition-colors">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-teal-500/50 dark:bg-teal-600 transition-colors">
+        <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-white/20 text-teal-600 dark:text-white flex items-center justify-center transition-colors">
           <Icon className="text-base" />
         </div>
-        <h3 className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
+        <h3 className="text-[14px] font-bold text-slate-800 dark:text-white uppercase tracking-tight transition-colors">
+          {title}
+        </h3>
       </div>
       <div className="p-5">{children}</div>
     </div>
-  )
+  );
 }
 
 // InputField Component
-function InputField({ label, type = 'text', value, onChange, disabled, placeholder, required }) {
+function InputField({
+  label,
+  type = "text",
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  required,
+}) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 transition-colors">
-        {label} {required && <span className="text-rose-400">*</span>}
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-500/90 mb-1.5 transition-colors">
+        {label} {required && <span className="text-rose-500">*</span>}
       </label>
       <input
         type={type}
@@ -38,146 +55,166 @@ function InputField({ label, type = 'text', value, onChange, disabled, placehold
         placeholder={placeholder}
         className={`w-full h-10 rounded-xl border px-3 text-[13px] outline-none transition-all duration-150 transition-colors ${
           disabled
-            ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed'
-            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
+            ? "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed"
+            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         }`}
       />
     </div>
-  )
+  );
 }
 
 export default function Profile() {
-  const { user } = useSelector(state => state.auth)
+  const { user } = useSelector((state) => state.auth);
 
-  const [editingInfo, setEditingInfo] = useState(false)
-  const [editingPass, setEditingPass] = useState(false)
-  const [submittingInfo, setSubmittingInfo] = useState(false)
-  const [submittingPass, setSubmittingPass] = useState(false)
-  const [infoError, setInfoError] = useState('')
-  const [infoSuccess, setInfoSuccess] = useState('')
-  const [passError, setPassError] = useState('')
-  const [passSuccess, setPassSuccess] = useState('')
-  const [profileData, setProfileData] = useState(null)
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editingPass, setEditingPass] = useState(false);
+  const [submittingInfo, setSubmittingInfo] = useState(false);
+  const [submittingPass, setSubmittingPass] = useState(false);
+  const [infoError, setInfoError] = useState("");
+  const [infoSuccess, setInfoSuccess] = useState("");
+  const [passError, setPassError] = useState("");
+  const [passSuccess, setPassSuccess] = useState("");
+  const [profileData, setProfileData] = useState(null);
 
   const [infoForm, setInfoForm] = useState({
-    name: '',
-    email: '',
-  })
+    name: "",
+    email: "",
+  });
 
   const [passForm, setPassForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   // Fetch profile data on mount
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
     try {
-      const response = await axiosInstance.get('/auth/profile')
+      const response = await axiosInstance.get("/auth/profile");
       if (response.data.success) {
-        setProfileData(response.data.data)
+        setProfileData(response.data.data);
         setInfoForm({
-          name: response.data.data.name || '',
-          email: response.data.data.email || '',
-        })
+          name: response.data.data.name || "",
+          email: response.data.data.email || "",
+        });
       }
     } catch (err) {
-      console.error('Failed to fetch profile:', err)
-      setInfoError('Failed to load profile data')
+      console.error("Failed to fetch profile:", err);
+      setInfoError("Failed to load profile data");
     }
-  }
+  };
 
   // Auto-clear alerts
   useEffect(() => {
     if (infoSuccess || infoError) {
-      const t = setTimeout(() => { setInfoSuccess(''); setInfoError('') }, 4000)
-      return () => clearTimeout(t)
+      const t = setTimeout(() => {
+        setInfoSuccess("");
+        setInfoError("");
+      }, 4000);
+      return () => clearTimeout(t);
     }
-  }, [infoSuccess, infoError])
+  }, [infoSuccess, infoError]);
 
   useEffect(() => {
     if (passSuccess || passError) {
-      const t = setTimeout(() => { setPassSuccess(''); setPassError('') }, 4000)
-      return () => clearTimeout(t)
+      const t = setTimeout(() => {
+        setPassSuccess("");
+        setPassError("");
+      }, 4000);
+      return () => clearTimeout(t);
     }
-  }, [passSuccess, passError])
+  }, [passSuccess, passError]);
 
-  const initials = (profileData?.name || user?.name || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  const initials = (profileData?.name || user?.name || "U")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   async function handleInfoSubmit(e) {
-    e.preventDefault()
+    e.preventDefault();
     if (!infoForm.name.trim() || !infoForm.email.trim())
-      return setInfoError('Name and Email are required.')
+      return setInfoError("Name and Email are required.");
 
-    setSubmittingInfo(true)
-    setInfoError('')
-    setInfoSuccess('')
+    setSubmittingInfo(true);
+    setInfoError("");
+    setInfoSuccess("");
     try {
-      const response = await axiosInstance.put('/auth/profile', {
+      const response = await axiosInstance.put("/auth/profile", {
         name: infoForm.name.trim(),
         email: infoForm.email.trim(),
-      })
-      
+      });
+
       if (response.data.success) {
-        setInfoSuccess('Profile updated successfully.')
-        setProfileData(response.data.data)
-        setEditingInfo(false)
-        
+        setInfoSuccess("Profile updated successfully.");
+        setProfileData(response.data.data);
+        setEditingInfo(false);
+
         // Optionally update Redux store here if needed
         // dispatch(updateUser(response.data.data))
       }
     } catch (err) {
-      setInfoError(err?.response?.data?.message || 'Failed to update profile.')
+      setInfoError(err?.response?.data?.message || "Failed to update profile.");
     } finally {
-      setSubmittingInfo(false)
+      setSubmittingInfo(false);
     }
   }
 
   async function handlePasswordSubmit(e) {
-    e.preventDefault()
-    if (!passForm.currentPassword || !passForm.newPassword || !passForm.confirmPassword)
-      return setPassError('All password fields are required.')
+    e.preventDefault();
+    if (
+      !passForm.currentPassword ||
+      !passForm.newPassword ||
+      !passForm.confirmPassword
+    )
+      return setPassError("All password fields are required.");
     if (passForm.newPassword !== passForm.confirmPassword)
-      return setPassError('New passwords do not match.')
+      return setPassError("New passwords do not match.");
     if (passForm.newPassword.length < 6)
-      return setPassError('New password must be at least 6 characters.')
+      return setPassError("New password must be at least 6 characters.");
 
-    setSubmittingPass(true)
-    setPassError('')
-    setPassSuccess('')
+    setSubmittingPass(true);
+    setPassError("");
+    setPassSuccess("");
     try {
-      await axiosInstance.put('/auth/change-password', {
+      await axiosInstance.put("/auth/change-password", {
         currentPassword: passForm.currentPassword,
         newPassword: passForm.newPassword,
-      })
-      setPassSuccess('Password changed successfully.')
-      setEditingPass(false)
-      setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      });
+      setPassSuccess("Password changed successfully.");
+      setEditingPass(false);
+      setPassForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (err) {
-      setPassError(err?.response?.data?.message || 'Failed to change password.')
+      setPassError(
+        err?.response?.data?.message || "Failed to change password.",
+      );
     } finally {
-      setSubmittingPass(false)
+      setSubmittingPass(false);
     }
   }
 
   function cancelInfo() {
-    setEditingInfo(false)
-    setInfoForm({ 
-      name: profileData?.name || '', 
-      email: profileData?.email || '' 
-    })
-    setInfoError('')
+    setEditingInfo(false);
+    setInfoForm({
+      name: profileData?.name || "",
+      email: profileData?.email || "",
+    });
+    setInfoError("");
   }
 
   function cancelPass() {
-    setEditingPass(false)
-    setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-    setPassError('')
+    setEditingPass(false);
+    setPassForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setPassError("");
   }
 
   return (
@@ -187,13 +224,17 @@ export default function Profile() {
       accent="from-teal-600 via-emerald-600 to-cyan-700"
     >
       <div className="max-w-3xl mx-auto space-y-5 z-2">
-
         {/* Avatar Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
           {/* Gradient banner */}
           <div className="h-24 bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 relative">
-            <div className="absolute inset-0 opacity-20"
-              style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }}
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
+                backgroundSize: "30px 30px",
+              }}
             />
           </div>
 
@@ -201,24 +242,47 @@ export default function Profile() {
             {/* Avatar overlapping banner */}
             <div className="flex items-end gap-4 -mt-10 mb-4">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-900 transition-colors">
-                <span className="text-white text-2xl font-bold">{initials}</span>
+                <span className="text-white text-2xl font-bold">
+                  {initials}
+                </span>
               </div>
               <div className="pb-1">
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 transition-colors">{profileData?.name || user?.name || 'User'}</h2>
-                <p className="text-[12px] text-slate-400 dark:text-slate-500 capitalize transition-colors">{profileData?.role || user?.role || 'User'}</p>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 transition-colors">
+                  {profileData?.name || user?.name || "User"}
+                </h2>
+                <p className="text-[12px] text-slate-400 dark:text-slate-500 capitalize transition-colors">
+                  {profileData?.role || user?.role || "User"}
+                </p>
               </div>
             </div>
 
             {/* Info pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                { icon: MdEmail, label: profileData?.email || user?.email || '—' },
-                { icon: MdBadge, label: profileData?.role || user?.role || 'User', capitalize: true },
-                { icon: MdCalendarToday, label: profileData?.created_at ? `Joined ${new Date(profileData.created_at).toLocaleDateString('en-PK', { month: 'short', year: 'numeric' })}` : 'Active Member' },
+                {
+                  icon: MdEmail,
+                  label: profileData?.email || user?.email || "—",
+                },
+                {
+                  icon: MdBadge,
+                  label: profileData?.role || user?.role || "User",
+                  capitalize: true,
+                },
+                {
+                  icon: MdCalendarToday,
+                  label: profileData?.created_at
+                    ? `Joined ${new Date(profileData.created_at).toLocaleDateString("en-PK", { month: "short", year: "numeric" })}`
+                    : "Active Member",
+                },
               ].map((pill, i) => (
-                <div key={i} className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1 transition-colors">
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1 transition-colors"
+                >
                   <pill.icon className="text-teal-500 text-sm" />
-                  <span className={`text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors ${pill.capitalize ? 'capitalize' : ''}`}>
+                  <span
+                    className={`text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors ${pill.capitalize ? "capitalize" : ""}`}
+                  >
                     {pill.label}
                   </span>
                 </div>
@@ -235,16 +299,23 @@ export default function Profile() {
           <form onSubmit={handleInfoSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField
-                label="Full Name" required
+                label="Full Name"
+                required
                 value={infoForm.name}
-                onChange={e => setInfoForm(p => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setInfoForm((p) => ({ ...p, name: e.target.value }))
+                }
                 disabled={!editingInfo}
                 placeholder="Your full name"
               />
               <InputField
-                label="Email Address" type="email" required
+                label="Email Address"
+                type="email"
+                required
                 value={infoForm.email}
-                onChange={e => setInfoForm(p => ({ ...p, email: e.target.value }))}
+                onChange={(e) =>
+                  setInfoForm((p) => ({ ...p, email: e.target.value }))
+                }
                 disabled={!editingInfo}
                 placeholder="your@email.com"
               />
@@ -253,19 +324,28 @@ export default function Profile() {
             <div className="flex justify-end gap-2 pt-1">
               {editingInfo ? (
                 <>
-                  <button type="button" onClick={cancelInfo}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                  <button
+                    type="button"
+                    onClick={cancelInfo}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
                     <MdClose className="text-base" /> Cancel
                   </button>
-                  <button type="submit" disabled={submittingInfo}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 text-[13px] font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                  <button
+                    type="submit"
+                    disabled={submittingInfo}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 text-[13px] font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
                     <MdSave className="text-base" />
-                    {submittingInfo ? 'Saving...' : 'Save Changes'}
+                    {submittingInfo ? "Saving..." : "Save Changes"}
                   </button>
                 </>
               ) : (
-                <button type="button" onClick={() => setEditingInfo(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-teal-200 text-[13px] font-semibold text-teal-600 hover:bg-teal-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => setEditingInfo(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-teal-200 text-[13px] font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+                >
                   <MdEdit className="text-base" /> Edit Profile
                 </button>
               )}
@@ -283,35 +363,60 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <div className="flex gap-1">
                   {[...Array(8)].map((_, i) => (
-                    <div key={i} className="w-2 h-2 rounded-full bg-slate-300" />
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-slate-300"
+                    />
                   ))}
                 </div>
-                <span className="text-[12px] text-slate-400">Update your password regularly</span>
+                <span className="text-[12px] text-slate-400">
+                  Update your password regularly
+                </span>
               </div>
-              <button onClick={() => setEditingPass(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-200 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+              <button
+                onClick={() => setEditingPass(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-200 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+              >
                 <MdShield className="text-base" /> Change Password
               </button>
             </div>
           ) : (
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <InputField
-                label="Current Password" type="password" required
+                label="Current Password"
+                type="password"
+                required
                 value={passForm.currentPassword}
-                onChange={e => setPassForm(p => ({ ...p, currentPassword: e.target.value }))}
+                onChange={(e) =>
+                  setPassForm((p) => ({
+                    ...p,
+                    currentPassword: e.target.value,
+                  }))
+                }
                 placeholder="Enter current password"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField
-                  label="New Password" type="password" required
+                  label="New Password"
+                  type="password"
+                  required
                   value={passForm.newPassword}
-                  onChange={e => setPassForm(p => ({ ...p, newPassword: e.target.value }))}
+                  onChange={(e) =>
+                    setPassForm((p) => ({ ...p, newPassword: e.target.value }))
+                  }
                   placeholder="Min. 6 characters"
                 />
                 <InputField
-                  label="Confirm New Password" type="password" required
+                  label="Confirm New Password"
+                  type="password"
+                  required
                   value={passForm.confirmPassword}
-                  onChange={e => setPassForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                  onChange={(e) =>
+                    setPassForm((p) => ({
+                      ...p,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
                   placeholder="Repeat new password"
                 />
               </div>
@@ -326,31 +431,40 @@ export default function Profile() {
                       /[0-9]/.test(passForm.newPassword),
                       /[^A-Za-z0-9]/.test(passForm.newPassword),
                     ].map((met, i) => (
-                      <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${met ? 'bg-teal-500' : 'bg-slate-200'}`} />
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${met ? "bg-teal-500" : "bg-slate-200"}`}
+                      />
                     ))}
                   </div>
                   <p className="text-[10px] text-slate-400">
-                    Strength: length ≥ 6 · uppercase · number · special character
+                    Strength: length ≥ 6 · uppercase · number · special
+                    character
                   </p>
                 </div>
               )}
 
               <div className="flex justify-end gap-2 pt-1">
-                <button type="button" onClick={cancelPass}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={cancelPass}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
                   <MdClose className="text-base" /> Cancel
                 </button>
-                <button type="submit" disabled={submittingPass}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-[13px] font-semibold text-white hover:bg-rose-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                <button
+                  type="submit"
+                  disabled={submittingPass}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-[13px] font-semibold text-white hover:bg-rose-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                   <MdShield className="text-base" />
-                  {submittingPass ? 'Updating...' : 'Update Password'}
+                  {submittingPass ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </form>
           )}
         </SectionCard>
-
       </div>
     </PageShell>
-  )
+  );
 }

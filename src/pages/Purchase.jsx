@@ -23,15 +23,19 @@ const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
 };
 
-function SectionCard({ title, children }) {
-  const style = sectionStyles.teal;
+function SectionCard({ color, title, children }) {
+  const style = sectionStyles[color] ?? sectionStyles.teal;
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 p-2.5 shadow-sm ring-1 ring-white/70 dark:ring-slate-800/70 transition-all duration-300 hover:shadow-md">
       <div
-        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700 transition-colors`}
+        className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
       >
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+        <span
+          className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
+        />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
+          {title}
+        </h3>
       </div>
       {children}
     </div>
@@ -287,9 +291,14 @@ export default function PurchasePage() {
 
   return (
     <PageShell>
-      <div className="space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+        className="space-y-4"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 dark:ring-slate-800/80">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
               Inventory Purchases
@@ -335,7 +344,7 @@ export default function PurchasePage() {
         </div>
 
         {/* Form */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isFormOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
@@ -344,7 +353,7 @@ export default function PurchasePage() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+              <Card className="mx-auto mb-6 max-w-6xl border-l-[6px] border-l-teal-500 p-6">
                 <SectionHeader
                   title={editId ? "Edit Purchase" : "New Purchase Order"}
                   description="Record supplier invoice and item details. Stock is updated after GRN confirmation."
@@ -384,7 +393,7 @@ export default function PurchasePage() {
                   {/* Items */}
                   <SectionCard title="Items to Purchase">
                     <div className="space-y-2">
-                      <div className="hidden grid-cols-[140px_1fr_90px_90px_80px_100px_40px] gap-2 px-2 sm:grid uppercase tracking-widest text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                      <div className="hidden grid-cols-[140px_1fr_90px_90px_80px_100px_40px] gap-2 px-3 sm:grid uppercase tracking-[0.18em] text-[9px] font-bold text-teal-500/80 dark:text-teal-400">
                         <div>Category</div>
                         <div>Product</div>
                         <div>Cost</div>
@@ -403,14 +412,14 @@ export default function PurchasePage() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px] items-center bg-slate-50/50 dark:bg-slate-800/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 dark:border-slate-800 sm:border-0 transition-colors"
+                            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-sm transition-all duration-200 hover:border-teal-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-teal-900/50 dark:hover:bg-slate-900/70 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px]"
                           >
                             <select
                               value={row.category_id}
                               onChange={(e) =>
                                 updateRow(row.id, "category_id", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] transition-colors"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] text-slate-800 transition-colors dark:text-slate-200"
                             >
                               <option value="">Category</option>
                               {categories.map((c) => (
@@ -425,7 +434,7 @@ export default function PurchasePage() {
                                 updateRow(row.id, "item_id", e.target.value)
                               }
                               disabled={!row.category_id}
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] disabled:bg-slate-100 dark:disabled:bg-slate-800/50 transition-colors"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] text-slate-800 disabled:bg-slate-100 dark:disabled:bg-slate-800/50 transition-colors dark:text-slate-200"
                             >
                               <option value="">Select Item</option>
                               {availableItems.map((i) => (
@@ -446,7 +455,7 @@ export default function PurchasePage() {
                                 )
                               }
                               placeholder="Cost"
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] text-right transition-colors"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-right text-[11px] text-slate-800 transition-colors dark:text-slate-200"
                             />
                             <input
                               type="number"
@@ -456,7 +465,7 @@ export default function PurchasePage() {
                                 updateRow(row.id, "sale_price", e.target.value)
                               }
                               placeholder="Sale"
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[11px] text-right transition-colors"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-right text-[11px] text-slate-800 transition-colors dark:text-slate-200"
                             />
                             <input
                               type="number"
@@ -465,15 +474,15 @@ export default function PurchasePage() {
                               onChange={(e) =>
                                 updateRow(row.id, "quantity", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-center text-[11px] font-bold transition-colors"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-center text-[11px] font-bold text-slate-800 transition-colors dark:text-slate-200"
                             />
-                            <div className="text-right font-black text-slate-800 dark:text-slate-200 text-[11px] transition-colors">
+                            <div className="rounded-xl bg-white/80 px-2 py-2 text-right text-[11px] font-black text-slate-800 ring-1 ring-slate-200/70 transition-colors dark:bg-slate-900/80 dark:text-slate-200 dark:ring-slate-700/60">
                               PKR {(Number(row.total) || 0).toLocaleString()}
                             </div>
                             <button
                               type="button"
                               onClick={() => removeRow(row.id)}
-                              className="text-rose-400 hover:text-rose-600 transition-colors flex justify-center"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                             >
                               <svg
                                 className="h-5 w-5"
@@ -497,7 +506,7 @@ export default function PurchasePage() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 dark:bg-teal-900/20 px-4 py-2 text-[12px] font-bold text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition"
+                          className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                         >
                           <MdAdd className="h-4 w-4" /> Add Item Line
                         </button>
@@ -509,9 +518,9 @@ export default function PurchasePage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <SectionCard title="Payment Summary">
                       <div className="space-y-3 py-1 text-sm">
-                        <div className="flex justify-between items-center text-slate-500">
+                        <div className="flex items-center justify-between text-slate-500">
                           <span>Sub-Total</span>
-                          <span className="font-bold text-slate-800">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
                             PKR {subTotal.toLocaleString()}
                           </span>
                         </div>
@@ -528,7 +537,7 @@ export default function PurchasePage() {
                             className="h-8 w-32 rounded border border-slate-300 text-right px-2 text-[12px] focus:border-teal-400 outline-none"
                           />
                         </div>
-                        <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                        <div className="flex items-center justify-between border-t border-slate-200 pt-2 dark:border-slate-700">
                           <span className="font-bold text-slate-700">
                             NET PAYABLE
                           </span>
@@ -550,7 +559,7 @@ export default function PurchasePage() {
                             value={givenAmount}
                             onChange={(e) => setGivenAmount(e.target.value)}
                             placeholder="0.00"
-                            className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-emerald-700 outline-none focus:border-emerald-500 focus:bg-white transition"
+                            className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-emerald-700 outline-none transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-emerald-400"
                           />
                         </div>
                         {payable > 0 && (
@@ -602,7 +611,7 @@ export default function PurchasePage() {
                         resetForm();
                         setIsFormOpen(false);
                       }}
-                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                      className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                       Discard
                     </button>
@@ -626,17 +635,17 @@ export default function PurchasePage() {
         </AnimatePresence>
 
         {/* Purchase Records Table */}
-        <Card className="mx-auto max-w-6xl p-0 overflow-hidden">
+        <Card className="mx-auto max-w-6xl overflow-hidden p-0">
           <SectionHeader
             title="Purchase Records"
             description="All purchase orders with payment and receipt status."
             icon={<MdInventory className="h-6 w-6 text-teal-600" />}
             action={
-              <div className="p-4">
+              <div className="pr-1">
                 <button
                   type="button"
                   onClick={fetchPurchases}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <MdRefresh className="inline mr-1" /> Refresh
                 </button>
@@ -649,10 +658,10 @@ export default function PurchasePage() {
           ) : purchasesRecord.length === 0 ? (
             <TableState message="No purchase records found. Click 'New Acquisition' to begin." />
           ) : (
-            <div className="overflow-x-auto w-full">
+            <div className="custom-scrollbar w-full overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
-                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur dark:bg-slate-800/80">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-4">#</th>
                     <th className="px-5 py-4">Supplier / Invoice</th>
                     <th className="px-5 py-4 text-right">Payable</th>
@@ -663,7 +672,7 @@ export default function PurchasePage() {
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
+                <tbody className="divide-y divide-slate-50 bg-white transition-colors dark:divide-slate-800 dark:bg-slate-900">
                   {purchasesRecord.map((s, index) => {
                     const payStatus = getPaymentStatus(s);
                     const receiptStatus = getReceiptStatus(s);
@@ -675,9 +684,9 @@ export default function PurchasePage() {
                         key={s.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`group transition-colors hover:bg-teal-50/20 dark:hover:bg-teal-900/10 ${editId === s.id ? "bg-teal-50/50 dark:bg-teal-900/20" : ""}`}
+                        className={`group transition-all duration-200 hover:bg-teal-50/20 dark:hover:bg-teal-900/10 ${editId === s.id ? "bg-teal-50/50 dark:bg-teal-900/20" : ""}`}
                       >
-                        <td className="px-5 py-4 text-[11px] text-slate-400 font-mono">
+                        <td className="px-5 py-4 font-mono text-[11px] text-slate-400">
                           {index + 1}
                         </td>
                         <td className="px-5 py-4">
@@ -685,7 +694,7 @@ export default function PurchasePage() {
                             <span className="font-bold text-slate-800 dark:text-slate-200 text-[12px]">
                               {s.supplier_name || `Supplier #${s.supplier_id}`}
                             </span>
-                            <span className="text-[10px] text-teal-600 font-mono">
+                            <span className="font-mono text-[10px] text-teal-600">
                               {s.invoice_no || "No Invoice #"}
                             </span>
                             <span className="text-[10px] text-slate-400">
@@ -695,10 +704,10 @@ export default function PurchasePage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-right font-bold text-slate-700 text-[12px]">
+                        <td className="px-5 py-4 text-right text-[12px] font-bold text-slate-700 dark:text-slate-200">
                           PKR {Number(s.payable || 0).toLocaleString()}
                         </td>
-                        <td className="px-5 py-4 text-right font-bold text-emerald-600 text-[12px]">
+                        <td className="px-5 py-4 text-right text-[12px] font-bold text-emerald-600">
                           PKR {Number(s.paid || 0).toLocaleString()}
                         </td>
                         <td className="px-5 py-4 text-right font-bold text-[12px]">
@@ -746,7 +755,7 @@ export default function PurchasePage() {
             </div>
           )}
         </Card>
-      </div>
+      </motion.div>
     </PageShell>
   );
 }

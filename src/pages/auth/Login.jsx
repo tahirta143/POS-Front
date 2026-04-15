@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearError } from '../../features/auth/authSlice';
-import { Field, StatusAlert } from '../../components/layout/PageShell.jsx';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, clearError } from "../../features/auth/authSlice";
+import { Field, StatusAlert } from "../../components/layout/PageShell.jsx";
+import { MdVisibility, MdVisibilityOff } from "react-icons/md";
 
 export default function Login({ onSwitchToRegister }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
@@ -24,7 +26,6 @@ export default function Login({ onSwitchToRegister }) {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 sm:p-6">
       {/* Outer card — wide two-column shell */}
       <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-white/80 bg-white/90 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur flex flex-col md:flex-row">
-
         {/* ── Left branding panel ── */}
         <div className="relative flex flex-col items-center justify-center gap-6 overflow-hidden bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-10 py-14 text-white md:w-2/5">
           {/* Decorative circles */}
@@ -35,7 +36,9 @@ export default function Login({ onSwitchToRegister }) {
           <div className="relative z-10 flex flex-col items-center text-center">
             {/* POS logo mark */}
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 shadow-lg backdrop-blur">
-              <span className="text-base font-bold tracking-[0.3em] text-white">POS</span>
+              <span className="text-base font-bold tracking-[0.3em] text-white">
+                POS
+              </span>
             </div>
             <h1 className="text-2xl font-bold tracking-tight">POS System</h1>
             <p className="mt-2 text-sm leading-relaxed text-teal-100">
@@ -45,11 +48,25 @@ export default function Login({ onSwitchToRegister }) {
 
           {/* Feature bullets */}
           <ul className="relative z-10 space-y-3 text-sm text-teal-50">
-            {['Category & item management', 'Real-time inventory tracking', 'Multi-user access control'].map((f) => (
+            {[
+              "Category & item management",
+              "Real-time inventory tracking",
+              "Multi-user access control",
+            ].map((f) => (
               <li key={f} className="flex items-center gap-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/25">
-                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="h-3 w-3 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </span>
                 {f}
@@ -62,12 +79,24 @@ export default function Login({ onSwitchToRegister }) {
         <div className="flex flex-1 flex-col justify-center px-8 py-12 sm:px-12">
           <div className="mb-7">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-600">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-slate-900">Welcome Back</h2>
-            <p className="mt-1 text-sm text-slate-500">Please enter your details to sign in</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Please enter your details to sign in
+            </p>
           </div>
 
           <StatusAlert message={error} type="error" />
@@ -84,13 +113,26 @@ export default function Login({ onSwitchToRegister }) {
             </Field>
 
             <Field label="Password" required>
-              <input
-                type="password"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 pr-12"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <MdVisibilityOff size={20} />
+                  ) : (
+                    <MdVisibility size={20} />
+                  )}
+                </button>
+              </div>
             </Field>
 
             <button
@@ -98,13 +140,16 @@ export default function Login({ onSwitchToRegister }) {
               disabled={loading}
               className="w-full rounded-2xl bg-teal-600 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{' '}
-            <button onClick={onSwitchToRegister} className="font-semibold text-teal-600 hover:underline">
+            Don't have an account?{" "}
+            <button
+              onClick={onSwitchToRegister}
+              className="font-semibold text-teal-600 hover:underline"
+            >
               Create account
             </button>
           </div>

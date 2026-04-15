@@ -13,10 +13,10 @@ const sectionStyles = {
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.teal
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-100/50">
-      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
+      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}>
+        <span className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`} />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
       </div>
       {children}
     </div>
@@ -30,7 +30,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-8 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-7 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 pr-7 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((option) => (
@@ -39,7 +39,7 @@ function SelectField({ label, required = false, value, onChange, options, placeh
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-500 transition-colors">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
@@ -199,8 +199,8 @@ export default function SupplierPage() {
         {/* Top Action Bar */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Suppliers</h1>
-            <p className="text-sm text-slate-500">Register and manage material suppliers for your inventory.</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Suppliers</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Register and manage material suppliers for your inventory.</p>
           </div>
           <button
             onClick={() => {
@@ -217,7 +217,7 @@ export default function SupplierPage() {
               }
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
-              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
               : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
               }`}
           >
@@ -261,7 +261,7 @@ export default function SupplierPage() {
                           value={form.supplierName}
                           onChange={(e) => updateField('supplierName', e.target.value)}
                           placeholder="Official company or provider name"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                       <Field label="Contact Person">
@@ -270,7 +270,7 @@ export default function SupplierPage() {
                           value={form.contactPerson}
                           onChange={(e) => updateField('contactPerson', e.target.value)}
                           placeholder="Key account representative"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                       <Field label="Designation">
@@ -279,7 +279,7 @@ export default function SupplierPage() {
                           value={form.designation}
                           onChange={(e) => updateField('designation', e.target.value)}
                           placeholder="e.g. Distributor Manager"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                       <Field label="Phone/Mobile Number">
@@ -288,7 +288,7 @@ export default function SupplierPage() {
                           value={form.phone}
                           onChange={(e) => updateField('phone', e.target.value)}
                           placeholder="Dial number"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                       <Field label="Email Address">
@@ -297,7 +297,7 @@ export default function SupplierPage() {
                           value={form.email}
                           onChange={(e) => updateField('email', e.target.value)}
                           placeholder="supplier@domain.com"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                       <Field label="Commercial Address" className="sm:col-span-2">
@@ -306,7 +306,7 @@ export default function SupplierPage() {
                           value={form.address}
                           onChange={(e) => updateField('address', e.target.value)}
                           placeholder="Operating address"
-                          className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                          className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                         />
                       </Field>
                     </div>
@@ -335,9 +335,9 @@ export default function SupplierPage() {
                               value={form.creditLimit}
                               onChange={(e) => updateField('creditLimit', e.target.value)}
                               placeholder="0.00"
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 pr-10 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
+                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 pr-10 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800/50 disabled:opacity-60 transition-colors"
                             />
-                            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 transition-colors">
                               PKR
                             </span>
                           </div>
@@ -348,7 +348,7 @@ export default function SupplierPage() {
                             value={form.ntn}
                             onChange={(e) => updateField('ntn', e.target.value)}
                             placeholder="National Tax Number"
-                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                            className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                           />
                         </Field>
                         <Field label="GST Number">
@@ -357,7 +357,7 @@ export default function SupplierPage() {
                             value={form.gstNumber}
                             onChange={(e) => updateField('gstNumber', e.target.value)}
                             placeholder="Sales Tax Number"
-                            className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                            className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
                           />
                         </Field>
                       </div>
@@ -382,7 +382,7 @@ export default function SupplierPage() {
                         resetForm()
                         setIsFormOpen(false)
                       }}
-                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                      className="inline-flex min-w-[100px] items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
                       Cancel
                     </button>
@@ -411,7 +411,7 @@ export default function SupplierPage() {
                 <button
                   type="button"
                   onClick={fetchSuppliers}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   Refresh
                 </button>
@@ -424,9 +424,9 @@ export default function SupplierPage() {
             <TableState message="No suppliers found yet." />
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-slate-100 text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left transition-colors">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-3">Name</th>
                     <th className="px-5 py-3">Contact</th>
                     <th className="px-5 py-3 text-center">Payment Terms</th>
@@ -434,18 +434,18 @@ export default function SupplierPage() {
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                   {suppliers.map((s) => (
                     <motion.tr
                       key={s.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="group transition-colors hover:bg-teal-50/30"
+                      className="group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10"
                     >
-                      <td className="px-5 py-4 font-bold text-slate-800">{s.supplier_name}</td>
+                      <td className="px-5 py-4 font-bold text-slate-800 dark:text-slate-200">{s.supplier_name}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
-                          <span className="text-[12px] font-medium text-slate-700">{s.phone || '-'}</span>
+                          <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">{s.phone || '-'}</span>
                           {s.contact_person && <span className="text-[10px] text-teal-600 font-semibold uppercase">{s.contact_person}</span>}
                         </div>
                       </td>

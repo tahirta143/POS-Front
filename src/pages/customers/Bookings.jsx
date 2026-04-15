@@ -31,10 +31,10 @@ function SectionCard({ title, children }) {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-2 shadow-sm transition-colors">
       <div
-        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-slate-800 dark:border-slate-700`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
       >
-        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
+        <span className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`} />
+        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
           {title}
         </h3>
       </div>
@@ -477,7 +477,7 @@ export default function Bookings() {
 
                   <SectionCard title="Booked Items">
                     <div className="space-y-2 mt-1">
-                      <div className="hidden grid-cols-[180px_1fr_100px_80px_120px_50px] gap-3 px-2 sm:grid uppercase tracking-widest text-[10px] font-bold text-slate-400">
+                      <div className="hidden grid-cols-[180px_1fr_100px_80px_120px_50px] gap-3 px-2 sm:grid uppercase tracking-widest text-[10px] font-bold text-teal-500/80 dark:text-teal-400">
                         <div>Category</div>
                         <div>Select Item</div>
                         <div className="text-right">Price</div>
@@ -738,7 +738,7 @@ export default function Bookings() {
             <div className="overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
                 <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors">
+                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400 transition-colors">
                     <th className="px-5 py-3">Booking ID</th>
                     <th className="px-5 py-3">Customer Info</th>
                     <th className="px-5 py-3">Date & Time</th>
