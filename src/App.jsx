@@ -25,7 +25,7 @@ import PurchasePage from "./pages/Purchase";
 import ItemBarcode from "./pages/setup/ItemBarcode";
 import ExpiryTagsPage from "./pages/ExpiryTags";
 import ReOrderStock from "./pages/stock/ReOrderStock";
-import ClosingStock from "./pages/stock/ClosingStock";
+
 import Security from "./pages/Security";
 import UserModule from "./pages/security/UserModule";
 import GroupRights from "./pages/security/GroupRights";
@@ -90,7 +90,6 @@ const App = () => {
 
         {/* Stock Routes */}
         <Route path="/stock/opening" element={<OpeningStock />} />
-        <Route path="/stock/closing" element={<ClosingStock />} />
         <Route path="/stock/reorder" element={<ReOrderStock />} />
         <Route path="/stock/sales-return" element={<SalesReturnPage />} />
         <Route path="/stock/purchase-return" element={<PurchaseReturnPage />} />

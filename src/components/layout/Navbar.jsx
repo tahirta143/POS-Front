@@ -18,7 +18,6 @@ const pageTitles = {
   "/dashboard": "Dashboard",
   "/items": "Item Details",
   "/stock/opening": "Opening Stock",
-  "/stock/closing": "Closing Stock",
   "/stock/reorder": "Reorder Stock",
   "/stock/grn": "Goods Receipt Note",
   "/stock/sales-return": "Sales Return",

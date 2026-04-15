@@ -292,7 +292,7 @@ export default function PurchasePage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
-              Inventory Acquisitions
+              Inventory Purchases
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Log purchases and restock inventory via Goods Receipt.
@@ -328,7 +328,7 @@ export default function PurchasePage() {
               </>
             ) : (
               <>
-                <MdAdd className="h-5 w-5" /> New Acquisition
+                <MdAdd className="h-5 w-5" /> New Purchases
               </>
             )}
           </button>

@@ -61,7 +61,6 @@ const NAV_ITEMS = [
     icon: MdWarehouse,
     children: [
       { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox },
-      { to: "/stock/closing", label: "Closing Stock", icon: MdRemoveCircle },
       { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh },
       { to: "/stock/grn", label: "Goods Receipt", icon: MdReceipt },
       { to: "/stock/transfer", label: "Stock Transfer", icon: MdSwapHoriz },
@@ -123,7 +122,7 @@ const NAV_ITEMS = [
     ],
   },
   { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday },
-  { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer },
+  
   {
     id: "accounts",
     label: "Accounts",
@@ -160,6 +159,7 @@ const NAV_ITEMS = [
           { to: "/setup/item-type", label: "Item Type", icon: MdInventory },
           { to: "/setup/item-unit", label: "Item Unit", icon: MdLabel },
           { to: "/setup/item-barcode", label: "Item Barcode", icon: MdQrCode2 },
+          { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer },
           {
             to: "/setup/shelve-location",
             label: "Shelve Location",
