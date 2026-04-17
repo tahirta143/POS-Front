@@ -32,7 +32,7 @@ import GroupRights from "./pages/security/GroupRights";
 import ModuleFunctions from "./pages/security/ModuleFunctions";
 import ModulesInfo from "./pages/security/ModulesInfo";
 import SecurityLog from "./pages/security/SecurityLog";
-import GroupUsers from "./pages/security/GroupUsers";
+import Groups from "./pages/security/Groups";
 import Company from "./pages/security/Company";
 import Employee from "./pages/security/Employee";
 import User from "./pages/security/User";
@@ -55,7 +55,6 @@ import StockTransferPage from "./pages/stock/StockTransfer";
 
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -74,17 +73,32 @@ const App = () => {
     root.style.colorScheme = shouldUseDark ? "dark" : "light";
   }, [isAuthenticated]);
 
-  if (!isAuthenticated) {
-    if (showRegister) {
-      return <Register onSwitchToLogin={() => setShowRegister(false)} />;
-    }
-    return <Login onSwitchToRegister={() => setShowRegister(true)} />;
-  }
+  // No longer returning early based on !isAuthenticated
+  // Moving all logic into the main return Routes structure
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route element={<Layout />}>
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={
+          !isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          !isAuthenticated ? <Register /> : <Navigate to="/dashboard" replace />
+        }
+      />
+
+      {/* Root/Protected Routes */}
+      <Route
+        element={
+          isAuthenticated ? <Layout /> : <Navigate to="/login" replace />
+        }
+      >
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
 
@@ -156,13 +170,21 @@ const App = () => {
         />
         <Route path="/security/module-info" element={<ModulesInfo />} />
         <Route path="/security/security-log" element={<SecurityLog />} />
-        <Route path="/security/group-users" element={<GroupUsers />} />
+        <Route path="/security/group-users" element={<Groups />} />
         <Route path="/security/company" element={<Company />} />
         <Route path="/security/employee" element={<Employee />} />
         <Route path="/security/user" element={<User />} />
         <Route path="/security/software-group" element={<SoftwareGroup />} />
         <Route path="/security/user-to-group" element={<UserToGroup />} />
       </Route>
+
+      {/* Catch-all route */}
+      <Route
+        path="*"
+        element={
+          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+        }
+      />
     </Routes>
   );
 };

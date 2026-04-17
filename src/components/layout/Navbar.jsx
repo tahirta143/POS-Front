@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   MdNotifications,
   MdLogout,
-  MdCheck,
   MdDoneAll,
   MdPerson,
   MdExpandMore,

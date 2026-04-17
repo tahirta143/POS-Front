@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Card, SectionHeader, Field, ActionButton, TableState } from '../../components/layout/PageShell.jsx'
 import { MdArrowBack, MdSave, MdGroupWork, MdRefresh, MdAdd, MdRemove } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-import axiosInstance from '../../services/axiosInstance'
+import axiosInstance from '../../services/axiosInstance.js'
 
 function generateGroupId() {
   const rand = Math.floor(1000 + Math.random() * 9000)
   return `GRP-${new Date().getFullYear()}-${rand}`
 }
 
-export default function GroupUsers() {
+export default function Groups() {
   const navigate = useNavigate()
 
   const [groups, setGroups]       = useState([])

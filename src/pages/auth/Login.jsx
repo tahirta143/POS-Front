@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, clearError } from "../../features/auth/authSlice";
 import { Field, StatusAlert } from "../../components/layout/PageShell.jsx";
 import { MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { Link } from "react-router-dom";
 
-export default function Login({ onSwitchToRegister }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -146,13 +147,14 @@ export default function Login({ onSwitchToRegister }) {
 
           <div className="mt-6 text-center text-sm text-slate-500">
             Don't have an account?{" "}
-            <button
-              onClick={onSwitchToRegister}
+            <Link
+              to="/register"
               className="font-semibold text-teal-600 hover:underline"
             >
               Create account
-            </button>
+            </Link>
           </div>
+
         </div>
       </div>
     </div>

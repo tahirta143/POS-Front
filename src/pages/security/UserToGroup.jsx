@@ -1,124 +1,131 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import { MdAppRegistration, MdArrowBack } from 'react-icons/md'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MdAppRegistration, MdArrowBack, MdSave, MdGroup, MdPerson } from 'react-icons/md'
 import axiosInstance from '../../services/axiosInstance'
 import {
   ActionButton,
   Card,
   Field,
   SectionHeader,
-  StatusAlert,
   TableState,
 } from '../../components/layout/PageShell.jsx'
 
-function emptyForm() {
-  return { groupId: '', userId: '' }
-}
-
 export default function UserToGroup() {
   const navigate = useNavigate()
-  const [form, setForm] = useState(emptyForm)
-  const [groups, setGroups] = useState([])
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    fetchPageData()
-  }, [])
+  const [groups, setGroups]           = useState([])
+  const [users, setUsers]             = useState([])
+  const [selectedGroupId, setSelectedGroupId] = useState('')
+  const [selectedUserIds, setSelectedUserIds] = useState([]) // multi-select
+  const [loading, setLoading]         = useState(false)
+  const [submitting, setSubmitting]   = useState(false)
+  const [expandedGroup, setExpandedGroup] = useState(null)
+
+  useEffect(() => { fetchPageData() }, [])
 
   async function fetchPageData() {
     setLoading(true)
-    setMessage('')
     try {
-      const [groupsResponse, usersResponse] = await Promise.all([
-        axiosInstance.get('/groups'),
-        axiosInstance.get('/company-users'),
+      const [groupsRes, usersRes] = await Promise.all([
+        axiosInstance.get('/group-users'),       // returns groups with their users[]
+        axiosInstance.get('/company-users').catch(() => axiosInstance.get('/users')),
       ])
-      setGroups(Array.isArray(groupsResponse.data) ? groupsResponse.data : [])
-      setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : [])
-    } catch (error) {
-      setGroups([])
-      setUsers([])
-      setMessage(error?.response?.data?.message || 'Assignments could not be loaded.')
+      setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : [])
+      const ud = usersRes.data
+      setUsers(Array.isArray(ud) ? ud : ud?.data || [])
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load data.')
     } finally {
       setLoading(false)
     }
   }
 
-  const assignments = useMemo(() => {
-    return groups.flatMap((group) =>
-      (group.users || []).map((user) => ({
-        groupId: group.id,
-        groupName: group.group_name,
-        userId: user.id,
-        userName: user.name || user.username || user.email,
-        email: user.email,
-      }))
+  // When a group is selected, pre-tick its current members
+  const selectedGroup = useMemo(
+    () => groups.find(g => String(g.id) === String(selectedGroupId)),
+    [groups, selectedGroupId]
+  )
+
+  function handleGroupChange(id) {
+    setSelectedGroupId(id)
+    const grp = groups.find(g => String(g.id) === String(id))
+    setSelectedUserIds((grp?.users || []).map(u => String(u.id)))
+  }
+
+  function toggleUser(userId) {
+    const id = String(userId)
+    setSelectedUserIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
-  }, [groups])
+  }
 
-  async function handleSave(event) {
-    event.preventDefault()
-    if (!form.groupId || !form.userId) {
-      toast.error('Group and user are required.')
-      return
+  function toggleAll() {
+    if (selectedUserIds.length === users.length) {
+      setSelectedUserIds([])
+    } else {
+      setSelectedUserIds(users.map(u => String(u.id)))
     }
+  }
 
-    const selectedGroup = groups.find((group) => String(group.id) === String(form.groupId))
-    if (!selectedGroup) {
-      toast.error('Please select a valid group.')
-      return
-    }
-
-    const currentUserIds = (selectedGroup.users || []).map((user) => Number(user.id))
-    const nextUserId = Number(form.userId)
-
-    if (currentUserIds.includes(nextUserId)) {
-      toast.error('This user is already assigned to the selected group.')
-      return
-    }
+  async function handleSave(e) {
+    e.preventDefault()
+    if (!selectedGroupId) { toast.error('Please select a group.'); return }
 
     setSubmitting(true)
-    setMessage('')
     try {
-      await axiosInstance.put(`/groups/${selectedGroup.id}`, {
-        groupName: selectedGroup.group_name,
-        users: [...currentUserIds, nextUserId],
+      // PUT /group-users/:groupId — replace all members
+      await axiosInstance.put(`/group-users/${selectedGroupId}`, {
+        users: selectedUserIds.map(Number),
       })
-      toast.success('User assigned to group successfully.')
-      setForm(emptyForm())
+      toast.success('Group members updated successfully.')
       fetchPageData()
-    } catch (error) {
-      setMessage(error?.response?.data?.message || 'Unable to assign user to group.')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update group members.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  async function removeAssignment(assignment) {
-    const selectedGroup = groups.find((group) => group.id === assignment.groupId)
-    if (!selectedGroup) return
-    if (!window.confirm(`Remove ${assignment.userName} from ${assignment.groupName}?`)) return
-
+  async function removeUser(groupId, userId, userName) {
+    if (!window.confirm(`Remove ${userName} from this group?`)) return
     try {
-      await axiosInstance.put(`/groups/${selectedGroup.id}`, {
-        groupName: selectedGroup.group_name,
-        users: (selectedGroup.users || [])
-          .map((user) => Number(user.id))
-          .filter((id) => id !== Number(assignment.userId)),
-      })
-      toast.success('User removed from group successfully.')
+      await axiosInstance.delete(`/group-users/${groupId}/user/${userId}`)
+      toast.success(`${userName} removed.`)
       fetchPageData()
-    } catch (error) {
-      setMessage(error?.response?.data?.message || 'Unable to remove assignment.')
+      // Update local selection if this group is open
+      if (String(groupId) === String(selectedGroupId)) {
+        setSelectedUserIds(prev => prev.filter(id => String(id) !== String(userId)))
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to remove user.')
     }
   }
 
+  // Users not yet in the selected group (for the "not assigned" count)
+  const currentMemberIds = useMemo(
+    () => new Set((selectedGroup?.users || []).map(u => String(u.id))),
+    [selectedGroup]
+  )
+
+  const allAssignments = useMemo(() =>
+    groups.flatMap(g =>
+      (g.users || []).map(u => ({
+        groupId:   g.id,
+        groupName: g.group_name,
+        userId:    u.id,
+        userName:  u.name || u.username || u.email || `User #${u.id}`,
+        email:     u.email,
+      }))
+    ),
+    [groups]
+  )
+
   return (
-    <div className="space-y-6 animate-in slide-in-from-right-4">
+    <div className="space-y-5 animate-in slide-in-from-right-4">
+
+      {/* Back */}
       <button
         onClick={() => navigate('/security')}
         className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
@@ -126,97 +133,168 @@ export default function UserToGroup() {
         <MdArrowBack /> Back to Overview
       </button>
 
+      {/* Assignment Form */}
       <Card className="border-l-[6px] border-l-teal-500 p-6">
         <SectionHeader
-          title="Assign User to Group"
-          description="Link users to specific software access groups."
-          icon={<MdAppRegistration className="text-teal-600 text-3xl" />}
+          title="Assign Users to Group"
+          description="Select a group and tick all users who should belong to it."
+          icon={<MdAppRegistration className="text-teal-600 text-2xl" />}
         />
 
-        <StatusAlert type="error" message={message} />
+        <form onSubmit={handleSave} className="mt-6 space-y-5">
 
-        <form onSubmit={handleSave} className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          <Field label="Assignment ID">
-            <input
-              type="text"
-              className="h-8 w-full rounded-md border border-slate-100 bg-slate-50 px-2.5 text-[12px] font-mono"
-              value="Auto generated"
-              disabled
-            />
-          </Field>
-          <Field label="Software Group" required>
+          {/* Group selector */}
+          <Field label="Select Group" required>
             <select
-              name="groupId"
-              value={form.groupId}
-              onChange={(event) => setForm((prev) => ({ ...prev, groupId: event.target.value }))}
-              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              value={selectedGroupId}
+              onChange={e => handleGroupChange(e.target.value)}
+              className="h-9 w-full max-w-sm rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               required
             >
-              <option value="">Select Software Group</option>
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>{group.group_name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="User Selection" required>
-            <select
-              name="userId"
-              value={form.userId}
-              onChange={(event) => setForm((prev) => ({ ...prev, userId: event.target.value }))}
-              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-              required
-            >
-              <option value="">Select User</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name || user.username || user.email}
+              <option value="">Choose a group...</option>
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>
+                  {g.group_name} ({(g.users || []).length} member{(g.users || []).length !== 1 ? 's' : ''})
                 </option>
               ))}
             </select>
           </Field>
-          <div className="md:col-span-3 flex justify-end">
+
+          {/* User multi-select checkboxes */}
+          {selectedGroupId && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
+                  Select Members
+                  <span className="ml-2 font-normal text-slate-400 normal-case tracking-normal">
+                    ({selectedUserIds.length} of {users.length} selected)
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={toggleAll}
+                  className="text-[11px] font-semibold text-teal-600 hover:text-teal-700 transition"
+                >
+                  {selectedUserIds.length === users.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 overflow-hidden max-h-64 overflow-y-auto">
+                {users.length === 0 ? (
+                  <div className="py-6 text-center text-[12px] text-slate-400">No users found.</div>
+                ) : (
+                  users.map((user, idx) => {
+                    const uid      = String(user.id)
+                    const checked  = selectedUserIds.includes(uid)
+                    const wasIn    = currentMemberIds.has(uid)
+                    return (
+                      <label
+                        key={user.id}
+                        className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-b last:border-0 ${
+                          checked ? 'bg-teal-50/60' : 'bg-white hover:bg-slate-50/60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleUser(uid)}
+                          className="h-4 w-4 rounded border-slate-300 text-teal-600 accent-teal-600"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-semibold text-slate-800 truncate">
+                            {user.name || user.username || `User #${user.id}`}
+                          </p>
+                          <p className="text-[10px] text-slate-400 truncate">{user.email || '—'}</p>
+                        </div>
+                        {wasIn && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full shrink-0">
+                            Current
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={() => { setSelectedGroupId(''); setSelectedUserIds([]) }}
+              className="px-6 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition"
+            >
+              Reset
+            </button>
             <button
               type="submit"
-              disabled={submitting}
-              className="flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg hover:bg-teal-700 transition disabled:opacity-50"
+              disabled={submitting || !selectedGroupId}
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
             >
-              {submitting ? 'Assigning...' : 'Assign User to Group'}
+              <MdSave />
+              {submitting ? 'Saving...' : 'Save Group Members'}
             </button>
           </div>
         </form>
       </Card>
 
-      <Card className="border-l-[6px] border-l-teal-500 p-6">
-        <h3 className="text-sm font-bold text-slate-700 mb-4">User Group Assignments</h3>
+      {/* All Assignments Table */}
+      <Card className="border-l-[6px] border-l-teal-500 p-0 overflow-hidden">
+        <SectionHeader
+          title="Current Group Assignments"
+          description={`${allAssignments.length} user–group assignment${allAssignments.length !== 1 ? 's' : ''}`}
+          icon={<MdGroup className="text-teal-600 text-xl" />}
+          action={
+            <div className="p-4">
+              <button
+                type="button"
+                onClick={fetchPageData}
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition"
+              >
+                Refresh
+              </button>
+            </div>
+          }
+        />
+
         {loading ? (
           <TableState message="Loading assignments..." />
-        ) : assignments.length === 0 ? (
-          <TableState message="No assignments recorded yet." />
+        ) : allAssignments.length === 0 ? (
+          <TableState message="No assignments yet. Select a group above and save members." />
         ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500">
-                <tr>
-                  <th className="px-6 py-3">Assignment ID</th>
-                  <th className="px-6 py-3">User</th>
-                  <th className="px-6 py-3">Software Group</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3 text-right">Action</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/80">
+                <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-5 py-3">#</th>
+                  <th className="px-5 py-3">Group</th>
+                  <th className="px-5 py-3">User</th>
+                  <th className="px-5 py-3">Email</th>
+                  <th className="px-5 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {assignments.map((assignment) => (
-                  <tr key={`${assignment.groupId}-${assignment.userId}`}>
-                    <td className="px-6 py-3 font-mono text-xs text-slate-400">
-                      #ASGN-{String(assignment.groupId).padStart(2, '0')}{String(assignment.userId).padStart(3, '0')}
+              <tbody className="divide-y divide-slate-50 bg-white">
+                {allAssignments.map((a, idx) => (
+                  <tr key={`${a.groupId}-${a.userId}`} className="hover:bg-teal-50/20 transition-colors">
+                    <td className="px-5 py-3 text-[11px] text-slate-400 font-mono">{idx + 1}</td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-bold text-teal-700">
+                        <MdGroup className="text-xs" />{a.groupName}
+                      </span>
                     </td>
-                    <td className="px-6 py-3 font-semibold text-slate-700">{assignment.userName}</td>
-                    <td className="px-6 py-3 text-slate-600">{assignment.groupName}</td>
-                    <td className="px-6 py-3 text-slate-500">{assignment.email || '-'}</td>
-                    <td className="px-6 py-3">
-                      <div className="flex justify-end gap-2">
-                        <ActionButton label="Remove" tone="rose" onClick={() => removeAssignment(assignment)} />
-                      </div>
+                    <td className="px-5 py-3 font-semibold text-slate-700 text-[12px]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <MdPerson className="text-slate-400 text-sm" />{a.userName}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-[11px] text-slate-400">{a.email || '—'}</td>
+                    <td className="px-5 py-3 text-right">
+                      <ActionButton
+                        label="Delete"
+                        tone="rose"
+                        onClick={() => removeUser(a.groupId, a.userId, a.userName)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -225,6 +303,7 @@ export default function UserToGroup() {
           </div>
         )}
       </Card>
+
     </div>
   )
 }

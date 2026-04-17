@@ -3,14 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { registerUser, clearError } from "../../features/auth/authSlice";
 import { Field, StatusAlert } from "../../components/layout/PageShell.jsx";
 import { MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { Link, useNavigate } from "react-router-dom";
 
-export default function Register({ onSwitchToLogin }) {
+export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -27,7 +29,7 @@ export default function Register({ onSwitchToLogin }) {
       if (registerUser.fulfilled.match(resultAction)) {
         setSuccessMsg("Account created! Redirecting to login...");
         setTimeout(() => {
-          onSwitchToLogin();
+          navigate("/login");
         }, 2000);
       }
     }
@@ -173,13 +175,14 @@ export default function Register({ onSwitchToLogin }) {
 
           <div className="mt-6 text-center text-sm text-slate-500">
             Already have an account?{" "}
-            <button
-              onClick={onSwitchToLogin}
+            <Link
+              to="/login"
               className="font-semibold text-teal-600 hover:underline"
             >
               Sign in
-            </button>
+            </Link>
           </div>
+
         </div>
       </div>
     </div>

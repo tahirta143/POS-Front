@@ -28,6 +28,7 @@ const initialState = {
   user: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
+  permissions: JSON.parse(localStorage.getItem('permissions')) || {},
   loading: false,
   error: null,
 };
@@ -39,9 +40,11 @@ const authSlice = createSlice({
     logout: (state) => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('permissions');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.permissions = {};
       toast.info('Logged out successfully');
     },
     clearError: (state) => {
@@ -55,10 +58,14 @@ const authSlice = createSlice({
       state.error = null;
     });
     builder.addCase(loginUser.fulfilled, (state, action) => {
+      const { user, token } = action.payload;
+      localStorage.setItem('permissions', JSON.stringify(user.permissions || {}));
+      
       state.loading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.user = user;
+      state.token = token;
+      state.permissions = user.permissions || {};
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.loading = false;

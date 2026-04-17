@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ThemeToggle from "./ThemeToggle";
 import {
   MdDashboard,
@@ -16,7 +16,6 @@ import {
   MdRemoveCircle,
   MdRefresh,
   MdCategory,
-  MdBusiness,
   MdLabel,
   MdQrCode2,
   MdLocationOn,
@@ -39,26 +38,22 @@ import {
   MdClose,
   MdHistory,
   MdViewModule,
-  MdExtension,
-  MdLockPerson,
   MdAppRegistration,
   MdSwapHoriz,
-  MdGroupWork,
-  MdSearch,
-  MdVpnKey,
 } from "react-icons/md";
 import { logout } from "../../features/auth/authSlice";
 
 // ── Nav tree ─────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: MdDashboard },
-  { to: "/items", label: "Item Details", icon: MdInventory },
-  { to: "/sale", label: "Sales Invoice", icon: MdReceipt },
-  { to: "/purchase", label: "Purchase", icon: MdShoppingCart },
+  { to: "/items", label: "Item Details", icon: MdInventory, module: "items" },
+  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "sales" },
+  { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "purchases" },
   {
     id: "stock",
     label: "Stock",
     icon: MdWarehouse,
+    module: "stock",
     children: [
       { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox },
       { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh },
@@ -80,6 +75,7 @@ const NAV_ITEMS = [
     id: "finance",
     label: "Finance",
     icon: MdAccountBalance,
+    module: "finance",
     children: [
       {
         to: "/finance/supplier-payment",
@@ -112,6 +108,7 @@ const NAV_ITEMS = [
     id: "customer",
     label: "Customer",
     icon: MdPeople,
+    module: "customers",
     children: [
       {
         to: "/customer/registration",
@@ -121,12 +118,13 @@ const NAV_ITEMS = [
       { to: "/customer/record", label: "Customer Record", icon: MdReceipt },
     ],
   },
-  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday },
+  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "bookings" },
   
   {
     id: "accounts",
     label: "Accounts",
     icon: MdMonetizationOn,
+    module: "accounts",
     children: [
       { to: "/daybook", label: "Daybook", icon: MdCalendarToday },
       { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance },
@@ -138,6 +136,7 @@ const NAV_ITEMS = [
     id: "setup",
     label: "Setup",
     icon: MdSettings,
+    module: "setup",
     children: [
       { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping },
       { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory },
@@ -182,6 +181,7 @@ const NAV_ITEMS = [
     id: "security-settings",
     label: "Security",
     icon: MdSecurity,
+    module: "security",
     children: [
       { to: "/security", label: "Overview", icon: MdDashboard },
       {
@@ -439,10 +439,43 @@ function NestedChildren({ children, onNavigate }) {
 function SidebarContent({ onNavigate }) {
   const dispatch = useDispatch();
   const location = useLocation();
+  const { user, permissions } = useSelector((state) => state.auth);
+
+  // Filter NAV_ITEMS based on permissions
+  const filterItems = (items) => {
+    return items.filter((item) => {
+      // Root admin sees everything
+      if (user?.isAdmin) return true;
+
+      // Items without module property are visible to all authenticated users (like Dashboard)
+      if (!item.module && !item.children) return true;
+
+      // If it's a module parent, check if user has access to this module
+      if (item.module) {
+        const hasAccess = permissions[item.module] && permissions[item.module].length > 0;
+        if (!hasAccess) return false;
+      }
+
+      // If it has children, recursively filter them
+      if (item.children) {
+        const visibleChildren = filterItems(item.children);
+        // If no children are visible, hide the parent
+        if (visibleChildren.length === 0) return false;
+        
+        // Update item with filtered children for this render
+        item.filteredChildren = visibleChildren;
+        return true;
+      }
+
+      return true;
+    });
+  };
+
+  const filteredNavItems = filterItems(NAV_ITEMS);
 
   // Only ONE level-1 item open at a time
   const [openId, setOpenId] = useState(() => {
-    for (const item of NAV_ITEMS) {
+    for (const item of filteredNavItems) {
       if (item.children && pathMatchesItem(item, location.pathname))
         return item.id;
     }
@@ -474,10 +507,10 @@ function SidebarContent({ onNavigate }) {
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
-        {NAV_ITEMS.map((item) => (
+        {filteredNavItems.map((item) => (
           <SidebarItem
             key={item.id || item.to}
-            item={item}
+            item={{...item, children: item.filteredChildren || item.children}}
             openId={openId}
             setOpenId={handleSetOpenId}
             onNavigate={onNavigate}
