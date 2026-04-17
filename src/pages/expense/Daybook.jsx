@@ -151,14 +151,14 @@ export default function Daybook() {
         </div>
 
         {/* Closing balance full-width */}
-        <Card className="p-3 bg-teal-600">
+        {/* <Card className="p-3 bg-teal-600">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-white/80 uppercase tracking-widest">Closing / Drawer Cash</span>
             <span className="text-xl font-black text-white font-mono">
               PKR {summary.closing.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
-        </Card>
+        </Card> */}
 
         {/* Search + Table */}
         <Card className="overflow-hidden p-0">
