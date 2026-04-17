@@ -126,16 +126,27 @@ export default function OpeningStockPage() {
     }
   }
 
+  // Map categories to names seamlessly
+  const getCategoryName = (id) => {
+    const c = categories.find(cat => String(cat.id) === String(id))
+    return c ? c.category_name : 'Uncategorized'
+  }
+
   // Apply Filters
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       // Name/Barcode/Supplier universal search
       const s = search.toLowerCase()
+      const categoryName = getCategoryName(item.item_category_id).toLowerCase()
+
       const matchesSearch = !s ||
                             item.item_name?.toLowerCase().includes(s) ||
                             item.barcode?.toLowerCase().includes(s) ||
+                            item.label_barcode?.toLowerCase().includes(s) ||
+                            String(item.id).toLowerCase().includes(s) ||
                             item.supplier?.toLowerCase().includes(s) ||
-                            item.supplier_name?.toLowerCase().includes(s)
+                            item.supplier_name?.toLowerCase().includes(s) ||
+                            categoryName.includes(s)
 
       const matchesCat = !categoryFilter || String(item.item_category_id) === String(categoryFilter)
       const supplierTokens = [item.supplier, item.supplier_name, item.supplier_id].filter(Boolean).map(String)
@@ -144,19 +155,13 @@ export default function OpeningStockPage() {
 
       return matchesSearch && matchesCat && matchesSup && matchesDate
     })
-  }, [items, search, categoryFilter, supplierFilter, dateFilter])
+  }, [items, categories, search, categoryFilter, supplierFilter, dateFilter])
 
   // Derive Metrics from the loaded payload
   const totalItems = items.length
   const totalStock = items.reduce((sum, item) => sum + (Number(item.stock) || 0), 0)
   const purchaseValue = items.reduce((sum, item) => sum + ((Number(item.stock) || 0) * (Number(item.purchase_price) || 0)), 0)
   const saleValue = items.reduce((sum, item) => sum + ((Number(item.stock) || 0) * (Number(item.sale_price) || 0)), 0)
-
-  // Map categories to names seamlessly
-  const getCategoryName = (id) => {
-    const c = categories.find(cat => String(cat.id) === String(id))
-    return c ? c.category_name : 'Uncategorized'
-  }
 
   return (
     <PageShell
