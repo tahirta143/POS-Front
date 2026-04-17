@@ -196,12 +196,7 @@ const NAV_ITEMS = [
             label: "Software Group",
             icon: MdWorkspaces,
           },
-          { to: "/security/user", label: "Users", icon: MdPerson },
-          {
-            to: "/security/group-users",
-            label: "Group Users",
-            icon: MdAppRegistration,
-          },
+         
           {
             to: "/security/user-to-group",
             label: "User to Group",
