@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import axios from "axios"; // Import axios
 import { useSelector } from "react-redux";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -45,40 +44,12 @@ import Department from "./pages/setup/Department";
 import Designation from "./pages/setup/Designation";
 import CustomerLedger from "./pages/customers/CustomerLedger";
 import Daybook from "./pages/expense/Daybook";
-
 import SupplierPaymentPage from "./pages/finance/SupplierPayment";
 import AmountPayablePage from "./pages/finance/AmountPayable";
 import SupplierLedgerPage from "./pages/finance/SupplierLedger";
 import CustomerPaymentPage from "./pages/finance/CustomerPayment";
 import AmountReceivablePage from "./pages/finance/AmountReceivable";
 import SalesReturnPage from "./pages/stock/SalesReturn";
-
-// --- Start of suggested axios configuration ---
-// Assuming your Redux store is accessible and has an 'auth' slice with 'token' and 'logout' action
-import store from "./app/store"; // Adjust path to your Redux store
-import { logout } from "./features/auth/authSlice"; // Adjust path to your auth slice's logout action
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api", // Use environment variable for API base URL
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const { token } = store.getState().auth;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// You can add a response interceptor to handle global errors, e.g., 401 Unauthorized
-// This would typically be in a separate utility file, but shown here for context.
-// --- End of suggested axios configuration ---
 import PurchaseReturnPage from "./pages/stock/PurchaseReturn";
 import GoodsReceiptNotePage from "./pages/stock/GoodsReceiptNote";
 import StockTransferPage from "./pages/stock/StockTransfer";
@@ -96,27 +67,14 @@ const App = () => {
     }
 
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
     const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
 
     root.classList.toggle("dark", shouldUseDark);
     root.style.colorScheme = shouldUseDark ? "dark" : "light";
   }, [isAuthenticated]);
-
-  // Add a response interceptor to handle global errors, e.g., 401 Unauthorized
-  // This is placed inside App component to ensure it has access to Redux store
-  useEffect(() => {
-    const interceptor = api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response && error.response.status === 401) {
-          store.dispatch(logout()); // Dispatch logout action
-        }
-        return Promise.reject(error);
-      }
-    );
-    return () => api.interceptors.response.eject(interceptor); // Clean up interceptor on unmount
-  }, []); // Run once on component mount
 
   // No longer returning early based on !isAuthenticated
   // Moving all logic into the main return Routes structure
