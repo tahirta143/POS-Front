@@ -45,7 +45,7 @@ import { logout } from "../../features/auth/authSlice";
 
 // ── Nav tree ─────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboarddd", icon: MdDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: MdDashboard },
   { to: "/items", label: "Item Details", icon: MdInventory, module: "items" },
   { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "sales" },
   { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "purchases" },
