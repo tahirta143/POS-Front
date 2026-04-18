@@ -50,35 +50,6 @@ import SupplierLedgerPage from "./pages/finance/SupplierLedger";
 import CustomerPaymentPage from "./pages/finance/CustomerPayment";
 import AmountReceivablePage from "./pages/finance/AmountReceivable";
 import SalesReturnPage from "./pages/stock/SalesReturn";
-<<<<<<< Updated upstream
-=======
-
-// --- Start of suggested axios configuration ---
-// Assuming your Redux store is accessible and has an 'auth' slice with 'token' and 'logout' action
-import store from "./app/store"; // Adjust path to your Redux store
-import { logout } from "./features/auth/authSlice"; // Adjust path to your auth slice's logout action
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api", // Use environment variable for API base URL
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const { token } = store.getState().auth;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-
-// --- End of suggested axios configuration ---
->>>>>>> Stashed changes
 import PurchaseReturnPage from "./pages/stock/PurchaseReturn";
 import GoodsReceiptNotePage from "./pages/stock/GoodsReceiptNote";
 import StockTransferPage from "./pages/stock/StockTransfer";
@@ -106,26 +77,6 @@ const App = () => {
     root.classList.toggle("dark", shouldUseDark);
     root.style.colorScheme = shouldUseDark ? "dark" : "light";
   }, [isAuthenticated]);
-
-<<<<<<< Updated upstream
-  // No longer returning early based on !isAuthenticated
-  // Moving all logic into the main return Routes structure
-=======
-  // Add a response interceptor to handle global errors, e.g., 401 Unauthorized
-  // This is placed inside App component to ensure it has access to Redux store
-  useEffect(() => {
-    const interceptor = api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response && error.response.status === 401) {
-          store.dispatch(logout()); // Dispatch logout action
-        }
-        return Promise.reject(error);
-      }
-    );
-    return () => api.interceptors.response.eject(interceptor); // Clean up interceptor on unmount
-  }, []); 
->>>>>>> Stashed changes
 
   return (
     <Routes>
