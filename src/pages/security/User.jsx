@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MdArrowBack, MdLockPerson, MdEmail, MdVpnKey, MdPerson, MdBusiness, MdBadge } from 'react-icons/md'
+import { MdArrowBack, MdLockPerson, MdEmail, MdVpnKey, MdPerson, MdBusiness, MdBadge, MdGroup } from 'react-icons/md'
 import axiosInstance from '../../services/axiosInstance'
 import {
   ActionButton,

@@ -17,20 +17,20 @@ import {
 
 // Route paths match App.jsx exactly
 const MODULE_DATA = [
-  {
-    path: "/security/company",
-    category: "Organization",
-    title: "Company",
-    desc: "Manage company information",
-    icon: <MdBusiness />,
-  },
-  {
-    path: "/security/employee",
-    category: "Organization",
-    title: "Employee",
-    desc: "Manage employee records",
-    icon: <MdPeople />,
-  },
+  // {
+  //   path: "/security/company",
+  //   category: "Organization",
+  //   title: "Company",
+  //   desc: "Manage company information",
+  //   icon: <MdBusiness />,
+  // },
+  // {
+  //   path: "/security/employee",
+  //   category: "Organization",
+  //   title: "Employee",
+  //   desc: "Manage employee records",
+  //   icon: <MdPeople />,
+  // },
   {
     path: "/security/software-group",
     category: "Access Control",
