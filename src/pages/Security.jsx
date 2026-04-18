@@ -45,13 +45,7 @@ const MODULE_DATA = [
     desc: "Manage user accounts",
     icon: <MdLockPerson />,
   },
-  {
-    path: "/security/group-users",
-    category: "User Management",
-    title: "Group Users",
-    desc: "Assign users to groups",
-    icon: <MdAppRegistration />,
-  },
+
   {
     path: "/security/user-to-group",
     category: "User Management",
