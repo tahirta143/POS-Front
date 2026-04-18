@@ -19,35 +19,19 @@ const USER_META_KEY = 'pos_security_user_meta_v1'
 function emptyForm() {
   return {
     username: '',
-    companyId: '',
-    employeeId: '',
     email: '',
     password: '',
     role: 'User',
+    group_id: '',
     status: 'active',
-    description: '',
   }
-}
-
-function readUserMeta() {
-  try {
-    return JSON.parse(localStorage.getItem(USER_META_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-function writeUserMeta(value) {
-  localStorage.setItem(USER_META_KEY, JSON.stringify(value))
 }
 
 export default function User() {
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
-  const [companies, setCompanies] = useState([])
-  const [employees, setEmployees] = useState([])
+  const [groups, setGroups] = useState([])
   const [users, setUsers] = useState([])
-  const [userMeta, setUserMeta] = useState(readUserMeta)
   const [editId, setEditId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -58,27 +42,20 @@ export default function User() {
     fetchPageData()
   }, [])
 
-  useEffect(() => {
-    writeUserMeta(userMeta)
-  }, [userMeta])
-
   async function fetchPageData() {
     setLoading(true)
     setMessage('')
     try {
-      const [companiesResponse, employeesResponse, usersResponse] = await Promise.all([
-        axiosInstance.get('/companies'),
-        axiosInstance.get('/employees'),
-        axiosInstance.get('/company-users'),
+      const [groupsResponse, usersResponse] = await Promise.all([
+        axiosInstance.get('/groups'),
+        axiosInstance.get('/auth/users'),
       ])
-      setCompanies(Array.isArray(companiesResponse.data) ? companiesResponse.data : [])
-      setEmployees(Array.isArray(employeesResponse.data) ? employeesResponse.data : [])
-      setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : [])
+      setGroups(Array.isArray(groupsResponse.data) ? groupsResponse.data : [])
+      setUsers(Array.isArray(usersResponse.data.data) ? usersResponse.data.data : [])
     } catch (error) {
-      setCompanies([])
-      setEmployees([])
+      setGroups([])
       setUsers([])
-      setMessage(error?.response?.data?.message || 'Software users could not be loaded.')
+      setMessage(error?.response?.data?.message || 'Users could not be loaded.')
     } finally {
       setLoading(false)
     }
@@ -91,70 +68,52 @@ export default function User() {
 
   async function handleSave(event) {
     event.preventDefault()
-    if (!form.username.trim() || !form.email.trim() || !form.password.trim()) {
+    if (!form.username.trim() || !form.email.trim() || (!editId && !form.password.trim())) {
       toast.error('Username, email, and password are required.')
       return
     }
-
-    const selectedEmployee = employees.find((row) => String(row.id) === String(form.employeeId))
-    const designation = selectedEmployee?.designation_name || selectedEmployee?.employee_name || form.role
 
     setSubmitting(true)
     setMessage('')
     try {
       const payload = {
         name: form.username.trim(),
+        username: form.username.trim(),
         email: form.email.trim(),
-        password: form.password,
-        designation,
-        number: '',
+        role: form.role,
+        group_id: form.group_id,
         status: form.status,
       }
+      
+      if (form.password) payload.password = form.password;
 
-      let savedId = editId
       if (editId) {
-        await axiosInstance.put(`/company-users/${editId}`, payload)
-        toast.success('Software user updated successfully.')
+        await axiosInstance.put(`/auth/users/${editId}`, payload)
+        toast.success('User updated successfully.')
       } else {
-        const response = await axiosInstance.post('/company-users', payload)
-        savedId = response.data?.id
-        toast.success('Software user created successfully.')
-      }
-
-      if (savedId) {
-        setUserMeta((prev) => ({
-          ...prev,
-          [savedId]: {
-            companyId: form.companyId,
-            employeeId: form.employeeId,
-            role: form.role,
-            description: form.description,
-          },
-        }))
+        await axiosInstance.post('/auth/users', payload)
+        toast.success('User created successfully.')
       }
 
       resetForm()
       setIsFormOpen(false)
       fetchPageData()
     } catch (error) {
-      setMessage(error?.response?.data?.message || 'Unable to save software user.')
+      setMessage(error?.response?.data?.message || 'Unable to save user.')
     } finally {
       setSubmitting(false)
     }
   }
 
   function handleEdit(userRow) {
-    const meta = userMeta[userRow.id] || {}
     setEditId(userRow.id)
     setForm({
-      username: userRow.name || userRow.username || '',
-      companyId: meta.companyId || '',
-      employeeId: meta.employeeId || '',
+      username: userRow.username || userRow.name || '',
       email: userRow.email || '',
-      password: userRow.password || '',
-      role: meta.role || 'User',
+      password: '', // Don't show password on edit
+      role: userRow.role || 'User',
+      group_id: userRow.group_id || '',
       status: userRow.status || 'active',
-      description: meta.description || '',
     })
     setMessage('')
     setIsFormOpen(true)
@@ -164,17 +123,12 @@ export default function User() {
   async function handleDelete(userRow) {
     if (!window.confirm(`Delete "${userRow.name || userRow.username}"?`)) return
     try {
-      await axiosInstance.delete(`/company-users/${userRow.id}`)
-      setUserMeta((prev) => {
-        const next = { ...prev }
-        delete next[userRow.id]
-        return next
-      })
-      toast.success('Software user deleted successfully.')
+      await axiosInstance.delete(`/auth/users/${userRow.id}`)
+      toast.success('User deleted successfully.')
       if (editId === userRow.id) resetForm()
       fetchPageData()
     } catch (error) {
-      setMessage(error?.response?.data?.message || 'Unable to delete software user.')
+      setMessage(error?.response?.data?.message || 'Unable to delete user.')
     }
   }
 
@@ -183,21 +137,6 @@ export default function User() {
     setForm(emptyForm())
     setMessage('')
   }
-
-  const rows = useMemo(() => {
-    return users.map((userRow) => {
-      const meta = userMeta[userRow.id] || {}
-      const company = companies.find((row) => String(row.id) === String(meta.companyId))
-      const employee = employees.find((row) => String(row.id) === String(meta.employeeId))
-      return {
-        ...userRow,
-        companyName: company?.company_name || '-',
-        employeeName: employee?.employee_name || '-',
-        role: meta.role || 'User',
-        description: meta.description || '',
-      }
-    })
-  }, [companies, employees, userMeta, users])
 
   const inputCls = "h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[12px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
 
@@ -214,8 +153,8 @@ export default function User() {
               <MdArrowBack className="h-5 w-5 transition group-hover:-translate-x-0.5" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">User Credentials</h1>
-              <p className="text-sm text-slate-500">Manage software access and system permissions</p>
+              <h1 className="text-xl font-bold text-slate-900">User Management</h1>
+              <p className="text-sm text-slate-500">Create and manage software access credentials</p>
             </div>
           </div>
           <button
@@ -264,15 +203,15 @@ export default function User() {
             >
               <Card className="mx-auto max-w-5xl border-l-[6px] border-l-teal-500 p-6 mb-6">
                 <SectionHeader
-                  title={editId ? 'Edit Software User' : 'Add New User'}
-                  description="Create system credentials and link them to employees."
+                  title={editId ? 'Edit User' : 'Add New User'}
+                  description="Create system credentials and assign them to security groups."
                   icon={<MdLockPerson className="text-teal-600 text-3xl" />}
                 />
 
                 <StatusAlert type="error" message={message} />
 
                 <form onSubmit={handleSave} className="mt-4 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <Field label="User ID">
                       <input
                         type="text"
@@ -287,26 +226,15 @@ export default function User() {
                         <MdPerson className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       </div>
                     </Field>
-                    <Field label="Company">
-                      <div className="relative">
-                        <select name="companyId" value={form.companyId} onChange={handleChange} className={`${inputCls} appearance-none pr-8`}>
-                          <option value="">Select Company</option>
-                          {companies.map((company) => (
-                            <option key={company.id} value={company.id}>{company.company_name}</option>
-                          ))}
-                        </select>
-                        <MdBusiness className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </Field>
-                    <Field label="Employee">
+                    <Field label="Security Group">
                        <div className="relative">
-                        <select name="employeeId" value={form.employeeId} onChange={handleChange} className={`${inputCls} appearance-none pr-8`}>
-                          <option value="">Select Employee</option>
-                          {employees.map((employee) => (
-                            <option key={employee.id} value={employee.id}>{employee.employee_name}</option>
+                        <select name="group_id" value={form.group_id} onChange={handleChange} className={`${inputCls} appearance-none pr-8`}>
+                          <option value="">No Group</option>
+                          {groups.map((group) => (
+                            <option key={group.id} value={group.id}>{group.group_name}</option>
                           ))}
                         </select>
-                        <MdBadge className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <MdGroup className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       </div>
                     </Field>
                   </div>
@@ -318,9 +246,9 @@ export default function User() {
                         <MdEmail className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       </div>
                     </Field>
-                    <Field label="Password" required>
+                    <Field label="Password" required={!editId}>
                       <div className="relative">
-                        <input type="text" name="password" value={form.password} onChange={handleChange} className={inputCls} required />
+                        <input type="password" name="password" value={form.password} onChange={handleChange} className={inputCls} placeholder={editId ? "Leave blank to keep current" : ""} required={!editId} />
                         <MdVpnKey className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       </div>
                     </Field>
@@ -329,9 +257,8 @@ export default function User() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="Role Selection">
                       <select name="role" value={form.role} onChange={handleChange} className={inputCls}>
-                        <option value="Admin">Admin</option>
-                        <option value="Manager">Manager</option>
-                        <option value="User">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
                       </select>
                     </Field>
                     <Field label="Account Status">
@@ -343,10 +270,6 @@ export default function User() {
                       </select>
                     </Field>
                   </div>
-
-                  <Field label="Description">
-                    <textarea name="description" value={form.description} onChange={handleChange} className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" rows="2" placeholder="User access notes..." />
-                  </Field>
 
                   <div className="flex justify-end gap-3 pt-4">
                     <button
@@ -372,7 +295,7 @@ export default function User() {
         <Card className="mx-auto max-w-5xl p-0 overflow-hidden">
           <SectionHeader
             title="Registered Users"
-            description={`${rows.length} software access accounts`}
+            description={`${users.length} accounts found`}
             icon={<MdLockPerson className="h-6 w-6 text-teal-600" />}
             action={
               <div className="p-4">
@@ -381,14 +304,14 @@ export default function User() {
                   onClick={fetchPageData}
                   className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
                 >
-                  Refresh Users
+                  Refresh
                 </button>
               </div>
             }
           />
           {loading ? (
             <TableState message="Loading users..." />
-          ) : rows.length === 0 ? (
+          ) : users.length === 0 ? (
             <TableState message="No users recorded yet." />
           ) : (
             <div className="overflow-x-auto w-full">
@@ -397,13 +320,13 @@ export default function User() {
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <th className="px-5 py-3">Code</th>
                     <th className="px-5 py-3">User Details</th>
-                    <th className="px-5 py-3">Associations</th>
+                    <th className="px-5 py-3">Security Group</th>
                     <th className="px-5 py-3">Access Level</th>
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
-                  {rows.map((row) => (
+                  {users.map((row) => (
                     <motion.tr 
                       key={row.id} 
                       initial={{ opacity: 0 }}
@@ -413,21 +336,17 @@ export default function User() {
                       <td className="px-5 py-4 font-mono text-[11px] text-slate-400">#USR-{String(row.id).padStart(3, '0')}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">{row.name || row.username}</span>
+                          <span className="font-bold text-slate-800">{row.username || row.name}</span>
                           <span className="text-[11px] text-slate-400">{row.email}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col gap-0.5">
-                           <span className="text-[12px] font-semibold text-slate-600">{row.employeeName}</span>
-                           <span className="text-[10px] text-slate-400">{row.companyName}</span>
-                        </div>
+                      <td className="px-5 py-4 text-[12px] font-semibold text-slate-600">
+                        {row.group_name || '—'}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                            row.role === 'Admin' ? 'bg-rose-50 text-rose-700' : 
-                            row.role === 'Manager' ? 'bg-amber-50 text-amber-700' : 'bg-teal-50 text-teal-700'
+                            row.role === 'admin' ? 'bg-rose-50 text-rose-700' : 'bg-teal-50 text-teal-700'
                           }`}>
                             {row.role}
                           </span>

@@ -38,13 +38,11 @@ export default function UserToGroup() {
     try {
       const [groupsRes, usersRes] = await Promise.all([
         axiosInstance.get("/groups"), // returns groups with their users[]
-        axiosInstance
-          .get("/company-users")
-          .catch(() => axiosInstance.get("/users")),
+        axiosInstance.get("/auth/users"),
       ]);
       setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : []);
-      const ud = usersRes.data;
-      setUsers(Array.isArray(ud) ? ud : ud?.data || []);
+      const ud = usersRes.data.data;
+      setUsers(Array.isArray(ud) ? ud : []);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to load data.");
     } finally {

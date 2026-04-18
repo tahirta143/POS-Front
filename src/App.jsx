@@ -54,6 +54,8 @@ import PurchaseReturnPage from "./pages/stock/PurchaseReturn";
 import GoodsReceiptNotePage from "./pages/stock/GoodsReceiptNote";
 import StockTransferPage from "./pages/stock/StockTransfer";
 
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 const App = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
 
@@ -114,35 +116,101 @@ const App = () => {
         <Route path="/stock/transfer" element={<StockTransferPage />} />
 
         {/* Items */}
-        <Route path="/items" element={<ItemList />} />
+        <Route 
+          path="/items" 
+          element={
+            <ProtectedRoute module="Items">
+              <ItemList />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Sales & Purchase */}
-        <Route path="/purchase" element={<PurchasePage />} />
-        <Route path="/sale" element={<Sales />} />
+        <Route 
+          path="/purchase" 
+          element={
+            <ProtectedRoute module="Purchase">
+              <PurchasePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/sale" 
+          element={
+            <ProtectedRoute module="Sale">
+              <Sales />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Finance Routes */}
         <Route
           path="/finance/supplier-payment"
-          element={<SupplierPaymentPage />}
+          element={
+            <ProtectedRoute module="Finance">
+              <SupplierPaymentPage />
+            </ProtectedRoute>
+          }
         />
-        <Route path="/finance/amount-payable" element={<AmountPayablePage />} />
+        <Route 
+          path="/finance/amount-payable" 
+          element={
+            <ProtectedRoute module="Finance">
+              <AmountPayablePage />
+            </ProtectedRoute>
+          } 
+        />
         <Route
           path="/finance/supplier-ledger"
-          element={<SupplierLedgerPage />}
+          element={
+            <ProtectedRoute module="Finance">
+              <SupplierLedgerPage />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/finance/customer-payment"
-          element={<CustomerPaymentPage />}
+          element={
+            <ProtectedRoute module="Finance">
+              <CustomerPaymentPage />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/finance/amount-receivable"
-          element={<AmountReceivablePage />}
+          element={
+            <ProtectedRoute module="Finance">
+              <AmountReceivablePage />
+            </ProtectedRoute>
+          }
         />
 
         {/* Customer Routes */}
-        <Route path="/customer/registration" element={<CustomerList />} />
-        <Route path="/customer/record" element={<CustomerLedger />} />
-        <Route path="/booking-customers" element={<Bookings />} />
+        <Route 
+          path="/customer/registration" 
+          element={
+            <ProtectedRoute module="Customers">
+              <CustomerList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/customer/record" 
+          element={
+            <ProtectedRoute module="Customers">
+              <CustomerLedger />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/booking-customers" 
+          element={
+            <ProtectedRoute module="Bookings">
+              <Bookings />
+            </ProtectedRoute>
+          } 
+        />
+        
         <Route path="/security" element={<Security />} />
         <Route path="/expiry-tags" element={<ExpiryTagsPage />} />
 
@@ -173,8 +241,6 @@ const App = () => {
         />
         <Route path="/security/module-info" element={<ModulesInfo />} />
         <Route path="/security/security-log" element={<SecurityLog />} />
-        <Route path="/security/company" element={<Company />} />
-        <Route path="/security/employee" element={<Employee />} />
         <Route path="/security/user" element={<User />} />
         <Route path="/security/software-group" element={<SoftwareGroup />} />
         <Route path="/security/user-to-group" element={<UserToGroup />} />

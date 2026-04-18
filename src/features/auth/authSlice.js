@@ -5,10 +5,11 @@ import { toast } from 'react-toastify';
 export const loginUser = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.post('/auth/login', credentials);
-    const { token, user } = response.data;
+    const { token, user, permissions } = response.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    return { token, user };
+    localStorage.setItem('permissions', JSON.stringify(permissions || {}));
+    return { token, user, permissions };
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Login failed');
   }
@@ -58,14 +59,13 @@ const authSlice = createSlice({
       state.error = null;
     });
     builder.addCase(loginUser.fulfilled, (state, action) => {
-      const { user, token } = action.payload;
-      localStorage.setItem('permissions', JSON.stringify(user.permissions || {}));
+      const { user, token, permissions } = action.payload;
       
       state.loading = false;
       state.isAuthenticated = true;
       state.user = user;
       state.token = token;
-      state.permissions = user.permissions || {};
+      state.permissions = permissions || {};
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.loading = false;

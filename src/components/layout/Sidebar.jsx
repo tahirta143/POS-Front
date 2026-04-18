@@ -189,14 +189,16 @@ const NAV_ITEMS = [
         label: "Actions",
         icon: MdExpandMore,
         children: [
-          { to: "/security/company", label: "Company", icon: MdCorporateFare },
-          { to: "/security/employee", label: "Employee", icon: MdBadge },
+          {
+            to: "/security/user",
+            label: "Users",
+            icon: MdPerson,
+          },
           {
             to: "/security/software-group",
             label: "Software Group",
             icon: MdWorkspaces,
           },
-         
           {
             to: "/security/user-to-group",
             label: "User to Group",
@@ -218,13 +220,7 @@ const NAV_ITEMS = [
             label: "Group Rights",
             icon: MdSecurity,
           },
-          {
-            to: "/security/user-module",
-            label: "Users Module Access",
-            icon: MdSettings,
-          },
         ],
-      },
     ],
   },
 ];
@@ -440,14 +436,16 @@ function SidebarContent({ onNavigate }) {
   const filterItems = (items) => {
     return items.filter((item) => {
       // Root admin sees everything
-      if (user?.isAdmin) return true;
+      if (user?.is_admin || user?.role === 'admin' || permissions?.isAdmin) return true;
 
       // Items without module property are visible to all authenticated users (like Dashboard)
       if (!item.module && !item.children) return true;
 
       // If it's a module parent, check if user has access to this module
       if (item.module) {
-        const hasAccess = permissions[item.module] && permissions[item.module].length > 0;
+        const hasAccess = permissions?.modules?.some(
+          (m) => m.slug === item.module.toLowerCase() || m.name.toLowerCase() === item.module.toLowerCase()
+        );
         if (!hasAccess) return false;
       }
 
