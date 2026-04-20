@@ -14,6 +14,8 @@ import {
   MdRefresh,
   MdShield,
   MdHistory,
+  MdExpandMore,
+  MdExpandLess,
 } from "react-icons/md";
 
 // ─── Shared Components ────────────────────────────────────────────────────────
@@ -61,6 +63,24 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   const [saving, setSaving]                 = useState(false);
   const [searchAvailable, setSearchAvailable] = useState("");
   const [searchAssigned, setSearchAssigned]   = useState("");
+  const [expandedAvailable, setExpandedAvailable] = useState(new Set());
+  const [expandedAssigned, setExpandedAssigned]   = useState(new Set());
+
+  function toggleExpand(setFn, moduleId) {
+    setFn(prev => {
+      const next = new Set(prev);
+      next.has(moduleId) ? next.delete(moduleId) : next.add(moduleId);
+      return next;
+    });
+  }
+
+  function expandAll(setFn, tree) {
+    setFn(new Set(tree.map(m => m.moduleId)));
+  }
+
+  function collapseAll(setFn) {
+    setFn(new Set());
+  }
 
   useEffect(() => {
     if (!selectedGroup) return;
@@ -74,8 +94,12 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       const funcIds = new Set();
       const modIds  = new Set();
       data.forEach(r => {
-        modIds.add(r.module_id);
-        (r.functionalities || []).forEach(f => funcIds.add(f.id));
+        const funcs = r.functionalities || [];
+        // Only add module if it has at least one functionality assigned
+        if (funcs.length > 0) {
+          modIds.add(r.module_id);
+          funcs.forEach(f => funcIds.add(f.id));
+        }
       });
       setAssignedModuleIds(modIds);
       setAssignedRightIds(funcIds);
@@ -113,6 +137,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
 
   function toggleNode(node) {
     if (node.moduleId && !node.funcId) {
+      // Toggling a module header
       const childFuncIds = (node.children || []).map(c => c.funcId).filter(Boolean);
       const allChecked   = childFuncIds.every(id => assignedRightIds.has(id));
 
@@ -128,27 +153,38 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         return next;
       });
     } else if (node.funcId) {
+      // Toggling a single functionality
       setAssignedRightIds(prev => {
         const next = new Set(prev);
         next.has(node.funcId) ? next.delete(node.funcId) : next.add(node.funcId);
-        return next;
-      });
-      setAssignedModuleIds(prev => {
-        const next = new Set(prev);
-        next.add(node.moduleId);
+
+        // Check if any sibling functionalities remain selected after this toggle
+        const siblingFuncIds = tree
+          .find(m => m.moduleId === node.moduleId)
+          ?.children.map(c => c.funcId) || [];
+        const anyRemaining = siblingFuncIds.some(id => next.has(id));
+
+        // Add or remove parent module based on whether any children remain
+        setAssignedModuleIds(prev2 => {
+          const next2 = new Set(prev2);
+          anyRemaining ? next2.add(node.moduleId) : next2.delete(node.moduleId);
+          return next2;
+        });
+
         return next;
       });
     }
   }
 
+  // Only show modules in "Assigned" panel that have at least one selected functionality
   const assignedTree = useMemo(() => {
     return tree
       .map(m => ({
         ...m,
         children: m.children.filter(c => assignedRightIds.has(c.funcId)),
       }))
-      .filter(m => assignedModuleIds.has(m.moduleId) || m.children.length > 0);
-  }, [tree, assignedRightIds, assignedModuleIds]);
+      .filter(m => m.children.length > 0);
+  }, [tree, assignedRightIds]);
 
   const filteredAvailable = useMemo(() => {
     const q = searchAvailable.toLowerCase();
@@ -226,52 +262,96 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">Available Permissions</span>
-          <div className="relative">
-            <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchAvailable}
-              onChange={e => setSearchAvailable(e.target.value)}
-              className="pl-7 pr-3 py-1 text-[11px] rounded-lg border border-slate-200 outline-none focus:border-teal-500 w-32 focus:w-48 transition-all"
-            />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => expandAll(setExpandedAvailable, filteredAvailable)}
+              className="text-[10px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition"
+              title="Expand All"
+            >Expand All</button>
+            <button
+              onClick={() => collapseAll(setExpandedAvailable)}
+              className="text-[10px] text-slate-500 hover:text-slate-700 font-bold hover:bg-slate-100 px-2 py-1 rounded transition"
+              title="Collapse All"
+            >Collapse</button>
+            <div className="relative">
+              <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchAvailable}
+                onChange={e => setSearchAvailable(e.target.value)}
+                className="pl-7 pr-3 py-1 text-[11px] rounded-lg border border-slate-200 outline-none focus:border-teal-500 w-32 focus:w-48 transition-all"
+              />
+            </div>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {filteredAvailable.map(m => (
-            <div key={m.id} className="space-y-1">
-              <div
-                className="flex items-center gap-2 p-2 rounded hover:bg-slate-50 cursor-pointer"
-                onClick={() => toggleNode(m)}
-              >
-                <input
-                  type="checkbox"
-                  checked={m.children.every(c => assignedRightIds.has(c.funcId))}
-                  onChange={() => toggleNode(m)}
-                  onClick={e => e.stopPropagation()}
-                  className="rounded accent-teal-600"
-                />
-                <span className="text-[12px] font-bold text-slate-800">{m.label}</span>
-              </div>
-              {m.children.map(c => (
-                <div
-                  key={c.id}
-                  className="flex items-center gap-2 pl-8 pr-2 py-1 rounded hover:bg-slate-50 cursor-pointer"
-                  onClick={() => toggleNode(c)}
-                >
+          {filteredAvailable.map(m => {
+            const isExpanded = expandedAvailable.has(m.moduleId);
+            const allChecked = m.children.length > 0 && m.children.every(c => assignedRightIds.has(c.funcId));
+            const someChecked = m.children.some(c => assignedRightIds.has(c.funcId));
+            return (
+              <div key={m.id} className="rounded-lg border border-slate-100 overflow-hidden">
+                {/* Module Header */}
+                <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50/80 hover:bg-slate-100/80 transition-colors">
                   <input
                     type="checkbox"
-                    checked={assignedRightIds.has(c.funcId)}
-                    onChange={() => toggleNode(c)}
+                    checked={allChecked}
+                    ref={el => { if (el) el.indeterminate = someChecked && !allChecked; }}
+                    onChange={() => toggleNode(m)}
                     onClick={e => e.stopPropagation()}
-                    className="rounded accent-teal-600"
+                    className="rounded accent-teal-600 cursor-pointer"
                   />
-                  <span className="text-[11px] text-slate-600 flex-1">{c.label}</span>
-                  {c.action && <ActionBadge action={c.action} />}
+                  <button
+                    onClick={() => toggleExpand(setExpandedAvailable, m.moduleId)}
+                    className="flex items-center gap-1.5 flex-1 min-w-0"
+                  >
+                    <MdViewModule className="text-teal-500 h-4 w-4 shrink-0" />
+                    <span className="text-[12px] font-bold text-slate-800 truncate">{m.label}</span>
+                    <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0">
+                      {m.children.filter(c => assignedRightIds.has(c.funcId)).length}/{m.children.length}
+                    </span>
+                    {isExpanded
+                      ? <MdExpandLess className="text-slate-400 h-5 w-5 shrink-0" />
+                      : <MdExpandMore className="text-slate-400 h-5 w-5 shrink-0" />}
+                  </button>
                 </div>
-              ))}
-            </div>
-          ))}
+
+                {/* Collapsible Functionalities */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="py-1 border-t border-slate-100">
+                        {m.children.map(c => (
+                          <div
+                            key={c.id}
+                            className="flex items-center gap-2 pl-9 pr-3 py-1.5 hover:bg-teal-50/50 cursor-pointer transition-colors"
+                            onClick={() => toggleNode(c)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={assignedRightIds.has(c.funcId)}
+                              onChange={() => toggleNode(c)}
+                              onClick={e => e.stopPropagation()}
+                              className="rounded accent-teal-600 cursor-pointer"
+                            />
+                            <span className="text-[11px] text-slate-600 flex-1">{c.label}</span>
+                            {c.action && <ActionBadge action={c.action} />}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -299,28 +379,54 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {filteredAssigned.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50">
               <MdShield className="h-10 w-10 mb-2" />
               <p className="text-[12px]">No permissions assigned</p>
             </div>
           ) : (
-            filteredAssigned.map(m => (
-              <div key={m.id} className="mb-2">
-                <div className="flex items-center gap-2 p-1">
-                  <MdCheck className="text-teal-500" />
-                  <span className="text-[11px] font-bold text-slate-700">{m.label}</span>
+            filteredAssigned.map(m => {
+              const isExpanded = expandedAssigned.has(m.moduleId);
+              return (
+                <div key={m.id} className="rounded-lg border border-teal-100 overflow-hidden">
+                  <button
+                    onClick={() => toggleExpand(setExpandedAssigned, m.moduleId)}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 bg-teal-50/50 hover:bg-teal-50 transition-colors"
+                  >
+                    <MdCheck className="text-teal-500 h-4 w-4 shrink-0" />
+                    <span className="text-[11px] font-bold text-teal-800 flex-1 text-left truncate">{m.label}</span>
+                    <span className="text-[9px] bg-teal-200 text-teal-800 font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                      {m.children.length}
+                    </span>
+                    {isExpanded
+                      ? <MdExpandLess className="text-teal-400 h-5 w-5 shrink-0" />
+                      : <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />}
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="py-1 border-t border-teal-100">
+                          {m.children.map(c => (
+                            <div key={c.id} className="flex items-center gap-2 pl-9 pr-3 py-1.5">
+                              <MdCheck className="text-emerald-400 h-3 w-3 shrink-0" />
+                              <span className="text-[11px] text-slate-600 flex-1">{c.label}</span>
+                              {c.action && <ActionBadge action={c.action} />}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                {m.children.map(c => (
-                  <div key={c.id} className="flex items-center gap-2 pl-7 pr-2 py-0.5">
-                    <MdCheck className="text-emerald-400 h-3 w-3" />
-                    <span className="text-[11px] text-slate-500 flex-1">{c.label}</span>
-                    {c.action && <ActionBadge action={c.action} />}
-                  </div>
-                ))}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -509,6 +615,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 function PermissionsTab({ modules, functionalities }) {
   const [search, setSearch] = useState("");
+  const [expandedModules, setExpandedModules] = useState(new Set());
 
   const grouped = useMemo(() => {
     const q = search.toLowerCase();
@@ -530,6 +637,22 @@ function PermissionsTab({ modules, functionalities }) {
     return null;
   }
 
+  function toggleModule(moduleId) {
+    setExpandedModules(prev => {
+      const next = new Set(prev);
+      next.has(moduleId) ? next.delete(moduleId) : next.add(moduleId);
+      return next;
+    });
+  }
+
+  function expandAll() {
+    setExpandedModules(new Set(grouped.map(m => m.id)));
+  }
+
+  function collapseAll() {
+    setExpandedModules(new Set());
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -543,34 +666,70 @@ function PermissionsTab({ modules, functionalities }) {
             className="w-full h-11 pl-10 pr-4 text-[14px] rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-500 shadow-sm transition-all"
           />
         </div>
-        <div className="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-[13px] font-bold">
-          {functionalities.length} total permissions
+        <div className="flex items-center gap-3">
+          <button
+            onClick={expandAll}
+            className="text-[11px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-3 py-1.5 rounded-lg transition"
+          >Expand All</button>
+          <button
+            onClick={collapseAll}
+            className="text-[11px] text-slate-500 hover:text-slate-700 font-bold hover:bg-slate-100 px-3 py-1.5 rounded-lg transition"
+          >Collapse All</button>
+          <div className="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-[13px] font-bold">
+            {functionalities.length} total permissions
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {grouped.map(m => (
-          <div key={m.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{m.module_name}</span>
-              <span className="text-[10px] bg-teal-100 text-teal-700 font-bold px-2 py-0.5 rounded-full">{m.funcs.length} PERMS</span>
+      <div className="space-y-2">
+        {grouped.map(m => {
+          const isExpanded = expandedModules.has(m.id);
+          return (
+            <div key={m.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <button
+                onClick={() => toggleModule(m.id)}
+                className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MdViewModule className="text-teal-500 h-5 w-5" />
+                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{m.module_name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-teal-100 text-teal-700 font-bold px-2 py-0.5 rounded-full">{m.funcs.length} PERMS</span>
+                  {isExpanded
+                    ? <MdExpandLess className="text-slate-400 h-5 w-5" />
+                    : <MdExpandMore className="text-slate-400 h-5 w-5" />}
+                </div>
+              </button>
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-4 space-y-2 border-t border-slate-100">
+                      {m.funcs.map(f => {
+                        const action = f.slug?.toUpperCase() || inferAction(f.name);
+                        return (
+                          <div key={f.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div className="h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
+                            <span className="text-[11px] font-bold text-slate-700 flex-1 truncate">
+                              {m.module_name.toUpperCase()}.{f.name.split(" ").slice(-1)[0].toUpperCase()}
+                            </span>
+                            {action && <ActionBadge action={action} />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
-              {m.funcs.map(f => {
-                const action = f.slug?.toUpperCase() || inferAction(f.name);
-                return (
-                  <div key={f.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                    <div className="h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
-                    <span className="text-[11px] font-bold text-slate-700 flex-1 truncate">
-                      {m.module_name.toUpperCase()}.{f.name.split(" ").slice(-1)[0].toUpperCase()}
-                    </span>
-                    {action && <ActionBadge action={action} />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

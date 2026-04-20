@@ -2,15 +2,12 @@ import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { PageShell } from "../components/layout/PageShell.jsx";
 import {
-  MdBusiness,
-  MdPeople,
   MdSecurity,
   MdVpnKey,
   MdHistory,
   MdViewModule,
   MdExtension,
   MdLockPerson,
-  MdAppRegistration,
   MdGroupWork,
   MdSearch,
 } from "react-icons/md";
@@ -80,14 +77,7 @@ const MODULE_DATA = [
     title: "Group Rights",
     desc: "Set group permissions",
     icon: <MdSecurity />,
-  },
-  {
-    path: "/security/user-module",
-    category: "Access Control",
-    title: "Users Module Access",
-    desc: "Manage user access",
-    icon: <MdVpnKey />,
-  },
+  }
 ];
 
 export default function Security() {
