@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { refreshPermissions } from "./features/auth/authSlice";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -40,6 +41,7 @@ import Employee from "./pages/security/Employee";
 import User from "./pages/security/User";
 import SoftwareGroup from "./pages/security/Software";
 import UserToGroup from "./pages/security/UserToGroup";
+import AccessControl from "./pages/security/AccessControl";
 import Department from "./pages/setup/Department";
 import Designation from "./pages/setup/Designation";
 import CustomerLedger from "./pages/customers/CustomerLedger";
@@ -57,7 +59,14 @@ import StockTransferPage from "./pages/stock/StockTransfer";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const App = () => {
+  const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(refreshPermissions());
+    }
+  }, [isAuthenticated, dispatch]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -228,7 +237,7 @@ const App = () => {
         <Route 
           path="/customer/registration" 
           element={
-            <ProtectedRoute module="Customers">
+            <ProtectedRoute module="Customer">
               <CustomerList />
             </ProtectedRoute>
           } 
@@ -236,7 +245,7 @@ const App = () => {
         <Route 
           path="/customer/record" 
           element={
-            <ProtectedRoute module="Customers">
+            <ProtectedRoute module="Customer">
               <CustomerLedger />
             </ProtectedRoute>
           } 
@@ -244,7 +253,7 @@ const App = () => {
         <Route 
           path="/booking-customers" 
           element={
-            <ProtectedRoute module="Bookings">
+            <ProtectedRoute module="Booking">
               <Bookings />
             </ProtectedRoute>
           } 
@@ -283,6 +292,7 @@ const App = () => {
         <Route path="/security/user" element={<User />} />
         <Route path="/security/software-group" element={<SoftwareGroup />} />
         <Route path="/security/user-to-group" element={<UserToGroup />} />
+        <Route path="/security/access-control" element={<AccessControl />} />
       </Route>
 
       {/* Catch-all route */}

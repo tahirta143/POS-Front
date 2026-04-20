@@ -27,7 +27,7 @@ export default function Groups() {
   async function fetchGroups() {
     setLoading(true)
     try {
-      const res = await axiosInstance.get('/groups')
+      const res = await axiosInstance.get('/group')
       setGroups(Array.isArray(res.data) ? res.data : res.data?.data || [])
     } catch {
       toast.error('Failed to load groups.')

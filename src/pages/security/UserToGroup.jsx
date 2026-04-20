@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   MdAppRegistration,
   MdArrowBack,
@@ -24,10 +24,9 @@ export default function UserToGroup() {
   const [groups, setGroups] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
-  const [selectedUserIds, setSelectedUserIds] = useState([]); // multi-select
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [expandedGroup, setExpandedGroup] = useState(null);
 
   useEffect(() => {
     fetchPageData();
@@ -36,8 +35,9 @@ export default function UserToGroup() {
   async function fetchPageData() {
     setLoading(true);
     try {
+      // Note: Make sure /groups includes the users array in the response
       const [groupsRes, usersRes] = await Promise.all([
-        axiosInstance.get("/groups"), // returns groups with their users[]
+        axiosInstance.get("/group-users"), // Use the group-users base route to get enriched data
         axiosInstance.get("/auth/users"),
       ]);
       setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : []);
@@ -50,22 +50,26 @@ export default function UserToGroup() {
     }
   }
 
-  // When a group is selected, pre-tick its current members
   const selectedGroup = useMemo(
     () => groups.find((g) => String(g.id) === String(selectedGroupId)),
-    [groups, selectedGroupId],
+    [groups, selectedGroupId]
   );
 
   function handleGroupChange(id) {
     setSelectedGroupId(id);
     const grp = groups.find((g) => String(g.id) === String(id));
-    setSelectedUserIds((grp?.users || []).map((u) => String(u.id)));
+    // Reset selection to currently assigned members from the DB
+    if (grp) {
+      setSelectedUserIds((grp.users || []).map((u) => String(u.id)));
+    } else {
+      setSelectedUserIds([]);
+    }
   }
 
   function toggleUser(userId) {
     const id = String(userId);
     setSelectedUserIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   }
 
@@ -86,16 +90,17 @@ export default function UserToGroup() {
 
     setSubmitting(true);
     try {
-      // Update group members via the /groups endpoint
-      await axiosInstance.put(`/groups/${selectedGroupId}`, {
-        group_name: selectedGroup?.group_name,
-        users: selectedUserIds.map(Number),
+      // MATCHES BACKEND: router.put("/:groupId/users", setGroupUsers);
+      // Note: We use /group-users as the base because of your main router config
+      await axiosInstance.put(`/group-users/${selectedGroupId}/users`, {
+        userIds: selectedUserIds.map(Number),
       });
+
       toast.success("Group members updated successfully.");
       fetchPageData();
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || "Failed to update group members.",
+        err?.response?.data?.message || "Failed to update group members."
       );
     } finally {
       setSubmitting(false);
@@ -105,23 +110,16 @@ export default function UserToGroup() {
   async function removeUser(groupId, userId, userName) {
     if (!window.confirm(`Remove ${userName} from this group?`)) return;
     try {
-      // Recalculate members list and update via PUT /groups/:id
-      const targetGroup = groups.find((g) => String(g.id) === String(groupId));
-      const remainingUserIds = (targetGroup?.users || [])
-        .filter((u) => String(u.id) !== String(userId))
-        .map((u) => u.id);
-
-      await axiosInstance.put(`/groups/${groupId}`, {
-        group_name: targetGroup?.group_name,
-        users: remainingUserIds,
-      });
+      // MATCHES BACKEND: router.delete("/:groupId/user/:userId", removeUserFromGroup);
+      await axiosInstance.delete(`/group-users/${groupId}/user/${userId}`);
 
       toast.success(`${userName} removed.`);
       fetchPageData();
-      // Update local selection if this group is open
+
+      // Update local checkbox state if the group being edited is the one we just removed from
       if (String(groupId) === String(selectedGroupId)) {
         setSelectedUserIds((prev) =>
-          prev.filter((id) => String(id) !== String(userId)),
+          prev.filter((id) => String(id) !== String(userId))
         );
       }
     } catch (err) {
@@ -129,29 +127,26 @@ export default function UserToGroup() {
     }
   }
 
-  // Users not yet in the selected group (for the "not assigned" count)
+  // Pre-calculate assignments for the table view
+  const allAssignments = useMemo(() => {
+    return groups.flatMap((g) =>
+      (g.users || []).map((u) => ({
+        groupId: g.id,
+        groupName: g.group_name,
+        userId: u.id,
+        userName: u.name || u.username || u.email || `User #${u.id}`,
+        email: u.email,
+      }))
+    );
+  }, [groups]);
+
   const currentMemberIds = useMemo(
     () => new Set((selectedGroup?.users || []).map((u) => String(u.id))),
-    [selectedGroup],
-  );
-
-  const allAssignments = useMemo(
-    () =>
-      groups.flatMap((g) =>
-        (g.users || []).map((u) => ({
-          groupId: g.id,
-          groupName: g.group_name,
-          userId: u.id,
-          userName: u.name || u.username || u.email || `User #${u.id}`,
-          email: u.email,
-        })),
-      ),
-    [groups],
+    [selectedGroup]
   );
 
   return (
     <div className="space-y-5 animate-in slide-in-from-right-4">
-      {/* Back */}
       <button
         onClick={() => navigate("/security")}
         className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700 hover:bg-teal-100 transition"
@@ -159,7 +154,6 @@ export default function UserToGroup() {
         <MdArrowBack /> Back to Overview
       </button>
 
-      {/* Assignment Form */}
       <Card className="border-l-[6px] border-l-teal-500 p-6">
         <SectionHeader
           title="Assign Users to Group"
@@ -168,7 +162,6 @@ export default function UserToGroup() {
         />
 
         <form onSubmit={handleSave} className="mt-6 space-y-5">
-          {/* Group selector */}
           <Field label="Select Group" required>
             <select
               value={selectedGroupId}
@@ -179,98 +172,67 @@ export default function UserToGroup() {
               <option value="">Choose a group...</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.group_name} ({(g.users || []).length} member
-                  {(g.users || []).length !== 1 ? "s" : ""})
+                  {g.group_name} ({(g.users || []).length} members)
                 </option>
               ))}
             </select>
           </Field>
 
-          {/* User multi-select checkboxes */}
           {selectedGroupId && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
-                  Select Members
-                  <span className="ml-2 font-normal text-slate-400 normal-case tracking-normal">
-                    ({selectedUserIds.length} of {users.length} selected)
-                  </span>
+                <label className="text-[11px] font-bold uppercase text-slate-600">
+                  Select Members ({selectedUserIds.length} of {users.length})
                 </label>
                 <button
                   type="button"
                   onClick={toggleAll}
-                  className="text-[11px] font-semibold text-teal-600 hover:text-teal-700 transition"
+                  className="text-[11px] font-semibold text-teal-600"
                 >
-                  {selectedUserIds.length === users.length
-                    ? "Deselect All"
-                    : "Select All"}
+                  {selectedUserIds.length === users.length ? "Deselect All" : "Select All"}
                 </button>
               </div>
 
               <div className="rounded-xl border border-slate-200 overflow-hidden max-h-64 overflow-y-auto">
-                {users.length === 0 ? (
-                  <div className="py-6 text-center text-[12px] text-slate-400">
-                    No users found.
-                  </div>
-                ) : (
-                  users.map((user, idx) => {
-                    const uid = String(user.id);
-                    const checked = selectedUserIds.includes(uid);
-                    const wasIn = currentMemberIds.has(uid);
-                    return (
-                      <label
-                        key={user.id}
-                        className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-b last:border-0 ${
-                          checked
-                            ? "bg-teal-50/60"
-                            : "bg-white hover:bg-slate-50/60"
+                {users.map((user) => {
+                  const uid = String(user.id);
+                  const checked = selectedUserIds.includes(uid);
+                  const wasIn = currentMemberIds.has(uid);
+                  return (
+                    <label
+                      key={user.id}
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer border-b last:border-0 ${checked ? "bg-teal-50/60" : "bg-white hover:bg-slate-50/60"
                         }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleUser(uid)}
-                          className="h-4 w-4 rounded border-slate-300 text-teal-600 accent-teal-600"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-slate-800 truncate">
-                            {user.name || user.username || `User #${user.id}`}
-                          </p>
-                          <p className="text-[10px] text-slate-400 truncate">
-                            {user.email || "—"}
-                          </p>
-                        </div>
-                        {wasIn && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full shrink-0">
-                            Current
-                          </span>
-                        )}
-                      </label>
-                    );
-                  })
-                )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleUser(uid)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600"
+                      />
+                      <div className="flex-1">
+                        <p className="text-[12px] font-semibold text-slate-800">
+                          {user.name || user.username}
+                        </p>
+                        <p className="text-[10px] text-slate-400">{user.email}</p>
+                      </div>
+                      {wasIn && (
+                        <span className="text-[9px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full">
+                          Current
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
               </div>
             </motion.div>
           )}
 
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedGroupId("");
-                setSelectedUserIds([]);
-              }}
-              className="px-6 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition"
-            >
-              Reset
-            </button>
+          <div className="flex justify-end gap-3 border-t pt-4">
             <button
               type="submit"
               disabled={submitting || !selectedGroupId}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-8 py-2 text-sm font-bold text-white shadow-lg disabled:opacity-50"
             >
               <MdSave />
               {submitting ? "Saving..." : "Save Group Members"}
@@ -279,80 +241,42 @@ export default function UserToGroup() {
         </form>
       </Card>
 
-      {/* All Assignments Table */}
       <Card className="border-l-[6px] border-l-teal-500 p-0 overflow-hidden">
         <SectionHeader
           title="Current Group Assignments"
-          description={`${allAssignments.length} user–group assignment${allAssignments.length !== 1 ? "s" : ""}`}
+          description={`${allAssignments.length} total assignments`}
           icon={<MdGroup className="text-teal-600 text-xl" />}
-          action={
-            <div className="p-4">
-              <button
-                type="button"
-                onClick={fetchPageData}
-                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition"
-              >
-                Refresh
-              </button>
-            </div>
-          }
         />
-
-        {loading ? (
-          <TableState message="Loading assignments..." />
-        ) : allAssignments.length === 0 ? (
-          <TableState message="No assignments yet. Select a group above and save members." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/80">
-                <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-5 py-3">#</th>
-                  <th className="px-5 py-3">Group</th>
-                  <th className="px-5 py-3">User</th>
-                  <th className="px-5 py-3">Email</th>
-                  <th className="px-5 py-3 text-right">Action</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50/80 text-[10px] font-bold uppercase text-slate-500">
+              <tr>
+                <th className="px-5 py-3">Group</th>
+                <th className="px-5 py-3">User</th>
+                <th className="px-5 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 text-[12px]">
+              {allAssignments.map((a) => (
+                <tr key={`${a.groupId}-${a.userId}`} className="hover:bg-teal-50/20">
+                  <td className="px-5 py-3">
+                    <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold">
+                      {a.groupName}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 font-semibold text-slate-700">{a.userName}</td>
+                  <td className="px-5 py-3 text-right">
+                    <ActionButton
+                      label="Delete"
+                      tone="rose"
+                      onClick={() => removeUser(a.groupId, a.userId, a.userName)}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 bg-white">
-                {allAssignments.map((a, idx) => (
-                  <tr
-                    key={`${a.groupId}-${a.userId}`}
-                    className="hover:bg-teal-50/20 transition-colors"
-                  >
-                    <td className="px-5 py-3 text-[11px] text-slate-400 font-mono">
-                      {idx + 1}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-bold text-teal-700">
-                        <MdGroup className="text-xs" />
-                        {a.groupName}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 font-semibold text-slate-700 text-[12px]">
-                      <span className="inline-flex items-center gap-1.5">
-                        <MdPerson className="text-slate-400 text-sm" />
-                        {a.userName}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-[11px] text-slate-400">
-                      {a.email || "—"}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <ActionButton
-                        label="Delete"
-                        tone="rose"
-                        onClick={() =>
-                          removeUser(a.groupId, a.userId, a.userName)
-                        }
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );

@@ -46,14 +46,14 @@ import { logout } from "../../features/auth/authSlice";
 // ── Nav tree ─────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: MdDashboard },
-  { to: "/items", label: "Item Details", icon: MdInventory, module: "items" },
-  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "sales" },
-  { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "purchases" },
+  { to: "/items", label: "Item Details", icon: MdInventory, module: "Items" },
+  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "Sale" },
+  { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "Purchase" },
   {
     id: "stock",
     label: "Stock",
     icon: MdWarehouse,
-    module: "stock",
+    module: "Stock",
     children: [
       { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox },
       { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh },
@@ -75,7 +75,7 @@ const NAV_ITEMS = [
     id: "finance",
     label: "Finance",
     icon: MdAccountBalance,
-    module: "finance",
+    module: "Finance",
     children: [
       {
         to: "/finance/supplier-payment",
@@ -108,7 +108,7 @@ const NAV_ITEMS = [
     id: "customer",
     label: "Customer",
     icon: MdPeople,
-    module: "customers",
+    module: "Customer",
     children: [
       {
         to: "/customer/registration",
@@ -118,13 +118,13 @@ const NAV_ITEMS = [
       { to: "/customer/record", label: "Customer Record", icon: MdReceipt },
     ],
   },
-  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "bookings" },
+  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "Booking" },
   
   {
     id: "accounts",
     label: "Accounts",
     icon: MdMonetizationOn,
-    module: "accounts",
+    module: "Accounts",
     children: [
       { to: "/daybook", label: "Daybook", icon: MdCalendarToday },
       { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance },
@@ -136,7 +136,7 @@ const NAV_ITEMS = [
     id: "setup",
     label: "Setup",
     icon: MdSettings,
-    module: "setup",
+    module: "Setup",
     children: [
       { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping },
       { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory },
@@ -181,7 +181,7 @@ const NAV_ITEMS = [
     id: "security-settings",
     label: "Security",
     icon: MdSecurity,
-    module: "security",
+    module: "Security",
     children: [
       { to: "/security", label: "Overview", icon: MdDashboard },
       {
@@ -190,14 +190,14 @@ const NAV_ITEMS = [
         icon: MdExpandMore,
         children: [
           {
+            to: "/security/access-control",
+            label: "Access Control",
+            icon: MdSecurity,
+          },
+          {
             to: "/security/user",
             label: "Users",
             icon: MdPerson,
-          },
-          {
-            to: "/security/software-group",
-            label: "Software Group",
-            icon: MdWorkspaces,
           },
           {
             to: "/security/user-to-group",
@@ -209,16 +209,10 @@ const NAV_ITEMS = [
             label: "Security Log",
             icon: MdHistory,
           },
-          { to: "/security/module-info", label: "Modules", icon: MdViewModule },
           {
-            to: "/security/module-functions",
-            label: "Module Functions",
-            icon: MdStyle,
-          },
-          {
-            to: "/security/group-rights",
-            label: "Group Rights",
-            icon: MdSecurity,
+            to: "/security/software-group",
+            label: "Software Group",
+            icon: MdWorkspaces,
           },
         ],
       },
@@ -446,7 +440,8 @@ function SidebarContent({ onNavigate }) {
       // If it's a module parent, check if user has access to this module
       if (item.module) {
         const hasAccess = permissions?.modules?.some(
-          (m) => m.slug === item.module.toLowerCase() || m.name.toLowerCase() === item.module.toLowerCase()
+          (m) => (m.slug && m.slug.toLowerCase() === item.module.toLowerCase()) || 
+                 (m.name && m.name.toLowerCase() === item.module.toLowerCase())
         );
         if (!hasAccess) return false;
       }

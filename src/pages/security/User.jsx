@@ -320,7 +320,6 @@ export default function User() {
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <th className="px-5 py-3">Code</th>
                     <th className="px-5 py-3">User Details</th>
-                    <th className="px-5 py-3">Security Group</th>
                     <th className="px-5 py-3">Access Level</th>
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
@@ -339,9 +338,6 @@ export default function User() {
                           <span className="font-bold text-slate-800">{row.username || row.name}</span>
                           <span className="text-[11px] text-slate-400">{row.email}</span>
                         </div>
-                      </td>
-                      <td className="px-5 py-4 text-[12px] font-semibold text-slate-600">
-                        {row.group_name || '—'}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">

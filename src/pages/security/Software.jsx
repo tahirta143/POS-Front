@@ -42,7 +42,7 @@ export default function SoftwareGroup() {
     setLoading(true);
     setMessage("");
     try {
-      const response = await axiosInstance.get("/groups");
+      const response = await axiosInstance.get("/group-users");
       setGroups(Array.isArray(response.data) ? response.data : []);
     } catch {
       setGroups([]);

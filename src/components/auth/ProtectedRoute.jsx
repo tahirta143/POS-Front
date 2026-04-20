@@ -25,7 +25,8 @@ const ProtectedRoute = ({ children, module, action }) => {
   // If a specific module check is required
   if (module) {
     const hasModule = permissions.modules?.some(
-      (m) => m.slug === module.toLowerCase() || m.name.toLowerCase() === module.toLowerCase()
+      (m) => (m.slug && m.slug.toLowerCase() === module.toLowerCase()) || 
+             (m.name && m.name.toLowerCase() === module.toLowerCase())
     );
 
     if (!hasModule) {
@@ -36,7 +37,8 @@ const ProtectedRoute = ({ children, module, action }) => {
   // If a specific action check is required
   if (action) {
     const hasAction = permissions.functionalities?.some(
-      (f) => f.slug === action.toLowerCase() || f.name.toLowerCase() === action.toLowerCase()
+      (f) => (f.slug && f.slug.toLowerCase() === action.toLowerCase()) || 
+             (f.name && f.name.toLowerCase() === action.toLowerCase())
     );
 
     if (!hasAction) {
