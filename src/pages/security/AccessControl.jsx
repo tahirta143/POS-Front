@@ -16,6 +16,15 @@ import {
   MdHistory,
   MdExpandMore,
   MdExpandLess,
+  MdFolder,
+  MdFolderOpen,
+  MdPerson,
+  MdPayment,
+  MdReceipt,
+  MdLocalShipping,
+  MdAccountBalance,
+  MdSettings,
+  MdDashboard,
 } from "react-icons/md";
 
 // ─── Shared Components ────────────────────────────────────────────────────────
@@ -52,9 +61,34 @@ function ActionBadge({ action }) {
   );
 }
 
+// Get icon for parent category
+function getCategoryIcon(categoryName) {
+  const name = categoryName.toLowerCase();
+  if (name.includes("customer")) return <MdPerson className="h-4 w-4 text-emerald-600" />;
+  if (name.includes("supplier") || name.includes("vendor")) return <MdLocalShipping className="h-4 w-4 text-blue-600" />;
+  if (name.includes("security") || name.includes("access")) return <MdSecurity className="h-4 w-4 text-purple-600" />;
+  if (name.includes("finance") || name.includes("billing")) return <MdPayment className="h-4 w-4 text-amber-600" />;
+  if (name.includes("clinical") || name.includes("patient")) return <MdAccountBalance className="h-4 w-4 text-rose-600" />;
+  if (name.includes("dashboard")) return <MdDashboard className="h-4 w-4 text-teal-600" />;
+  return <MdFolder className="h-4 w-4 text-slate-500" />;
+}
+
+// Get icon for child module
+function getModuleIcon(moduleName) {
+  const name = moduleName.toLowerCase();
+  if (name === "customer") return <MdPerson className="h-3.5 w-3.5" />;
+  if (name.includes("payment")) return <MdPayment className="h-3.5 w-3.5" />;
+  if (name.includes("ledger")) return <MdReceipt className="h-3.5 w-3.5" />;
+  if (name === "supplier") return <MdLocalShipping className="h-3.5 w-3.5" />;
+  if (name === "groups") return <MdPeople className="h-3.5 w-3.5" />;
+  if (name === "users") return <MdPeople className="h-3.5 w-3.5" />;
+  if (name === "modules") return <MdViewModule className="h-3.5 w-3.5" />;
+  if (name.includes("permission")) return <MdSecurity className="h-3.5 w-3.5" />;
+  return <MdFolder className="h-3.5 w-3.5" />;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GROUPS TAB
+// GROUPS TAB - with Hierarchical Tree Structure (Parent Categories → Child Modules)
 // ═══════════════════════════════════════════════════════════════════════════════
 function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   const [selectedGroup, setSelectedGroup]   = useState(null);
@@ -66,16 +100,16 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   const [expandedAvailable, setExpandedAvailable] = useState(new Set());
   const [expandedAssigned, setExpandedAssigned]   = useState(new Set());
 
-  function toggleExpand(setFn, moduleId) {
+  function toggleExpand(setFn, id) {
     setFn(prev => {
       const next = new Set(prev);
-      next.has(moduleId) ? next.delete(moduleId) : next.add(moduleId);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
-  function expandAll(setFn, tree) {
-    setFn(new Set(tree.map(m => m.moduleId)));
+  function expandAll(setFn, treeData) {
+    setFn(new Set(treeData.map(item => item.id)));
   }
 
   function collapseAll(setFn) {
@@ -95,7 +129,6 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       const modIds  = new Set();
       data.forEach(r => {
         const funcs = r.functionalities || [];
-        // Only add module if it has at least one functionality assigned
         if (funcs.length > 0) {
           modIds.add(r.module_id);
           funcs.forEach(f => funcIds.add(f.id));
@@ -109,21 +142,161 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     }
   }
 
-  const tree = useMemo(() => {
-    return modules.map(m => ({
-      id:       `mod-${m.id}`,
-      moduleId: m.id,
-      label:    m.module_name,
-      children: functionalities
-        .filter(f => f.module_id === m.id)
-        .map(f => ({
-          id:          `func-${f.id}`,
-          funcId:      f.id,
-          moduleId:    m.id,
-          label:       f.name,
-          action:      f.slug?.toUpperCase() || inferAction(f.name),
-        })),
-    }));
+  // Build hierarchical tree structure: Parent Categories → Child Modules → Functionalities
+  const availableTree = useMemo(() => {
+   
+    const categoryStructure = {
+      "Customer Management": {
+        id: "cat-customer",
+        icon: getCategoryIcon("customer"),
+        description: "Manage customer data, payments, and account ledgers",
+        modules: ["Customer", "Customer Payment", "Customer Ledger", "Customer Statement"]
+      },
+      "Supplier Management": {
+        id: "cat-supplier",
+        icon: getCategoryIcon("supplier"),
+        description: "Manage supplier information, payments, and amounts",
+        modules: ["Supplier", "Supplier Payment", "Supplier Amount", "Supplier Ledger"]
+      },
+      "Security & Access Control": {
+        id: "cat-security",
+        icon: getCategoryIcon("security"),
+        description: "System security, user roles, and permission management",
+        modules: ["Groups", "Users", "Modules", "Permissions", "Roles", "Audit Logs"]
+      },
+      "Billing & Finance": {
+        id: "cat-billing",
+        icon: getCategoryIcon("finance"),
+        description: "Invoicing, payment processing, and financial transactions",
+        modules: ["Invoice", "Payment", "Refund", "Settlement", "Tax Configuration"]
+      },
+      "Dashboard & Analytics": {
+        id: "cat-dashboard",
+        icon: getCategoryIcon("dashboard"),
+        description: "System dashboards, reports, and analytics",
+        modules: ["Dashboard", "Reports", "Analytics", "KPI Monitoring"]
+      },
+      "Setup": {
+        id: "cat-emergency",
+        icon: getCategoryIcon("emergency"),
+        description: "Setup screens for various modules",
+        modules: ["Item Category", "Item Type", "Item Unit", "Shelve Location"]
+      }
+    };
+
+    // Create a map of module_id to module object from API
+    const moduleMap = new Map();
+    modules.forEach(m => {
+      moduleMap.set(m.id, {
+        id: m.id,
+        name: m.module_name,
+        description: m.description || "",
+        functionalities: [],
+      });
+    });
+
+    // Group functionalities under their modules
+    functionalities.forEach(f => {
+      const module = moduleMap.get(f.module_id);
+      if (module) {
+        module.functionalities.push({
+          id: f.id,
+          funcId: f.id,
+          name: f.name,
+          slug: f.slug,
+          action: f.slug?.toUpperCase() || inferAction(f.name),
+        });
+      }
+    });
+
+    // Build the tree structure
+    const tree = [];
+    
+    Object.entries(categoryStructure).forEach(([categoryName, category]) => {
+      const childModules = [];
+      
+      category.modules.forEach(moduleName => {
+        // Find matching module from API data
+        let matchingModule = null;
+        for (const [_, mod] of moduleMap) {
+          if (mod.name.toLowerCase() === moduleName.toLowerCase() ||
+              mod.name.toLowerCase().includes(moduleName.toLowerCase())) {
+            matchingModule = mod;
+            break;
+          }
+        }
+        
+        if (matchingModule) {
+          childModules.push({
+            id: matchingModule.id,
+            moduleId: matchingModule.id,
+            name: matchingModule.name,
+            description: matchingModule.description,
+            icon: getModuleIcon(matchingModule.name),
+            type: "module",
+            functionalities: matchingModule.functionalities,
+          });
+        } else {
+          // If module doesn't exist in DB, show as planned
+          childModules.push({
+            id: `planned-${moduleName.replace(/\s/g, '-')}`,
+            moduleId: `planned-${moduleName.replace(/\s/g, '-')}`,
+            name: moduleName,
+            description: `${moduleName} module (coming soon)`,
+            icon: getModuleIcon(moduleName),
+            type: "module",
+            isPlanned: true,
+            functionalities: [],
+          });
+        }
+      });
+      
+      // Only add category if it has at least one module (or always show for planned)
+      if (childModules.length > 0) {
+        tree.push({
+          id: category.id,
+          name: categoryName,
+          description: category.description,
+          icon: category.icon,
+          type: "category",
+          children: childModules,
+        });
+      }
+    });
+
+    // Add any standalone modules that don't fit into categories
+    const assignedModuleNames = new Set();
+    Object.values(categoryStructure).forEach(cat => {
+      cat.modules.forEach(m => assignedModuleNames.add(m.toLowerCase()));
+    });
+    
+    const standaloneModules = [];
+    for (const [_, mod] of moduleMap) {
+      if (!assignedModuleNames.has(mod.name.toLowerCase())) {
+        standaloneModules.push({
+          id: mod.id,
+          moduleId: mod.id,
+          name: mod.name,
+          description: mod.description,
+          icon: getModuleIcon(mod.name),
+          type: "module",
+          functionalities: mod.functionalities,
+        });
+      }
+    }
+    
+    if (standaloneModules.length > 0) {
+      tree.push({
+        id: "cat-standalone",
+        name: "Other Modules",
+        description: "Standalone modules without parent category",
+        icon: <MdFolder className="h-4 w-4 text-slate-500" />,
+        type: "category",
+        children: standaloneModules,
+      });
+    }
+    
+    return tree;
   }, [modules, functionalities]);
 
   function inferAction(name) {
@@ -132,74 +305,117 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     if (n.includes("DELETE") || n.includes("REMOVE")) return "DELETE";
     if (n.includes("UPDATE") || n.includes("EDIT")) return "UPDATE";
     if (n.includes("READ") || n.includes("VIEW") || n.includes("GET")) return "READ";
+    if (n.includes("PRINT")) return "PRINT";
+    if (n.includes("EXPORT")) return "READ";
     return null;
   }
 
-  function toggleNode(node) {
-    if (node.moduleId && !node.funcId) {
-      // Toggling a module header
-      const childFuncIds = (node.children || []).map(c => c.funcId).filter(Boolean);
-      const allChecked   = childFuncIds.every(id => assignedRightIds.has(id));
+  // Toggle entire module selection (select/deselect all functionalities under a module)
+  function toggleModule(module) {
+    const childFuncIds = module.functionalities.map(f => f.funcId).filter(Boolean);
+    const allChecked = childFuncIds.length > 0 && childFuncIds.every(id => assignedRightIds.has(id));
 
-      setAssignedModuleIds(prev => {
-        const next = new Set(prev);
-        allChecked ? next.delete(node.moduleId) : next.add(node.moduleId);
-        return next;
-      });
-      setAssignedRightIds(prev => {
-        const next = new Set(prev);
-        if (allChecked) childFuncIds.forEach(id => next.delete(id));
-        else            childFuncIds.forEach(id => next.add(id));
-        return next;
-      });
-    } else if (node.funcId) {
-      // Toggling a single functionality
-      setAssignedRightIds(prev => {
-        const next = new Set(prev);
-        next.has(node.funcId) ? next.delete(node.funcId) : next.add(node.funcId);
-
-        // Check if any sibling functionalities remain selected after this toggle
-        const siblingFuncIds = tree
-          .find(m => m.moduleId === node.moduleId)
-          ?.children.map(c => c.funcId) || [];
-        const anyRemaining = siblingFuncIds.some(id => next.has(id));
-
-        // Add or remove parent module based on whether any children remain
-        setAssignedModuleIds(prev2 => {
-          const next2 = new Set(prev2);
-          anyRemaining ? next2.add(node.moduleId) : next2.delete(node.moduleId);
-          return next2;
-        });
-
-        return next;
-      });
-    }
+    setAssignedModuleIds(prev => {
+      const next = new Set(prev);
+      allChecked ? next.delete(module.moduleId) : next.add(module.moduleId);
+      return next;
+    });
+    
+    setAssignedRightIds(prev => {
+      const next = new Set(prev);
+      if (allChecked) {
+        childFuncIds.forEach(id => next.delete(id));
+      } else {
+        childFuncIds.forEach(id => next.add(id));
+      }
+      return next;
+    });
   }
 
-  // Only show modules in "Assigned" panel that have at least one selected functionality
+  // Toggle single functionality
+  function toggleFunctionality(func, moduleId) {
+    setAssignedRightIds(prev => {
+      const next = new Set(prev);
+      next.has(func.funcId) ? next.delete(func.funcId) : next.add(func.funcId);
+
+      // Update parent module selection state
+      let parentModule = null;
+      for (const category of availableTree) {
+        parentModule = category.children.find(m => m.moduleId === moduleId);
+        if (parentModule) break;
+      }
+      
+      if (parentModule) {
+        const siblingFuncIds = parentModule.functionalities.map(f => f.funcId);
+        const anyRemaining = siblingFuncIds.some(id => next.has(id));
+        const allSelected = siblingFuncIds.length > 0 && siblingFuncIds.every(id => next.has(id));
+
+        setAssignedModuleIds(prev2 => {
+          const next2 = new Set(prev2);
+          if (allSelected) {
+            next2.add(moduleId);
+          } else if (!anyRemaining) {
+            next2.delete(moduleId);
+          } else {
+            if (!next2.has(moduleId) && anyRemaining) {
+              next2.add(moduleId);
+            }
+          }
+          return next2;
+        });
+      }
+
+      return next;
+    });
+  }
+
+  // Build assigned tree (only categories and modules with assigned functionalities)
   const assignedTree = useMemo(() => {
-    return tree
-      .map(m => ({
-        ...m,
-        children: m.children.filter(c => assignedRightIds.has(c.funcId)),
+    return availableTree
+      .map(category => ({
+        ...category,
+        children: category.children
+          .map(module => ({
+            ...module,
+            functionalities: module.functionalities.filter(f => assignedRightIds.has(f.funcId)),
+          }))
+          .filter(module => module.functionalities.length > 0),
       }))
-      .filter(m => m.children.length > 0);
-  }, [tree, assignedRightIds]);
+      .filter(category => category.children.length > 0);
+  }, [availableTree, assignedRightIds]);
 
-  const filteredAvailable = useMemo(() => {
+  // Filter available tree based on search
+  const filteredAvailableTree = useMemo(() => {
     const q = searchAvailable.toLowerCase();
-    return tree.map(m => ({
-      ...m,
-      children: m.children.filter(c => c.label.toLowerCase().includes(q) || m.label.toLowerCase().includes(q)),
-    })).filter(m => m.children.length > 0 || m.label.toLowerCase().includes(q));
-  }, [tree, searchAvailable]);
+    if (!q) return availableTree;
+    
+    return availableTree
+      .map(category => ({
+        ...category,
+        children: category.children.filter(module =>
+          module.name.toLowerCase().includes(q) ||
+          category.name.toLowerCase().includes(q) ||
+          module.functionalities.some(f => f.name.toLowerCase().includes(q))
+        ),
+      }))
+      .filter(category => category.children.length > 0 || category.name.toLowerCase().includes(q));
+  }, [availableTree, searchAvailable]);
 
-  const filteredAssigned = useMemo(() => {
+  // Filter assigned tree based on search
+  const filteredAssignedTree = useMemo(() => {
     const q = searchAssigned.toLowerCase();
-    return assignedTree.map(m => ({
-      ...m,
-      children: m.children.filter(c => c.label.toLowerCase().includes(q) || m.label.toLowerCase().includes(q)),
-    })).filter(m => m.children.length > 0 || m.label.toLowerCase().includes(q));
+    if (!q) return assignedTree;
+    
+    return assignedTree
+      .map(category => ({
+        ...category,
+        children: category.children.filter(module =>
+          module.name.toLowerCase().includes(q) ||
+          category.name.toLowerCase().includes(q) ||
+          module.functionalities.some(f => f.name.toLowerCase().includes(q))
+        ),
+      }))
+      .filter(category => category.children.length > 0 || category.name.toLowerCase().includes(q));
   }, [assignedTree, searchAssigned]);
 
   async function handleSave() {
@@ -208,22 +424,25 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     try {
       const byModule = {};
       assignedRightIds.forEach(funcId => {
-        const f = functionalities.find(x => x.id === funcId);
-        if (!f) return;
-        if (!byModule[f.module_id]) byModule[f.module_id] = [];
-        byModule[f.module_id].push(funcId);
+        const func = functionalities.find(x => x.id === funcId);
+        if (!func) return;
+        if (!byModule[func.module_id]) byModule[func.module_id] = [];
+        byModule[func.module_id].push(funcId);
       });
+      
       assignedModuleIds.forEach(modId => {
         if (!byModule[modId]) byModule[modId] = [];
       });
 
       await axiosInstance.delete(`/add-rights/group/${selectedGroup.id}`);
       for (const [moduleId, funcIds] of Object.entries(byModule)) {
-        await axiosInstance.post("/add-rights", {
-          group:           selectedGroup.id,
-          module:          Number(moduleId),
-          functionalities: funcIds,
-        });
+        if (funcIds.length > 0) {
+          await axiosInstance.post("/add-rights", {
+            group:           selectedGroup.id,
+            module:          Number(moduleId),
+            functionalities: funcIds,
+          });
+        }
       }
       toast.success(`Permissions updated for "${selectedGroup.group_name}"`);
       onRefresh();
@@ -234,8 +453,20 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     }
   }
 
+  // Calculate module check state (for indeterminate checkbox)
+  function getModuleCheckState(module) {
+    const childFuncIds = module.functionalities.map(f => f.funcId);
+    if (childFuncIds.length === 0) return false;
+    const checkedCount = childFuncIds.filter(id => assignedRightIds.has(id)).length;
+    
+    if (checkedCount === 0) return false;
+    if (checkedCount === childFuncIds.length) return true;
+    return "indeterminate";
+  }
+
   return (
     <div className="flex gap-4 h-[calc(100vh-280px)]">
+      {/* Groups Sidebar */}
       <div className="w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">Groups</span>
@@ -259,20 +490,25 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         </div>
       </div>
 
+      {/* Available Permissions - Hierarchical Tree Structure (Parent Category → Child Modules → Functionalities) */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">Available Permissions</span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => expandAll(setExpandedAvailable, filteredAvailable)}
+              onClick={() => expandAll(setExpandedAvailable, filteredAvailableTree)}
               className="text-[10px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition"
               title="Expand All"
-            >Expand All</button>
+            >
+              Expand All
+            </button>
             <button
               onClick={() => collapseAll(setExpandedAvailable)}
               className="text-[10px] text-slate-500 hover:text-slate-700 font-bold hover:bg-slate-100 px-2 py-1 rounded transition"
               title="Collapse All"
-            >Collapse</button>
+            >
+              Collapse
+            </button>
             <div className="relative">
               <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -285,76 +521,167 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {filteredAvailable.map(m => {
-            const isExpanded = expandedAvailable.has(m.moduleId);
-            const allChecked = m.children.length > 0 && m.children.every(c => assignedRightIds.has(c.funcId));
-            const someChecked = m.children.some(c => assignedRightIds.has(c.funcId));
-            return (
-              <div key={m.id} className="rounded-lg border border-slate-100 overflow-hidden">
-                {/* Module Header */}
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50/80 hover:bg-slate-100/80 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    ref={el => { if (el) el.indeterminate = someChecked && !allChecked; }}
-                    onChange={() => toggleNode(m)}
-                    onClick={e => e.stopPropagation()}
-                    className="rounded accent-teal-600 cursor-pointer"
-                  />
-                  <button
-                    onClick={() => toggleExpand(setExpandedAvailable, m.moduleId)}
-                    className="flex items-center gap-1.5 flex-1 min-w-0"
+        
+        <div className="flex-1 overflow-y-auto p-2 space-y-3 custom-scroll">
+          {filteredAvailableTree.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50">
+              <MdShield className="h-10 w-10 mb-2" />
+              <p className="text-[12px]">No permissions available</p>
+            </div>
+          ) : (
+            filteredAvailableTree.map(category => {
+              const isCategoryExpanded = expandedAvailable.has(category.id);
+              
+              return (
+                <div key={category.id} className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+                  {/* Parent Category Row */}
+                  <div 
+                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-slate-100 to-white hover:from-slate-100/70 transition-colors cursor-pointer"
+                    onClick={() => toggleExpand(setExpandedAvailable, category.id)}
                   >
-                    <MdViewModule className="text-teal-500 h-4 w-4 shrink-0" />
-                    <span className="text-[12px] font-bold text-slate-800 truncate">{m.label}</span>
-                    <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0">
-                      {m.children.filter(c => assignedRightIds.has(c.funcId)).length}/{m.children.length}
-                    </span>
-                    {isExpanded
+                    <div className="p-1 rounded-lg bg-white shadow-sm">
+                      {category.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-slate-800">{category.name}</span>
+                        <span className="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full">
+                          {category.children.length} modules
+                        </span>
+                      </div>
+                      {category.description && (
+                        <p className="text-[9px] text-slate-500 mt-0.5 truncate">{category.description}</p>
+                      )}
+                    </div>
+                    {isCategoryExpanded
                       ? <MdExpandLess className="text-slate-400 h-5 w-5 shrink-0" />
                       : <MdExpandMore className="text-slate-400 h-5 w-5 shrink-0" />}
-                  </button>
-                </div>
+                  </div>
 
-                {/* Collapsible Functionalities */}
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="py-1 border-t border-slate-100">
-                        {m.children.map(c => (
-                          <div
-                            key={c.id}
-                            className="flex items-center gap-2 pl-9 pr-3 py-1.5 hover:bg-teal-50/50 cursor-pointer transition-colors"
-                            onClick={() => toggleNode(c)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={assignedRightIds.has(c.funcId)}
-                              onChange={() => toggleNode(c)}
-                              onClick={e => e.stopPropagation()}
-                              className="rounded accent-teal-600 cursor-pointer"
-                            />
-                            <span className="text-[11px] text-slate-600 flex-1">{c.label}</span>
-                            {c.action && <ActionBadge action={c.action} />}
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+                  {/* Child Modules (Collapsible) */}
+                  <AnimatePresence initial={false}>
+                    {isCategoryExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-slate-100 bg-white">
+                          {category.children.map(module => {
+                            const isModuleExpanded = expandedAvailable.has(module.id);
+                            const checkState = getModuleCheckState(module);
+                            const moduleFuncCount = module.functionalities.length;
+                            const assignedFuncCount = module.functionalities.filter(f => assignedRightIds.has(f.funcId)).length;
+                            
+                            return (
+                              <div key={module.id} className="border-b border-slate-50 last:border-0">
+                                {/* Module Row (Child) */}
+                                <div className="flex items-center gap-2 pl-8 pr-3 py-2 hover:bg-slate-50/80 transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={checkState === true}
+                                    ref={el => {
+                                      if (el) el.indeterminate = checkState === "indeterminate";
+                                    }}
+                                    onChange={() => toggleModule(module)}
+                                    onClick={e => e.stopPropagation()}
+                                    className="rounded accent-teal-600 cursor-pointer h-3.5 w-3.5"
+                                    disabled={module.isPlanned}
+                                  />
+                                  <div className="p-0.5 rounded-md text-slate-500">
+                                    {module.icon}
+                                  </div>
+                                  <button
+                                    onClick={() => !module.isPlanned && toggleExpand(setExpandedAvailable, module.id)}
+                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                                    disabled={module.isPlanned}
+                                  >
+                                    <span className={`text-[12px] font-semibold ${module.isPlanned ? 'text-slate-400' : 'text-slate-700'} truncate`}>
+                                      {module.name}
+                                      {module.isPlanned && (
+                                        <span className="ml-2 text-[8px] bg-slate-100 text-slate-500 font-normal px-1 py-0.5 rounded-full">Planned</span>
+                                      )}
+                                    </span>
+                                    {moduleFuncCount > 0 && (
+                                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                                        assignedFuncCount === moduleFuncCount 
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : assignedFuncCount > 0
+                                          ? 'bg-amber-100 text-amber-700'
+                                          : 'bg-slate-100 text-slate-500'
+                                      }`}>
+                                        {assignedFuncCount}/{moduleFuncCount}
+                                      </span>
+                                    )}
+                                    {!module.isPlanned && moduleFuncCount > 0 && (
+                                      isModuleExpanded
+                                        ? <MdExpandLess className="text-slate-400 h-4 w-4 shrink-0" />
+                                        : <MdExpandMore className="text-slate-400 h-4 w-4 shrink-0" />
+                                    )}
+                                  </button>
+                                </div>
+
+                                {/* Functionalities under Module */}
+                                {!module.isPlanned && moduleFuncCount > 0 && (
+                                  <AnimatePresence initial={false}>
+                                    {isModuleExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.15, ease: "easeInOut" }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="pl-14 pr-3 py-1 bg-slate-50/50">
+                                          {module.functionalities.map(func => (
+                                            <div
+                                              key={func.id}
+                                              className="flex items-center gap-2 py-1.5 hover:bg-teal-50/40 cursor-pointer transition-colors rounded px-1"
+                                              onClick={() => toggleFunctionality(func, module.moduleId)}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={assignedRightIds.has(func.funcId)}
+                                                onChange={() => toggleFunctionality(func, module.moduleId)}
+                                                onClick={e => e.stopPropagation()}
+                                                className="rounded accent-teal-600 cursor-pointer h-3 w-3"
+                                              />
+                                              <span className="text-[10px] text-slate-600 flex-1">{func.name}</span>
+                                              {func.action && <ActionBadge action={func.action} />}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                )}
+                                
+                                {/* Planned module placeholder */}
+                                {module.isPlanned && (
+                                  <div className="pl-14 pr-3 py-2 bg-slate-50/30">
+                                    <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
+                                      <MdSettings className="h-3 w-3" />
+                                      Permissions will be available when module is deployed
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
+      {/* Assigned to Group Panel */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <span className="text-[12px] font-bold text-teal-700 uppercase tracking-wide">Assigned to Group</span>
@@ -367,6 +694,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
+        
         <div className="px-4 py-2 border-b border-slate-50">
           <div className="relative">
             <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -379,32 +707,41 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {filteredAssigned.length === 0 ? (
+        
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          {!selectedGroup ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300">
+              <MdShield className="h-10 w-10 mb-2 opacity-40" />
+              <p className="text-[12px]">Select a group to view assignments</p>
+            </div>
+          ) : filteredAssignedTree.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50">
               <MdShield className="h-10 w-10 mb-2" />
               <p className="text-[12px]">No permissions assigned</p>
+              <p className="text-[10px] text-slate-400 mt-1">Check items from the left panel</p>
             </div>
           ) : (
-            filteredAssigned.map(m => {
-              const isExpanded = expandedAssigned.has(m.moduleId);
+            filteredAssignedTree.map(category => {
+              const isCategoryExpanded = expandedAssigned.has(category.id);
+              
               return (
-                <div key={m.id} className="rounded-lg border border-teal-100 overflow-hidden">
+                <div key={category.id} className="rounded-lg border border-teal-100 overflow-hidden">
                   <button
-                    onClick={() => toggleExpand(setExpandedAssigned, m.moduleId)}
+                    onClick={() => toggleExpand(setExpandedAssigned, category.id)}
                     className="w-full flex items-center gap-2 px-3 py-2.5 bg-teal-50/50 hover:bg-teal-50 transition-colors"
                   >
-                    <MdCheck className="text-teal-500 h-4 w-4 shrink-0" />
-                    <span className="text-[11px] font-bold text-teal-800 flex-1 text-left truncate">{m.label}</span>
+                    {category.icon}
+                    <span className="text-[11px] font-bold text-teal-800 flex-1 text-left truncate">{category.name}</span>
                     <span className="text-[9px] bg-teal-200 text-teal-800 font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                      {m.children.length}
+                      {category.children.length}
                     </span>
-                    {isExpanded
+                    {isCategoryExpanded
                       ? <MdExpandLess className="text-teal-400 h-5 w-5 shrink-0" />
                       : <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />}
                   </button>
+                  
                   <AnimatePresence initial={false}>
-                    {isExpanded && (
+                    {isCategoryExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -412,14 +749,50 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                         transition={{ duration: 0.2, ease: "easeInOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="py-1 border-t border-teal-100">
-                          {m.children.map(c => (
-                            <div key={c.id} className="flex items-center gap-2 pl-9 pr-3 py-1.5">
-                              <MdCheck className="text-emerald-400 h-3 w-3 shrink-0" />
-                              <span className="text-[11px] text-slate-600 flex-1">{c.label}</span>
-                              {c.action && <ActionBadge action={c.action} />}
-                            </div>
-                          ))}
+                        <div className="border-t border-teal-100 bg-white">
+                          {category.children.map(module => {
+                            const isModuleExpanded = expandedAssigned.has(module.id);
+                            
+                            return (
+                              <div key={module.id} className="border-b border-teal-50 last:border-0">
+                                <button
+                                  onClick={() => toggleExpand(setExpandedAssigned, module.id)}
+                                  className="w-full flex items-center gap-2 pl-8 pr-3 py-2 hover:bg-teal-50/30 transition-colors"
+                                >
+                                  <MdCheck className="text-emerald-500 h-3 w-3 shrink-0" />
+                                  <span className="text-[11px] font-medium text-slate-700 flex-1 text-left truncate">{module.name}</span>
+                                  <span className="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                    {module.functionalities.length}
+                                  </span>
+                                  {isModuleExpanded
+                                    ? <MdExpandLess className="text-slate-400 h-4 w-4 shrink-0" />
+                                    : <MdExpandMore className="text-slate-400 h-4 w-4 shrink-0" />}
+                                </button>
+                                
+                                <AnimatePresence initial={false}>
+                                  {isModuleExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.15, ease: "easeInOut" }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="pl-14 pr-3 py-1 bg-slate-50/30">
+                                        {module.functionalities.map(func => (
+                                          <div key={func.id} className="flex items-center gap-2 py-1.5">
+                                            <MdCheck className="text-emerald-400 h-2.5 w-2.5 shrink-0" />
+                                            <span className="text-[10px] text-slate-600 flex-1">{func.name}</span>
+                                            {func.action && <ActionBadge action={func.action} />}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            );
+                          })}
                         </div>
                       </motion.div>
                     )}
@@ -435,7 +808,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// USERS TAB
+// USERS TAB (unchanged)
 // ═══════════════════════════════════════════════════════════════════════════════
 function UsersTab({ groups, allUsers, onRefresh }) {
   const [selectedGroupId, setSelectedGroupId] = useState("");
@@ -460,7 +833,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    // Deduplicate users by ID (in case backend returns duplicates due to group joins)
     const uniqueUsers = Array.from(new Map(allUsers.map(u => [u.id, u])).values());
     
     return uniqueUsers.filter(u =>
@@ -670,11 +1042,15 @@ function PermissionsTab({ modules, functionalities }) {
           <button
             onClick={expandAll}
             className="text-[11px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-3 py-1.5 rounded-lg transition"
-          >Expand All</button>
+          >
+            Expand All
+          </button>
           <button
             onClick={collapseAll}
             className="text-[11px] text-slate-500 hover:text-slate-700 font-bold hover:bg-slate-100 px-3 py-1.5 rounded-lg transition"
-          >Collapse All</button>
+          >
+            Collapse All
+          </button>
           <div className="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-[13px] font-bold">
             {functionalities.length} total permissions
           </div>
@@ -799,7 +1175,6 @@ function IPTrackingTab() {
     </div>
   );
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ACCESS CONTROL PAGE
