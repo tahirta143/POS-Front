@@ -152,11 +152,11 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         description: "Manage customer data, payments, and account ledgers",
         modules: ["Customer", "Customer Payment", "Customer Ledger", "Customer Statement"]
       },
-      "Supplier Management": {
+      "Supplier & Manufacturer Management": {
         id: "cat-supplier",
         icon: getCategoryIcon("supplier"),
         description: "Manage supplier information, payments, and amounts",
-        modules: ["Supplier", "Supplier Payment", "Supplier Amount", "Supplier Ledger"]
+        modules: ["Supplier", "Supplier Payment", "Supplier Amount", "Supplier Ledger","Manufacturer"]
       },
       "Security & Access Control": {
         id: "cat-security",
