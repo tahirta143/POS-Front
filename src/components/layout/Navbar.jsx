@@ -35,7 +35,6 @@ const pageTitles = {
   "/setup/designation": "Designation",
   "/security/company": "Company",
   "/security/employee": "Employee",
-  "/security/software-group": "Software Group",
   "/security/user": "Users",
   "/security/group-users": "Group Users",
   "/security/user-to-group": "User To Group",

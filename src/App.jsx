@@ -36,7 +36,6 @@ import Groups from "./pages/security/Groups";
 import Company from "./pages/security/Company";
 import Employee from "./pages/security/Employee";
 import User from "./pages/security/User";
-import SoftwareGroup from "./pages/security/Software";
 import UserToGroup from "./pages/security/UserToGroup";
 import AccessControl from "./pages/security/AccessControl";
 import Department from "./pages/setup/Department";

@@ -220,7 +220,7 @@ async function handleGroupDelete(group) {
         id: "cat-emergency",
         icon: getCategoryIcon("emergency"),
         description: "Setup screens for various modules",
-        modules: ["Item Detail","Item Category","Sub Category", "Item Type", "Item Unit", "Shelve Location"]
+        modules: ["Items","Item Category","Sub Category", "Item Type", "Item Unit", "Shelve Location"]
       }
     };
 

@@ -28,13 +28,13 @@ const MODULE_DATA = [
   //   desc: "Manage employee records",
   //   icon: <MdPeople />,
   // },
-  {
-    path: "/security/software-group",
-    category: "Access Control",
-    title: "Software Group",
-    desc: "Configure software groups",
-    icon: <MdGroupWork />,
-  },
+  // {
+  //   path: "/security/software-group",
+  //   category: "Access Control",
+  //   title: "Software Group",
+  //   desc: "Configure software groups",
+  //   icon: <MdGroupWork />,
+  // },
   {
     path: "/security/user",
     category: "User Management",

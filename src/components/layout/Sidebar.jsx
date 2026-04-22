@@ -209,11 +209,6 @@ const NAV_ITEMS = [
             label: "Security Log",
             icon: MdHistory,
           },
-          {
-            to: "/security/software-group",
-            label: "Software Group",
-            icon: MdWorkspaces,
-          },
         ],
       },
     ],
