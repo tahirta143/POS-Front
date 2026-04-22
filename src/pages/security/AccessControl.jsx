@@ -99,6 +99,11 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   const [searchAssigned, setSearchAssigned]   = useState("");
   const [expandedAvailable, setExpandedAvailable] = useState(new Set());
   const [expandedAssigned, setExpandedAssigned]   = useState(new Set());
+  const [groupModal, setGroupModal] = useState(null); // null | 'add' | 'edit'
+const [editingGroup, setEditingGroup] = useState(null);
+const [groupNameInput, setGroupNameInput] = useState('');
+const [groupSubmitting, setGroupSubmitting] = useState(false);
+const [expandedGroupActions, setExpandedGroupActions] = useState(null);
 
   function toggleExpand(setFn, id) {
     setFn(prev => {
@@ -142,6 +147,41 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     }
   }
 
+  async function handleGroupSubmit() {
+  if (!groupNameInput.trim()) { toast.error('Group name is required.'); return; }
+  setGroupSubmitting(true);
+  try {
+    if (groupModal === 'edit' && editingGroup) {
+      await axiosInstance.put(`/groups/${editingGroup.id}`, { group_name: groupNameInput.trim() });
+      toast.success('Group updated successfully.');
+    } else {
+      await axiosInstance.post('/groups', { group_name: groupNameInput.trim() });
+      toast.success('Group created successfully.');
+    }
+    setGroupModal(null);
+    setGroupNameInput('');
+    setEditingGroup(null);
+    onRefresh();
+  } catch (err) {
+    toast.error(err?.response?.data?.message || 'Failed to save group.');
+  } finally {
+    setGroupSubmitting(false);
+  }
+}
+
+async function handleGroupDelete(group) {
+  if (!window.confirm(`Delete "${group.group_name}"? This may affect assigned users.`)) return;
+  try {
+    await axiosInstance.delete(`/groups/${group.id}`);
+    toast.success('Group deleted.');
+    if (selectedGroup?.id === group.id) setSelectedGroup(null);
+    setExpandedGroupActions(null);
+    onRefresh();
+  } catch (err) {
+    toast.error(err?.response?.data?.message || 'Failed to delete group.');
+  }
+}
+
   // Build hierarchical tree structure: Parent Categories → Child Modules → Functionalities
   const availableTree = useMemo(() => {
    
@@ -150,7 +190,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         id: "cat-customer",
         icon: getCategoryIcon("customer"),
         description: "Manage customer data, payments, and account ledgers",
-        modules: ["Customer", "Customer Payment", "Customer Ledger", "Customer Statement"]
+        modules: ["Customer", "Customer Payment", "Customer Ledger"]
       },
       "Supplier & Manufacturer Management": {
         id: "cat-supplier",
@@ -174,13 +214,13 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         id: "cat-dashboard",
         icon: getCategoryIcon("dashboard"),
         description: "System dashboards, reports, and analytics",
-        modules: ["Dashboard", "Reports", "Analytics", "KPI Monitoring"]
+        modules: ["Dashboard", "Reports", "Analytics"]
       },
       "Setup": {
         id: "cat-emergency",
         icon: getCategoryIcon("emergency"),
         description: "Setup screens for various modules",
-        modules: ["Item Category", "Item Type", "Item Unit", "Shelve Location"]
+        modules: ["Item Detail","Item Category","Sub Category", "Item Type", "Item Unit", "Shelve Location"]
       }
     };
 
@@ -465,30 +505,189 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   }
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-280px)]">
+    <div className="flex gap-4 h-[calc(106vh-280px)]">
       {/* Groups Sidebar */}
-      <div className="w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">Groups</span>
-          <MdPeople className="text-slate-400" />
-        </div>
-        <div className="flex-1 overflow-y-auto py-1">
-          {groups.map(g => (
-            <button
-              key={g.id}
-              onClick={() => setSelectedGroup(g)}
-              className={`w-full text-left px-4 py-3 transition-all border-l-4 ${
-                selectedGroup?.id === g.id
-                  ? "bg-teal-50 border-teal-500 text-teal-700"
-                  : "border-transparent text-slate-600 hover:bg-slate-50"
-              }`}
+    {/* Groups Sidebar */}
+<div className="w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+    <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">Groups</span>
+    <button
+      onClick={() => { setGroupModal('add'); setGroupNameInput(''); setEditingGroup(null); }}
+      className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[14px] font-bold leading-none shadow-sm"
+      title="Add new group"
+    >
+      +
+    </button>
+  </div>
+  <div className="flex-1 overflow-y-auto py-1">
+    {groups.map(g => (
+      <div
+        key={g.id}
+        className={`group relative flex items-center border-l-4 transition-all ${
+          selectedGroup?.id === g.id
+            ? 'bg-teal-50 border-teal-500'
+            : 'border-transparent hover:bg-slate-50'
+        }`}
+      >
+        <button
+          onClick={() => { setSelectedGroup(g); setExpandedGroupActions(null); }}
+          className="flex-1 text-left px-4 py-3 min-w-0"
+        >
+          <p className={`text-[13px] font-bold truncate ${selectedGroup?.id === g.id ? 'text-teal-700' : 'text-slate-700'}`}>
+            {g.group_name}
+          </p>
+          <p className="text-[9px] opacity-50 uppercase tracking-widest mt-0.5 truncate">
+            {(g.users || []).length} users
+          </p>
+        </button>
+
+        {/* ">" action toggle button */}
+        <button
+          onClick={e => { e.stopPropagation(); setExpandedGroupActions(prev => prev === g.id ? null : g.id); }}
+          className={`shrink-0 mr-2 p-1 rounded transition text-[11px] font-bold ${
+            expandedGroupActions === g.id
+              ? 'bg-slate-200 text-slate-700'
+              : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
+          }`}
+          title="Group actions"
+        >
+          <svg className={`h-3.5 w-3.5 transition-transform duration-200 ${expandedGroupActions === g.id ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* Inline action buttons (edit / delete) */}
+        <AnimatePresence>
+          {expandedGroupActions === g.id && (
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-lg px-1.5 py-1 z-10"
             >
-              <p className="text-[14px] font-bold">{g.group_name}</p>
-              <p className="text-[10px] opacity-60 uppercase tracking-widest mt-0.5">{g.group_name}</p>
-            </button>
-          ))}
-        </div>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setEditingGroup(g);
+                  setGroupNameInput(g.group_name);
+                  setGroupModal('edit');
+                  setExpandedGroupActions(null);
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-50 rounded transition"
+                title="Edit group"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" /></svg>
+                Edit
+              </button>
+              <div className="w-px h-4 bg-slate-200" />
+              <button
+                onClick={e => { e.stopPropagation(); handleGroupDelete(g); }}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded transition"
+                title="Delete group"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Delete
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+    ))}
+  </div>
+</div>
+
+{/* Add / Edit Group Modal */}
+<AnimatePresence>
+  {groupModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={() => { setGroupModal(null); setGroupNameInput(''); setEditingGroup(null); }}
+    >
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0, y: 16 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 16 }}
+        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-teal-100">
+              <MdPeople className="h-4 w-4 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-[13px] font-black text-slate-800">
+                {groupModal === 'edit' ? 'Edit Group' : 'New Group'}
+              </p>
+              <p className="text-[10px] text-slate-500">
+                {groupModal === 'edit' ? `Editing: ${editingGroup?.group_name}` : 'Create a new access group'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setGroupModal(null); setGroupNameInput(''); setEditingGroup(null); }}
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+          >
+            <MdClose className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="px-5 py-5 space-y-4">
+          {groupModal === 'edit' && (
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Group ID</label>
+              <input
+                type="text"
+                value={`#${String(editingGroup?.id || '').padStart(4, '0')}`}
+                disabled
+                className="w-full h-9 px-3 rounded-lg border border-slate-100 bg-slate-50 text-[12px] font-mono text-slate-400"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Group Name <span className="text-rose-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={groupNameInput}
+              onChange={e => setGroupNameInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleGroupSubmit(); if (e.key === 'Escape') { setGroupModal(null); setGroupNameInput(''); } }}
+              placeholder="e.g. System Administrators"
+              autoFocus
+              className="w-full h-9 px-3 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition"
+            />
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30">
+          <button
+            onClick={() => { setGroupModal(null); setGroupNameInput(''); setEditingGroup(null); }}
+            className="px-4 py-2 text-[12px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleGroupSubmit}
+            disabled={groupSubmitting || !groupNameInput.trim()}
+            className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white rounded-lg text-[12px] font-bold hover:bg-teal-700 transition disabled:opacity-50 shadow-sm"
+          >
+            <MdSave className="h-3.5 w-3.5" />
+            {groupSubmitting ? 'Saving...' : groupModal === 'edit' ? 'Update Group' : 'Create Group'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Available Permissions - Hierarchical Tree Structure (Parent Category → Child Modules → Functionalities) */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -1038,7 +1237,7 @@ function PermissionsTab({ modules, functionalities }) {
             className="w-full h-11 pl-10 pr-4 text-[14px] rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-500 shadow-sm transition-all"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3"> 
           <button
             onClick={expandAll}
             className="text-[11px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-3 py-1.5 rounded-lg transition"
