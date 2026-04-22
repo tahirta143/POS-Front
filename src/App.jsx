@@ -17,7 +17,6 @@ import ExpenseHead from "./pages/expense/ExpenseHead";
 import ExpenseVoucher from "./pages/expense/ExpenseVoucher";
 import ExpenseReport from "./pages/expense/ExpenseReport";
 import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
 import Manufacturers from "./pages/setup/Manufacturers";
 import Bookings from "./pages/customers/Bookings";
 import Sales from "./pages/Sales";
@@ -92,12 +91,6 @@ const App = () => {
         path="/login"
         element={
           !isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          !isAuthenticated ? <Register /> : <Navigate to="/dashboard" replace />
         }
       />
 

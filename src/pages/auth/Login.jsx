@@ -145,15 +145,9 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="font-semibold text-teal-600 hover:underline"
-            >
-              Create account
-            </Link>
-          </div>
+        <div className="mt-6 text-center text-sm text-slate-500">
+  Don't have an account? <span className="font-medium text-slate-600">Please contact your system administrator to request access.</span>
+</div>
 
         </div>
       </div>
