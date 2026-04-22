@@ -157,7 +157,6 @@ const App = () => {
         <Route path="/security/module-info" element={<ProtectedRoute module="Security"><ModulesInfo /></ProtectedRoute>} />
         <Route path="/security/security-log" element={<ProtectedRoute module="Security"><SecurityLog /></ProtectedRoute>} />
         <Route path="/security/user" element={<ProtectedRoute module="Security"><User /></ProtectedRoute>} />
-        <Route path="/security/software-group" element={<ProtectedRoute module="Security"><SoftwareGroup /></ProtectedRoute>} />
         <Route path="/security/user-to-group" element={<ProtectedRoute module="Security"><UserToGroup /></ProtectedRoute>} />
         <Route path="/security/access-control" element={<ProtectedRoute module="Security"><AccessControl /></ProtectedRoute>} />
       </Route>
