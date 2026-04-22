@@ -3,15 +3,43 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ThemeToggle from "./ThemeToggle";
 import {
-  MdDashboard, MdSettings, MdInventory, MdMonetizationOn,
-  MdPeople, MdShoppingCart, MdExpandMore, MdLogout,
-  MdWarehouse, MdAddBox, MdRemoveCircle, MdRefresh,
-  MdCategory, MdLabel, MdQrCode2, MdLocationOn,
-  MdReceipt, MdAccountBalance, MdAssessment, MdLocalOffer,
-  MdCalendarToday, MdSecurity, MdApartment, MdBadge,
-  MdPerson, MdFactory, MdLocalShipping, MdStorefront,
-  MdCorporateFare, MdWorkspaces, MdStyle, MdMenu, MdClose,
-  MdHistory, MdViewModule, MdAppRegistration, MdSwapHoriz,
+  MdDashboard,
+  MdSettings,
+  MdInventory,
+  MdMonetizationOn,
+  MdPeople,
+  MdShoppingCart,
+  MdExpandMore,
+  MdLogout,
+  MdWarehouse,
+  MdAddBox,
+  MdRemoveCircle,
+  MdRefresh,
+  MdCategory,
+  MdLabel,
+  MdQrCode2,
+  MdLocationOn,
+  MdReceipt,
+  MdAccountBalance,
+  MdAssessment,
+  MdLocalOffer,
+  MdCalendarToday,
+  MdSecurity,
+  MdApartment,
+  MdBadge,
+  MdPerson,
+  MdFactory,
+  MdLocalShipping,
+  MdStorefront,
+  MdCorporateFare,
+  MdWorkspaces,
+  MdStyle,
+  MdMenu,
+  MdClose,
+  MdHistory,
+  MdViewModule,
+  MdAppRegistration,
+  MdSwapHoriz,
 } from "react-icons/md";
 import { logout } from "../../features/auth/authSlice";
 
@@ -20,81 +48,162 @@ import { logout } from "../../features/auth/authSlice";
 //            item to be visible. Items without `module` are always visible.
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: MdDashboard },
-  { to: "/items",     label: "Item Details", icon: MdInventory, module: "Items" },
-  { to: "/sale",      label: "Sales Invoice", icon: MdReceipt,  module: "Sale" },
-  { to: "/purchase",  label: "Purchase",      icon: MdShoppingCart, module: "Purchase" },
+  { to: "/items", label: "Item Details", icon: MdInventory, module: "Items" },
+  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "Sale" },
   {
-    id: "stock", label: "Stock", icon: MdWarehouse, module: "Stock",
+    to: "/purchase",
+    label: "Purchase",
+    icon: MdShoppingCart,
+    module: "Purchase",
+  },
+  {
+    id: "stock",
+    label: "Stock",
+    icon: MdWarehouse,
+    module: "Stock",
     children: [
-      { to: "/stock/opening",         label: "Opening Stock",    icon: MdAddBox },
-      { to: "/stock/reorder",         label: "Reorder Stock",    icon: MdRefresh },
-      { to: "/stock/grn",             label: "Goods Receipt",    icon: MdReceipt },
-      { to: "/stock/transfer",        label: "Stock Transfer",   icon: MdSwapHoriz },
-      { to: "/stock/sales-return",    label: "Sales Return",     icon: MdRemoveCircle },
-      { to: "/stock/purchase-return", label: "Purchase Return",  icon: MdRemoveCircle },
+      { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox },
+      { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh },
+      { to: "/stock/grn", label: "Goods Receipt", icon: MdReceipt },
+      { to: "/stock/transfer", label: "Stock Transfer", icon: MdSwapHoriz },
+      {
+        to: "/stock/sales-return",
+        label: "Sales Return",
+        icon: MdRemoveCircle,
+      },
+      {
+        to: "/stock/purchase-return",
+        label: "Purchase Return",
+        icon: MdRemoveCircle,
+      },
     ],
   },
   {
-    id: "finance", label: "Finance", icon: MdAccountBalance, module: "Finance",
+    id: "finance",
+    label: "Finance",
+    icon: MdAccountBalance,
+    module: "Finance",
     children: [
-      { to: "/finance/supplier-payment",  label: "Supplier Payment",  icon: MdMonetizationOn },
-      { to: "/finance/amount-payable",    label: "Amount Payable",    icon: MdAssessment },
-      { to: "/finance/supplier-ledger",   label: "Supplier Ledger",   icon: MdReceipt },
-      { to: "/finance/customer-payment",  label: "Customer Payment",  icon: MdMonetizationOn },
-      { to: "/finance/amount-receivable", label: "Amount Receivable", icon: MdAssessment },
+      {
+        to: "/finance/supplier-payment",
+        label: "Supplier Payment",
+        icon: MdMonetizationOn,
+      },
+      {
+        to: "/finance/amount-payable",
+        label: "Amount Payable",
+        icon: MdAssessment,
+      },
+      {
+        to: "/finance/supplier-ledger",
+        label: "Supplier Ledger",
+        icon: MdReceipt,
+      },
+      {
+        to: "/finance/customer-payment",
+        label: "Customer Payment",
+        icon: MdMonetizationOn,
+      },
+      {
+        to: "/finance/amount-receivable",
+        label: "Amount Receivable",
+        icon: MdAssessment,
+      },
     ],
   },
   {
-    id: "customer", label: "Customer", icon: MdPeople, module: "Customer",
+    id: "customer",
+    label: "Customer",
+    icon: MdPeople,
+    module: "Customer",
     children: [
-      { to: "/customer/registration", label: "Registration",    icon: MdAccountBalance },
-      { to: "/customer/record",       label: "Customer Record", icon: MdReceipt },
+      {
+        to: "/customer/registration",
+        label: "Registration",
+        icon: MdAccountBalance,
+      },
+      { to: "/customer/record", label: "Customer Record", icon: MdReceipt },
     ],
   },
-  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "Booking" },
   {
-    id: "accounts", label: "Accounts", icon: MdMonetizationOn, module: "Accounts",
+    to: "/booking-customers",
+    label: "Bookings",
+    icon: MdCalendarToday,
+    module: "Booking",
+  },
+  {
+    id: "accounts",
+    label: "Accounts",
+    icon: MdMonetizationOn,
+    module: "Accounts",
     children: [
-      { to: "/daybook",         label: "Daybook",         icon: MdCalendarToday },
-      { to: "/expense/head",    label: "Expense Head",    icon: MdAccountBalance },
+      { to: "/daybook", label: "Daybook", icon: MdCalendarToday },
+      { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance },
       { to: "/expense/voucher", label: "Expense Voucher", icon: MdReceipt },
-      { to: "/expense/report",  label: "Expense Report",  icon: MdAssessment },
+      { to: "/expense/report", label: "Expense Report", icon: MdAssessment },
     ],
   },
   {
-    id: "setup", label: "Setup", icon: MdSettings, module: "Setup",
+    id: "setup",
+    label: "Setup",
+    icon: MdSettings,
+    module: "Setup",
     children: [
-      { to: "/setup/suppliers",     label: "Suppliers",     icon: MdLocalShipping },
+      { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping },
       { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory },
       {
-        id: "setup-item", label: "Item", icon: MdWorkspaces,
+        id: "setup-item",
+        label: "Item",
+        icon: MdWorkspaces,
         children: [
-          { to: "/setup/item-category",    label: "Item Category",    icon: MdCategory },
-          { to: "/setup/item-subcategory", label: "Item Subcategory", icon: MdStyle },
-          { to: "/setup/item-type",        label: "Item Type",        icon: MdInventory },
-          { to: "/setup/item-unit",        label: "Item Unit",        icon: MdLabel },
-          { to: "/expiry-tags",            label: "Expiry Tags",      icon: MdLocalOffer },
-          { to: "/setup/shelve-location",  label: "Shelve Location",  icon: MdLocationOn },
+          {
+            to: "/setup/item-category",
+            label: "Item Category",
+            icon: MdCategory,
+          },
+          {
+            to: "/setup/item-subcategory",
+            label: "Item Subcategory",
+            icon: MdStyle,
+          },
+          { to: "/setup/item-type", label: "Item Type", icon: MdInventory },
+          { to: "/setup/item-unit", label: "Item Unit", icon: MdLabel },
+          { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer },
+          {
+            to: "/setup/shelve-location",
+            label: "Shelve Location",
+            icon: MdLocationOn,
+          },
         ],
       },
       {
-        id: "setup-company", label: "Company", icon: MdCorporateFare,
+        id: "setup-company",
+        label: "Company",
+        icon: MdCorporateFare,
         children: [
-          { to: "/setup/department",  label: "Department",  icon: MdApartment },
+          { to: "/setup/department", label: "Department", icon: MdApartment },
           { to: "/setup/designation", label: "Designation", icon: MdBadge },
         ],
       },
     ],
   },
   {
-    id: "security-settings", label: "Security", icon: MdSecurity, module: "Security",
+    id: "security-settings",
+    label: "Security",
+    icon: MdSecurity,
+    module: "Security",
     children: [
       { to: "/security", label: "Overview", icon: MdDashboard },
       {
-        id: "security-manage", label: "Actions", icon: MdExpandMore,
+        id: "security-manage",
+        label: "Actions",
+        icon: MdExpandMore,
         children: [
-          { to: "/security/access-control", label: "Access Control", icon: MdSecurity },
-          { to: "/security/security-log",   label: "Security Log",   icon: MdHistory },
+          {
+            to: "/security/access-control",
+            label: "Access Control",
+            icon: MdSecurity,
+          },
         ],
       },
     ],
@@ -121,14 +230,21 @@ function filterNavItems(items, permissions, isAdmin) {
     if (item.module) {
       const allowed = permissions?.modules?.some((m) => {
         const name = (m.name || m.module_name || m.slug || "").toLowerCase();
-        return name === item.module.toLowerCase() || name.includes(item.module.toLowerCase());
+        return (
+          name === item.module.toLowerCase() ||
+          name.includes(item.module.toLowerCase())
+        );
       });
       if (!allowed) return acc; // skip this item entirely
     }
 
     // Has children → recursively filter them
     if (item.children) {
-      const visibleChildren = filterNavItems(item.children, permissions, isAdmin);
+      const visibleChildren = filterNavItems(
+        item.children,
+        permissions,
+        isAdmin,
+      );
       if (visibleChildren.length === 0 && item.module) return acc; // no visible children
       acc.push({ ...item, children: visibleChildren });
       return acc;
@@ -148,14 +264,20 @@ function pathMatchesItem(item, pathname) {
 // ── Level-2 nested dropdown ───────────────────────────────────────────────────
 function NestedDropdown({ item, openId, setOpenId }) {
   const location = useLocation();
-  const isActive = item.children?.some((c) => pathMatchesItem(c, location.pathname));
-  const isOpen   = openId === item.id;
+  const isActive = item.children?.some((c) =>
+    pathMatchesItem(c, location.pathname),
+  );
+  const isOpen = openId === item.id;
 
   return (
     <div>
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white font-medium shadow-sm"
@@ -163,14 +285,20 @@ function NestedDropdown({ item, openId, setOpenId }) {
         }`}
       >
         <div className="flex items-center gap-2.5">
-          <span className={`flex items-center justify-center w-6 h-6 rounded-md text-xs transition-colors ${
-            isActive ? "bg-teal-400 dark:bg-teal-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
-          }`}>
+          <span
+            className={`flex items-center justify-center w-6 h-6 rounded-md text-xs transition-colors ${
+              isActive
+                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+            }`}
+          >
             {item.icon && <item.icon />}
           </span>
           {item.label}
         </div>
-        <MdExpandMore className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <MdExpandMore
+          className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -179,7 +307,11 @@ function NestedDropdown({ item, openId, setOpenId }) {
             <NavLink
               key={child.to}
               to={child.to}
-              style={({ isActive }) => isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+              style={({ isActive }) =>
+                isActive
+                  ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+                  : undefined
+              }
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
                   isActive
@@ -210,13 +342,22 @@ function NestedChildren({ children, onNavigate }) {
 
   return children.map((child) =>
     child.children ? (
-      <NestedDropdown key={child.id} item={child} openId={nestedOpenId} setOpenId={setNestedOpenId} />
+      <NestedDropdown
+        key={child.id}
+        item={child}
+        openId={nestedOpenId}
+        setOpenId={setNestedOpenId}
+      />
     ) : (
       <NavLink
         key={child.to}
         to={child.to}
         onClick={onNavigate}
-        style={({ isActive }) => isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={({ isActive }) =>
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={({ isActive }) =>
           `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
             isActive
@@ -236,7 +377,7 @@ function NestedChildren({ children, onNavigate }) {
 function SidebarItem({ item, openId, setOpenId, onNavigate }) {
   const location = useLocation();
   const isActive = pathMatchesItem(item, location.pathname);
-  const isOpen   = openId === item.id;
+  const isOpen = openId === item.id;
 
   // Pure link
   if (item.to) {
@@ -244,7 +385,11 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
       <NavLink
         to={item.to}
         onClick={onNavigate}
-        style={({ isActive }) => isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={({ isActive }) =>
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
             isActive
@@ -255,9 +400,13 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
       >
         {({ isActive }) => (
           <>
-            <span className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
-              isActive ? "bg-teal-400 dark:bg-teal-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
-            }`}>
+            <span
+              className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
+                isActive
+                  ? "bg-teal-400 dark:bg-teal-600 text-white"
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+              }`}
+            >
               {item.icon && <item.icon />}
             </span>
             <span className="font-medium text-[13px]">{item.label}</span>
@@ -272,7 +421,11 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
     <div className="mb-0.5">
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white shadow-sm"
@@ -280,14 +433,20 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
         }`}
       >
         <div className="flex items-center gap-3">
-          <span className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
-            isActive ? "bg-teal-400 dark:bg-teal-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
-          }`}>
+          <span
+            className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
+              isActive
+                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+            }`}
+          >
             {item.icon && <item.icon />}
           </span>
           <span className="font-medium text-[13px]">{item.label}</span>
         </div>
-        <MdExpandMore className={`text-base transition-transform duration-200 ${isActive ? "text-white" : "text-gray-400"} ${isOpen ? "rotate-180" : ""}`} />
+        <MdExpandMore
+          className={`text-base transition-transform duration-200 ${isActive ? "text-white" : "text-gray-400"} ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -301,22 +460,20 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
 
 // ── Sidebar shell ─────────────────────────────────────────────────────────────
 function SidebarContent({ onNavigate }) {
-  const dispatch   = useDispatch();
-  const location   = useLocation();
+  const dispatch = useDispatch();
+  const location = useLocation();
   const { user, permissions } = useSelector((state) => state.auth);
 
   const isAdmin =
-    user?.is_admin ||
-    user?.role === "admin" ||
-    permissions?.isAdmin ||
-    false;
+    user?.is_admin || user?.role === "admin" || permissions?.isAdmin || false;
 
   // Filter nav items based on permissions
   const filteredNavItems = filterNavItems(NAV_ITEMS, permissions, isAdmin);
 
   const [openId, setOpenId] = useState(() => {
     for (const item of filteredNavItems) {
-      if (item.children && pathMatchesItem(item, location.pathname)) return item.id;
+      if (item.children && pathMatchesItem(item, location.pathname))
+        return item.id;
     }
     return null;
   });
@@ -332,7 +489,9 @@ function SidebarContent({ onNavigate }) {
             <MdStorefront className="text-white text-xl" />
           </div>
           <div className="truncate">
-            <h1 className="text-[15px] font-extrabold text-gray-900 dark:text-white leading-tight">POS System</h1>
+            <h1 className="text-[15px] font-extrabold text-gray-900 dark:text-white leading-tight">
+              POS System
+            </h1>
           </div>
         </div>
         <ThemeToggle />
@@ -353,32 +512,37 @@ function SidebarContent({ onNavigate }) {
 
       {/* User info + Logout */}
       <div className="border-t border-gray-100 dark:border-slate-800 p-3 shrink-0 transition-colors duration-300">
-        {/* User badge */}
+        {/* User badge and logout in same line */}
         {user && (
-          <div className="flex items-center gap-2.5 px-3 py-2 mb-1 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-            <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center shrink-0">
-              <MdPerson className="text-teal-600 dark:text-teal-400 text-sm" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                {user.username || user.name}
-              </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate capitalize">
-                {isAdmin ? "Administrator" : user.role || "User"}
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/profile"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex-1 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center shrink-0">
+                <MdPerson className="text-teal-600 dark:text-teal-400 text-sm" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                  {user.username || user.name}
+                </p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate capitalize">
+                  {isAdmin ? "Administrator" : user.role || "User"}
+                </p>
+              </div>
+            </NavLink>
+
+            <button
+              title="Logout"
+              onClick={() => dispatch(logout())}
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-red-500 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-900/20 transition-colors duration-150 group shrink-0"
+            >
+              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 dark:bg-rose-900/40 text-red-400 dark:text-rose-300 group-hover:bg-red-100 transition-colors">
+                <MdLogout className="text-base" />
+              </span>
+            </button>
           </div>
         )}
-
-        <button
-          onClick={() => dispatch(logout())}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-900/20 transition-colors duration-150 group"
-        >
-          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 dark:bg-rose-900/40 text-red-400 dark:text-rose-300 group-hover:bg-red-100 transition-colors">
-            <MdLogout className="text-base" />
-          </span>
-          <span className="font-medium text-[13px]">Logout</span>
-        </button>
       </div>
     </div>
   );
@@ -388,7 +552,7 @@ function SidebarContent({ onNavigate }) {
 const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const overlayRef = useRef(null);
-  const location   = useLocation();
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => setMobileOpen(false), 0);
@@ -396,7 +560,9 @@ const Sidebar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    function onKey(e) { if (e.key === "Escape") setMobileOpen(false); }
+    function onKey(e) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
@@ -420,7 +586,11 @@ const Sidebar = () => {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div ref={overlayRef} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            ref={overlayRef}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="relative z-10 flex h-full animate-in slide-in-from-left-4 duration-200">
             <SidebarContent onNavigate={() => setMobileOpen(false)} />
             <button

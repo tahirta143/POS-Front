@@ -30,7 +30,6 @@ import UserModule from "./pages/security/UserModule";
 import GroupRights from "./pages/security/GroupRights";
 import ModuleFunctions from "./pages/security/ModuleFunctions";
 import ModulesInfo from "./pages/security/ModulesInfo";
-import SecurityLog from "./pages/security/SecurityLog";
 import Company from "./pages/security/Company";
 import Employee from "./pages/security/Employee";
 // import User from "./pages/security/User";
@@ -152,7 +151,6 @@ const App = () => {
         <Route path="/security/group-rights" element={<ProtectedRoute module="Security"><GroupRights /></ProtectedRoute>} />
         <Route path="/security/module-functions" element={<ProtectedRoute module="Security"><ModuleFunctions /></ProtectedRoute>} />
         <Route path="/security/module-info" element={<ProtectedRoute module="Security"><ModulesInfo /></ProtectedRoute>} />
-        <Route path="/security/security-log" element={<ProtectedRoute module="Security"><SecurityLog /></ProtectedRoute>} />
         <Route path="/security/user-to-group" element={<ProtectedRoute module="Security"><UserToGroup /></ProtectedRoute>} />
         <Route path="/security/access-control" element={<ProtectedRoute module="Security"><AccessControl /></ProtectedRoute>} />
       </Route>

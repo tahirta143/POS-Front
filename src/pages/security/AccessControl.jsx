@@ -782,7 +782,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
               setGroupNameInput("");
               setEditingGroup(null);
             }}
-            className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[14px] font-bold leading-none shadow-sm"
+            className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[13px] font-bold leading-none shadow-sm"
             title="Add new group"
           >
             +
@@ -1032,261 +1032,246 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       </AnimatePresence>
 
       {/* Available Permissions - Hierarchical Tree Structure (Parent Category → Child Modules → Functionalities) */}
-      <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">
-            Available Permissions
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                expandAll(setExpandedAvailable, filteredAvailableTree)
-              }
-              className="text-[10px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition"
-              title="Expand All"
-            >
-              Expand All
-            </button>
-            <button
-              onClick={() => collapseAll(setExpandedAvailable)}
-              className="text-[10px] text-slate-500 hover:text-slate-700 font-bold hover:bg-slate-100 px-2 py-1 rounded transition"
-              title="Collapse All"
-            >
-              Collapse
-            </button>
-            <div className="relative">
-              <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchAvailable}
-                onChange={(e) => setSearchAvailable(e.target.value)}
-                className="pl-7 pr-3 py-1 text-[11px] rounded-lg border border-slate-200 outline-none focus:border-teal-500 w-32 focus:w-48 transition-all"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-2 space-y-3 custom-scroll">
-          {filteredAvailableTree.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50">
-              <MdShield className="h-10 w-10 mb-2" />
-              <p className="text-[12px]">No permissions available</p>
-            </div>
-          ) : (
-            filteredAvailableTree.map((category) => {
-              const isCategoryExpanded = expandedAvailable.has(category.id);
-
-              return (
-                <div
-                  key={category.id}
-                  className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm"
-                >
-                  {/* Parent Category Row */}
-                  <div
-                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-slate-100 to-white hover:from-slate-100/70 transition-colors cursor-pointer"
-                    onClick={() =>
-                      toggleExpand(setExpandedAvailable, category.id)
-                    }
-                  >
-                    <div className="p-1 rounded-lg bg-white shadow-sm">
-                      {category.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-slate-800">
-                          {category.name}
-                        </span>
-                        <span className="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full">
-                          {category.children.length} modules
-                        </span>
-                      </div>
-                      {category.description && (
-                        <p className="text-[9px] text-slate-500 mt-0.5 truncate">
-                          {category.description}
-                        </p>
-                      )}
-                    </div>
-                    {isCategoryExpanded ? (
-                      <MdExpandLess className="text-slate-400 h-5 w-5 shrink-0" />
-                    ) : (
-                      <MdExpandMore className="text-slate-400 h-5 w-5 shrink-0" />
-                    )}
-                  </div>
-
-                  {/* Child Modules (Collapsible) */}
-                  <AnimatePresence initial={false}>
-                    {isCategoryExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="border-t border-slate-100 bg-white">
-                          {category.children.map((module) => {
-                            const isModuleExpanded = expandedAvailable.has(
-                              module.id,
-                            );
-                            const checkState = getModuleCheckState(module);
-                            const moduleFuncCount =
-                              module.functionalities.length;
-                            const assignedFuncCount =
-                              module.functionalities.filter((f) =>
-                                assignedRightIds.has(f.funcId),
-                              ).length;
-
-                            return (
-                              <div
-                                key={module.id}
-                                className="border-b border-slate-50 last:border-0"
-                              >
-                                {/* Module Row (Child) */}
-                                <div className="flex items-center gap-2 pl-8 pr-3 py-2 hover:bg-slate-50/80 transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={checkState === true}
-                                    ref={(el) => {
-                                      if (el)
-                                        el.indeterminate =
-                                          checkState === "indeterminate";
-                                    }}
-                                    onChange={() => toggleModule(module)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="rounded accent-teal-600 cursor-pointer h-3.5 w-3.5"
-                                    disabled={module.isPlanned}
-                                  />
-                                  <div className="p-0.5 rounded-md text-slate-500">
-                                    {module.icon}
-                                  </div>
-                                  <button
-                                    onClick={() =>
-                                      !module.isPlanned &&
-                                      toggleExpand(
-                                        setExpandedAvailable,
-                                        module.id,
-                                      )
-                                    }
-                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                                    disabled={module.isPlanned}
-                                  >
-                                    <span
-                                      className={`text-[12px] font-semibold ${module.isPlanned ? "text-slate-400" : "text-slate-700"} truncate`}
-                                    >
-                                      {module.name}
-                                      {module.isPlanned && (
-                                        <span className="ml-2 text-[8px] bg-slate-100 text-slate-500 font-normal px-1 py-0.5 rounded-full">
-                                          Planned
-                                        </span>
-                                      )}
-                                    </span>
-                                    {moduleFuncCount > 0 && (
-                                      <span
-                                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                                          assignedFuncCount === moduleFuncCount
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : assignedFuncCount > 0
-                                              ? "bg-amber-100 text-amber-700"
-                                              : "bg-slate-100 text-slate-500"
-                                        }`}
-                                      >
-                                        {assignedFuncCount}/{moduleFuncCount}
-                                      </span>
-                                    )}
-                                    {!module.isPlanned &&
-                                      moduleFuncCount > 0 &&
-                                      (isModuleExpanded ? (
-                                        <MdExpandLess className="text-slate-400 h-4 w-4 shrink-0" />
-                                      ) : (
-                                        <MdExpandMore className="text-slate-400 h-4 w-4 shrink-0" />
-                                      ))}
-                                  </button>
-                                </div>
-
-                                {/* Functionalities under Module */}
-                                {!module.isPlanned && moduleFuncCount > 0 && (
-                                  <AnimatePresence initial={false}>
-                                    {isModuleExpanded && (
-                                      <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{
-                                          duration: 0.15,
-                                          ease: "easeInOut",
-                                        }}
-                                        className="overflow-hidden"
-                                      >
-                                        <div className="pl-14 pr-3 py-1 bg-slate-50/50">
-                                          {module.functionalities.map(
-                                            (func) => (
-                                              <div
-                                                key={func.id}
-                                                className="flex items-center gap-2 py-1.5 hover:bg-teal-50/40 cursor-pointer transition-colors rounded px-1"
-                                                onClick={() =>
-                                                  toggleFunctionality(
-                                                    func,
-                                                    module.moduleId,
-                                                  )
-                                                }
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  checked={assignedRightIds.has(
-                                                    func.funcId,
-                                                  )}
-                                                  onChange={() =>
-                                                    toggleFunctionality(
-                                                      func,
-                                                      module.moduleId,
-                                                    )
-                                                  }
-                                                  onClick={(e) =>
-                                                    e.stopPropagation()
-                                                  }
-                                                  className="rounded accent-teal-600 cursor-pointer h-3 w-3"
-                                                />
-                                                <span className="text-[10px] text-slate-600 flex-1">
-                                                  {func.name}
-                                                </span>
-                                                {func.action && (
-                                                  <ActionBadge
-                                                    action={func.action}
-                                                  />
-                                                )}
-                                              </div>
-                                            ),
-                                          )}
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                )}
-
-                                {/* Planned module placeholder */}
-                                {module.isPlanned && (
-                                  <div className="pl-14 pr-3 py-2 bg-slate-50/30">
-                                    <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
-                                      <MdSettings className="h-3 w-3" />
-                                      Permissions will be available when module
-                                      is deployed
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })
-          )}
-        </div>
+    {/* Available Permissions - VS Code Tree View Style */}
+<div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+  {/* Header */}
+  <div className="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+      Available Permissions
+    </span>
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => expandAll(setExpandedAvailable, filteredAvailableTree)}
+        className="text-[9px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition uppercase tracking-wide"
+      >
+        Expand All
+      </button>
+      <button
+        onClick={() => collapseAll(setExpandedAvailable)}
+        className="text-[9px] text-slate-400 hover:text-slate-600 font-bold hover:bg-slate-100 px-2 py-1 rounded transition uppercase tracking-wide"
+      >
+        Collapse
+      </button>
+      <div className="relative ml-1">
+        <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 h-3 w-3" />
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchAvailable}
+          onChange={e => setSearchAvailable(e.target.value)}
+          className="pl-6 pr-2 py-1 text-[10px] rounded border border-slate-200 outline-none focus:border-teal-400 w-24 focus:w-36 transition-all bg-white"
+        />
       </div>
+    </div>
+  </div>
+
+  {/* Tree Body */}
+  <div className="flex-1 overflow-y-auto py-1">
+    {filteredAvailableTree.length === 0 ? (
+      <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
+        <MdShield className="h-8 w-8 mb-2" />
+        <p className="text-[11px]">No permissions available</p>
+      </div>
+    ) : (
+      filteredAvailableTree.map((category, catIdx) => {
+        const isCatExpanded = expandedAvailable.has(category.id);
+        // Count assigned funcs in this category
+        const catAssignedCount = category.children.reduce((acc, mod) =>
+          acc + mod.functionalities.filter(f => assignedRightIds.has(f.funcId)).length, 0
+        );
+        const catTotalCount = category.children.reduce((acc, mod) =>
+          acc + mod.functionalities.length, 0
+        );
+
+        return (
+          <div key={category.id}>
+            {/* ── Category Row (Level 1) ─────────────────────────── */}
+            <button
+              onClick={() => toggleExpand(setExpandedAvailable, category.id)}
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 hover:bg-slate-50 transition-colors group"
+            >
+              {/* Chevron */}
+              <svg
+                className={`h-3 w-3 text-slate-400 shrink-0 transition-transform duration-150 ${isCatExpanded ? "rotate-90" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              {/* Icon */}
+              <span className="shrink-0">{category.icon}</span>
+              {/* Label */}
+              <span className="flex-1 text-left text-[12px] font-bold text-slate-700 truncate">
+                {category.name}
+              </span>
+              {/* Count badge */}
+              {catTotalCount > 0 && (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 mr-1 ${
+                  catAssignedCount === catTotalCount && catTotalCount > 0
+                    ? "bg-emerald-100 text-emerald-700"
+                    : catAssignedCount > 0
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-slate-100 text-slate-400"
+                }`}>
+                  {catAssignedCount}/{catTotalCount}
+                </span>
+              )}
+            </button>
+
+            {/* ── Module Children (Level 2) ──────────────────────── */}
+            <AnimatePresence initial={false}>
+              {isCatExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  {category.children.map((module, modIdx) => {
+                    const isModExpanded = expandedAvailable.has(module.id);
+                    const checkState = getModuleCheckState(module);
+                    const modTotal = module.functionalities.length;
+                    const modAssigned = module.functionalities.filter(f => assignedRightIds.has(f.funcId)).length;
+                    const isLastMod = modIdx === category.children.length - 1;
+
+                    return (
+                      <div key={module.id} className="relative">
+                        {/* Vertical tree line from category */}
+                        <div className="absolute left-[18px] top-0 bottom-0 w-px bg-slate-200" style={{ bottom: isLastMod ? "50%" : 0 }} />
+                        {/* Horizontal connector */}
+                        <div className="absolute left-[18px] top-1/2 w-2.5 h-px bg-slate-200" />
+
+                        {/* Module Row */}
+                        <div className={`flex items-center gap-1.5 pl-8 pr-2 py-1.5 hover:bg-slate-50/80 transition-colors ${module.isPlanned ? "opacity-50" : ""}`}>
+                          {/* Checkbox */}
+                          <input
+                            type="checkbox"
+                            checked={checkState === true}
+                            ref={el => { if (el) el.indeterminate = checkState === "indeterminate"; }}
+                            onChange={() => !module.isPlanned && toggleModule(module)}
+                            onClick={e => e.stopPropagation()}
+                            className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
+                            disabled={module.isPlanned}
+                          />
+                          {/* Expand chevron (only if has funcs) */}
+                          {!module.isPlanned && modTotal > 0 ? (
+                            <button
+                              onClick={() => toggleExpand(setExpandedAvailable, module.id)}
+                              className="shrink-0"
+                            >
+                              <svg
+                                className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${isModExpanded ? "rotate-90" : ""}`}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="w-3 shrink-0" />
+                          )}
+                          {/* Module icon */}
+                          <span className="text-slate-400 shrink-0">{module.icon}</span>
+                          {/* Module name — clicking also toggles expand */}
+                          <button
+                            onClick={() => !module.isPlanned && modTotal > 0 && toggleExpand(setExpandedAvailable, module.id)}
+                            className="flex-1 text-left min-w-0"
+                            disabled={module.isPlanned}
+                          >
+                            <span className="text-[11px] font-semibold text-slate-700 truncate block">
+                              {module.name}
+                              {module.isPlanned && (
+                                <span className="ml-1.5 text-[8px] bg-slate-100 text-slate-400 font-normal px-1 py-0.5 rounded-full">
+                                  soon
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                          {/* func count badge */}
+                          {modTotal > 0 && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                              modAssigned === modTotal
+                                ? "bg-emerald-100 text-emerald-700"
+                                : modAssigned > 0
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-slate-100 text-slate-400"
+                            }`}>
+                              {modAssigned}/{modTotal}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* ── Functionality Leaves (Level 3) ──────────── */}
+                        {!module.isPlanned && modTotal > 0 && (
+                          <AnimatePresence initial={false}>
+                            {isModExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.15, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                              >
+                                {module.functionalities.map((func, funcIdx) => {
+                                  const isLastFunc = funcIdx === module.functionalities.length - 1;
+                                  const isChecked = assignedRightIds.has(func.funcId);
+
+                                  return (
+                                    <div key={func.id} className="relative">
+                                      {/* Vertical tree line from module */}
+                                      <div
+                                        className="absolute left-[34px] top-0 w-px bg-slate-200"
+                                        style={{ bottom: isLastFunc ? "50%" : 0 }}
+                                      />
+                                      {/* Horizontal connector */}
+                                      <div className="absolute left-[34px] top-1/2 w-2.5 h-px bg-slate-200" />
+
+                                      <div
+                                        className={`flex items-center gap-1.5 pl-12 pr-2 py-1 cursor-pointer transition-colors rounded-sm mx-1 ${
+                                          isChecked ? "bg-teal-50/60 hover:bg-teal-50" : "hover:bg-slate-50"
+                                        }`}
+                                        onClick={() => toggleFunctionality(func, module.moduleId)}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => toggleFunctionality(func, module.moduleId)}
+                                          onClick={e => e.stopPropagation()}
+                                          className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
+                                        />
+                                        <span className={`text-[10px] flex-1 truncate ${isChecked ? "text-teal-700 font-medium" : "text-slate-500"}`}>
+                                          {func.name}
+                                        </span>
+                                        {func.action && <ActionBadge action={func.action} />}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        )}
+
+                        {/* Planned placeholder */}
+                        {module.isPlanned && (
+                          <div className="pl-12 pr-2 py-1">
+                            <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
+                              <MdSettings className="h-3 w-3" />
+                              Available when module is deployed
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })
+    )}
+  </div>
+</div>
 
       {/* Assigned to Group Panel */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -2337,7 +2322,7 @@ function IPTrackingTab() {
                     {new Date(log.created_at).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-[12px] text-slate-400 italic">
-                    {log.details || "—"}
+                    {log.description || "—"}
                   </td>
                 </tr>
               ))

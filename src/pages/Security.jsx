@@ -50,13 +50,13 @@ const MODULE_DATA = [
     desc: "Link users to groups",
     icon: <MdGroupWork />,
   },
-  {
-    path: "/security/security-log",
-    category: "Monitoring",
-    title: "Security Log",
-    desc: "View security activities",
-    icon: <MdHistory />,
-  },
+  // {
+  //   path: "/security/security-log",
+  //   category: "Monitoring",
+  //   title: "Security Log",
+  //   desc: "View security activities",
+  //   icon: <MdHistory />,
+  // },
   {
     path: "/security/module-info",
     category: "System",
