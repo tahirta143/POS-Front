@@ -1,50 +1,39 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { usePermissions } from "../../hooks/usePermissions"; // adjust path if needed
+import { MdShield } from "react-icons/md";
 
 /**
- * ProtectedRoute component
- * @param {Object} props
- * @param {React.ReactNode} props.children - Component to render if authorized
- * @param {string} props.module - Optional module name to check permission
- * @param {string} props.action - Optional action name to check permission
+ * ProtectedRoute
+ *
+ * Props:
+ *   children   — what to render if access is granted
+ *   module     — (optional) module name the user must have access to  e.g. "Sale"
+ *   action     — (optional) functionality name the user must have     e.g. "Create Sale Invoice"
+ *   fallback   — (optional) where to redirect on failure. Defaults to "/dashboard"
  */
-const ProtectedRoute = ({ children, module, action }) => {
-  const { isAuthenticated, user, permissions } = useSelector((state) => state.auth);
+const ProtectedRoute = ({ children, module, action, fallback = "/dashboard" }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAdmin, canAccess, canDo } = usePermissions();
   const location = useLocation();
 
+  // 1. Not logged in → go to login
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Admins bypass all checks
-  if (user?.is_admin || user?.role === 'admin' || permissions?.isAdmin) {
-    return children;
+  // 2. Admins bypass all permission checks
+  if (isAdmin) return children;
+
+  // 3. Module-level check
+  if (module && !canAccess(module)) {
+    return <Navigate to={fallback} replace />;
   }
 
-  // If a specific module check is required
-  if (module) {
-    const hasModule = permissions.modules?.some(
-      (m) => (m.slug && m.slug.toLowerCase() === module.toLowerCase()) || 
-             (m.name && m.name.toLowerCase() === module.toLowerCase())
-    );
-
-    if (!hasModule) {
-      return <Navigate to="/dashboard" replace />;
-    }
-  }
-
-  // If a specific action check is required
-  if (action) {
-    const hasAction = permissions.functionalities?.some(
-      (f) => (f.slug && f.slug.toLowerCase() === action.toLowerCase()) || 
-             (f.name && f.name.toLowerCase() === action.toLowerCase())
-    );
-
-    if (!hasAction) {
-      // For now, redirect to dashboard. In a real app, maybe show an "Access Denied" toast or page.
-      return <Navigate to="/dashboard" replace />;
-    }
+  // 4. Functionality-level check
+  if (action && !canDo(action)) {
+    return <Navigate to={fallback} replace />;
   }
 
   return children;

@@ -35,13 +35,13 @@ const MODULE_DATA = [
   //   desc: "Configure software groups",
   //   icon: <MdGroupWork />,
   // },
-  {
-    path: "/security/user",
-    category: "User Management",
-    title: "Users",
-    desc: "Manage user accounts",
-    icon: <MdLockPerson />,
-  },
+  // {
+  //   path: "/security/user",
+  //   category: "User Management",
+  //   title: "Users",
+  //   desc: "Manage user accounts",
+  //   icon: <MdLockPerson />,
+  // },
 
   {
     path: "/security/user-to-group",

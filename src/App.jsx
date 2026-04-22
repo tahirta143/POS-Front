@@ -22,7 +22,6 @@ import Bookings from "./pages/customers/Bookings";
 import Sales from "./pages/Sales";
 import OpeningStock from "./pages/stock/OpeningStock";
 import PurchasePage from "./pages/Purchase";
-import ItemBarcode from "./pages/setup/ItemBarcode";
 import ExpiryTagsPage from "./pages/ExpiryTags";
 import ReOrderStock from "./pages/stock/ReOrderStock";
 
@@ -32,10 +31,9 @@ import GroupRights from "./pages/security/GroupRights";
 import ModuleFunctions from "./pages/security/ModuleFunctions";
 import ModulesInfo from "./pages/security/ModulesInfo";
 import SecurityLog from "./pages/security/SecurityLog";
-import Groups from "./pages/security/Groups";
 import Company from "./pages/security/Company";
 import Employee from "./pages/security/Employee";
-import User from "./pages/security/User";
+// import User from "./pages/security/User";
 import UserToGroup from "./pages/security/UserToGroup";
 import AccessControl from "./pages/security/AccessControl";
 import Department from "./pages/setup/Department";
@@ -139,7 +137,6 @@ const App = () => {
         <Route path="/setup/item-type" element={<ProtectedRoute module="Setup"><ItemType /></ProtectedRoute>} />
         <Route path="/setup/item-unit" element={<ProtectedRoute module="Setup"><ItemUnit /></ProtectedRoute>} />
         <Route path="/setup/shelve-location" element={<ProtectedRoute module="Setup"><ItemShelve /></ProtectedRoute>} />
-        <Route path="/setup/item-barcode" element={<ProtectedRoute module="Setup"><ItemBarcode /></ProtectedRoute>} />
         <Route path="/setup/department" element={<ProtectedRoute module="Setup"><Department /></ProtectedRoute>} />
         <Route path="/setup/designation" element={<ProtectedRoute module="Setup"><Designation /></ProtectedRoute>} />
 
@@ -156,7 +153,6 @@ const App = () => {
         <Route path="/security/module-functions" element={<ProtectedRoute module="Security"><ModuleFunctions /></ProtectedRoute>} />
         <Route path="/security/module-info" element={<ProtectedRoute module="Security"><ModulesInfo /></ProtectedRoute>} />
         <Route path="/security/security-log" element={<ProtectedRoute module="Security"><SecurityLog /></ProtectedRoute>} />
-        <Route path="/security/user" element={<ProtectedRoute module="Security"><User /></ProtectedRoute>} />
         <Route path="/security/user-to-group" element={<ProtectedRoute module="Security"><UserToGroup /></ProtectedRoute>} />
         <Route path="/security/access-control" element={<ProtectedRoute module="Security"><AccessControl /></ProtectedRoute>} />
       </Route>

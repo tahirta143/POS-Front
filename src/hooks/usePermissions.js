@@ -1,67 +1,75 @@
+import { useSelector } from "react-redux";
 
-import { useMemo } from "react";
-
-const PERM_KEY = "pos_user_permissions";
-const USER_KEY = "pos_user";
-
-function readPermissions() {
-  try {
-    return JSON.parse(localStorage.getItem(PERM_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function readUser() {
-  try {
-    return JSON.parse(localStorage.getItem(USER_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
+/**
+ * usePermissions()
+ *
+ * Reads permissions directly from Redux store (state.auth.permissions).
+ * Shape stored at login:  { isAdmin: bool, modules: [...], functionalities: [...] }
+ *
+ * Permissions object from server looks like:
+ *   modules:         [ { id, name, slug, ... }, ... ]
+ *   functionalities: [ { id, name, slug, module_id, ... }, ... ]
+ */
 export function usePermissions() {
-  const user  = readUser();
-  const perms = readPermissions();
+  const { user, permissions } = useSelector((state) => state.auth);
 
-  return useMemo(() => {
-    const isAdmin = perms.isAdmin || user?.role === "admin" || user?.is_admin;
+  const isAdmin =
+    permissions?.isAdmin ||
+    user?.role === "admin" ||
+    user?.is_admin ||
+    false;
 
-    /**
-     * canAccess('Purchase') — true if user has any right to this module
-     */
-    const canAccess = (moduleName) => {
-      if (isAdmin) return true;
-      return (perms.modules || []).some(
-        (m) => m.toLowerCase() === moduleName.toLowerCase()
-      );
-    };
+  /**
+   * canAccess("Sale")
+   * Returns true if the user has this module in their permissions list.
+   */
+  function canAccess(moduleName) {
+    if (isAdmin) return true;
+    if (!permissions?.modules?.length) return false;
+    return permissions.modules.some((m) => {
+      const name = (m.name || m.module_name || m.slug || "").toLowerCase();
+      return name === moduleName.toLowerCase() || name.includes(moduleName.toLowerCase());
+    });
+  }
 
-    /**
-     * canDo('Create Purchase Invoice') — true if user has this functionality
-     */
-    const canDo = (actionName) => {
-      if (isAdmin) return true;
-      return (perms.functionalities || []).some(
-        (f) => f.toLowerCase() === actionName.toLowerCase()
-      );
-    };
+  /**
+   * canDo("Create Sale Invoice")   — match by functionality name
+   * canDo("read", "Sale")          — match by action keyword + module name (optional second arg)
+   */
+  function canDo(actionOrFuncName, moduleName = null) {
+    if (isAdmin) return true;
+    if (!permissions?.functionalities?.length) return false;
 
-    /**
-     * canAny(['Create Purchase Invoice', 'Update Purchase Invoice'])
-     */
-    const canAny = (actions) => actions.some(canDo);
+    return permissions.functionalities.some((f) => {
+      const fname = (f.name || f.slug || "").toLowerCase();
+      const mname = (f.module_name || "").toLowerCase();
 
-    return { isAdmin, canAccess, canDo, canAny, modules: perms.modules || [], functionalities: perms.functionalities || [] };
-  }, [perms, user]);
-}
+      if (moduleName) {
+        // Two-arg form: canDo("read", "Sale")
+        return (
+          fname.includes(actionOrFuncName.toLowerCase()) &&
+          mname.includes(moduleName.toLowerCase())
+        );
+      }
+      // One-arg form: canDo("Create Sale Invoice")
+      return fname.includes(actionOrFuncName.toLowerCase());
+    });
+  }
 
-// ─── Save permissions to localStorage after login ────────────────────────────
-export function savePermissions(permissions) {
-  localStorage.setItem(PERM_KEY, JSON.stringify(permissions));
-}
+  /**
+   * canAny(["Create Booking", "Update Booking"])
+   * Returns true if the user has ANY of the listed functionalities.
+   */
+  function canAny(actions) {
+    return actions.some((a) => canDo(a));
+  }
 
-export function clearPermissions() {
-  localStorage.removeItem(PERM_KEY);
-  localStorage.removeItem(USER_KEY);
+  return {
+    isAdmin,
+    canAccess,
+    canDo,
+    canAny,
+    modules: permissions?.modules || [],
+    functionalities: permissions?.functionalities || [],
+  };
 }
