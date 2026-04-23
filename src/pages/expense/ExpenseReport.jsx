@@ -7,6 +7,8 @@ import {
   StatusAlert,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { usePermissions } from "../../hooks/usePermissions";
+import { MdLock } from "react-icons/md";
 
 const sectionStyles = {
   emerald: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
@@ -97,6 +99,9 @@ function ChartIcon({ className }) {
 }
 
 export default function ExpenseReport() {
+  const { canRead, isAdmin } = usePermissions();
+  const MODULE_NAME = "Expense Report";
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -106,10 +111,14 @@ export default function ExpenseReport() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  const canReadReport = isAdmin || canRead(MODULE_NAME);
+
   useEffect(() => {
-    fetchReport();
+    if (canReadReport) {
+      fetchReport();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, fromDate, toDate]);
+  }, [type, fromDate, toDate, canReadReport]);
 
   async function fetchReport() {
     setLoading(true);
@@ -142,6 +151,29 @@ export default function ExpenseReport() {
       { sales: 0, expense: 0, profit: 0 },
     );
   }, [data]);
+
+  // Access Denied
+  if (!canReadReport) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Expense Reports.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Expense Report</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell
@@ -271,8 +303,8 @@ export default function ExpenseReport() {
                         className="py-8 text-center text-slate-400 dark:text-slate-500"
                       >
                         Loading data...
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td
@@ -280,8 +312,8 @@ export default function ExpenseReport() {
                         className="py-8 text-center text-slate-400 dark:text-slate-500"
                       >
                         No records found for this period.
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ) : (
                     data.map((row, index) => (
                       <tr

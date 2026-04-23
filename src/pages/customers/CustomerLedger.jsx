@@ -32,7 +32,7 @@ const CREDIT_LIMIT = 50000;
 export default function CustomerLedger() {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [ledgerData, setLedgerData] = useState(null); // { customer, ledger, closingBalance }
+  const [ledgerData, setLedgerData] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);

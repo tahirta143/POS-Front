@@ -10,6 +10,8 @@ import {
   ActionButton,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { usePermissions } from "../../hooks/usePermissions";
+import { MdLock } from "react-icons/md";
 
 const sectionStyles = {
   emerald: {
@@ -65,6 +67,9 @@ function createEmptyForm() {
 }
 
 export default function ExpenseHeadPage() {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions();
+  const MODULE_NAME = "Expense Head";
+
   const [form, setForm] = useState(createEmptyForm);
   const [expenseHeads, setExpenseHeads] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -72,9 +77,17 @@ export default function ExpenseHeadPage() {
   const [editId, setEditId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  // Permission checks
+  const canCreateHead = isAdmin || canCreate(MODULE_NAME);
+  const canReadHead = isAdmin || canRead(MODULE_NAME);
+  const canUpdateHead = isAdmin || canUpdate(MODULE_NAME);
+  const canDeleteHead = isAdmin || canDelete(MODULE_NAME);
+
   useEffect(() => {
-    fetchHeads();
-  }, []);
+    if (canReadHead) {
+      fetchHeads();
+    }
+  }, [canReadHead]);
 
   async function fetchHeads() {
     setLoading(true);
@@ -109,8 +122,16 @@ export default function ExpenseHeadPage() {
       };
 
       if (editId) {
+        if (!canUpdateHead) {
+          toast.error("You don't have permission to update expense heads.");
+          return;
+        }
         await axiosInstance.put(`/expense-heads/${editId}`, payload);
       } else {
+        if (!canCreateHead) {
+          toast.error("You don't have permission to create expense heads.");
+          return;
+        }
         await axiosInstance.post("/expense-heads", payload);
       }
 
@@ -132,6 +153,11 @@ export default function ExpenseHeadPage() {
   }
 
   async function handleDelete(id) {
+    if (!canDeleteHead) {
+      toast.error("You don't have permission to delete expense heads.");
+      return;
+    }
+
     if (!window.confirm("Delete this expense head?")) return;
 
     try {
@@ -146,6 +172,11 @@ export default function ExpenseHeadPage() {
   }
 
   function handleEdit(eh) {
+    if (!canUpdateHead) {
+      toast.error("You don't have permission to edit expense heads.");
+      return;
+    }
+
     setEditId(eh.id);
     setForm({
       head: eh.head || "",
@@ -167,6 +198,29 @@ export default function ExpenseHeadPage() {
   const inputCls =
     "h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors";
 
+  // Access Denied
+  if (!canReadHead) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Expense Heads.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Expense Head</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -181,71 +235,73 @@ export default function ExpenseHeadPage() {
               tracking.
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm();
-                document
-                  .querySelector("main")
-                  ?.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                const opening = !isFormOpen;
-                setIsFormOpen(opening);
-                if (opening) {
+          {canCreateHead && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
                   resetForm();
                   document
                     .querySelector("main")
                     ?.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  const opening = !isFormOpen;
+                  setIsFormOpen(opening);
+                  if (opening) {
+                    resetForm();
+                    document
+                      .querySelector("main")
+                      ?.scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen
-                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
-                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
-          >
-            {isFormOpen ? (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Close Form
-              </>
-            ) : (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Head
-              </>
-            )}
-          </button>
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+              }`}
+            >
+              {isFormOpen ? (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Close Form
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Head
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateHead && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -370,16 +426,20 @@ export default function ExpenseHeadPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton
-                            label="Edit"
-                            tone="teal"
-                            onClick={() => handleEdit(eh)}
-                          />
-                          <ActionButton
-                            label="Delete"
-                            tone="rose"
-                            onClick={() => handleDelete(eh.id)}
-                          />
+                          {canUpdateHead && (
+                            <ActionButton
+                              label="Edit"
+                              tone="teal"
+                              onClick={() => handleEdit(eh)}
+                            />
+                          )}
+                          {canDeleteHead && (
+                            <ActionButton
+                              label="Delete"
+                              tone="rose"
+                              onClick={() => handleDelete(eh.id)}
+                            />
+                          )}
                         </div>
                       </td>
                     </motion.tr>

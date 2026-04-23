@@ -3,6 +3,8 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { usePermissions } from '../../hooks/usePermissions'
+import { MdLock } from 'react-icons/md'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -43,6 +45,9 @@ function createEmptyForm() {
 }
 
 export default function CustomerPage() {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions()
+  const MODULE_NAME = "Customer"
+
   const [form, setForm] = useState(createEmptyForm)
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(false)
@@ -50,9 +55,17 @@ export default function CustomerPage() {
   const [editId, setEditId] = useState(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
 
+  // Permission checks
+  const canCreateCustomer = isAdmin || canCreate(MODULE_NAME)
+  const canReadCustomer = isAdmin || canRead(MODULE_NAME)
+  const canUpdateCustomer = isAdmin || canUpdate(MODULE_NAME)
+  const canDeleteCustomer = isAdmin || canDelete(MODULE_NAME)
+
   useEffect(() => {
-    fetchCustomers()
-  }, [])
+    if (canReadCustomer) {
+      fetchCustomers()
+    }
+  }, [canReadCustomer])
 
   async function fetchCustomers() {
     setLoading(true)
@@ -89,9 +102,17 @@ export default function CustomerPage() {
       }
 
       if (editId) {
+        if (!canUpdateCustomer) {
+          toast.error('You don\'t have permission to update customers.')
+          return
+        }
         await axiosInstance.put(`/customers/${editId}`, payload)
         toast.success('Customer updated successfully.')
       } else {
+        if (!canCreateCustomer) {
+          toast.error('You don\'t have permission to create customers.')
+          return
+        }
         await axiosInstance.post('/customers', payload)
         toast.success('Customer created successfully.')
       }
@@ -107,6 +128,11 @@ export default function CustomerPage() {
   }
 
   async function handleDelete(id) {
+    if (!canDeleteCustomer) {
+      toast.error('You don\'t have permission to delete customers.')
+      return
+    }
+
     if (!window.confirm('Delete this customer?')) return
 
     try {
@@ -119,6 +145,11 @@ export default function CustomerPage() {
   }
 
   function handleEdit(customer) {
+    if (!canUpdateCustomer) {
+      toast.error('You don\'t have permission to edit customers.')
+      return
+    }
+
     setEditId(customer.id)
     setForm({
       customerName: customer.customer_name || '',
@@ -143,6 +174,29 @@ export default function CustomerPage() {
 
   const inputCls = "h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
 
+  // Access Denied
+  if (!canReadCustomer) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Customers.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Customer</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -152,42 +206,44 @@ export default function CustomerPage() {
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Customers</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">Register and manage clients for detailed billing and history.</p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm()
-                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
-              } else {
-                setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) {
+          {canCreateCustomer && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
                   resetForm()
                   document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                } else {
+                  setIsFormOpen(!isFormOpen)
+                  if (!isFormOpen) {
+                    resetForm()
+                    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
                 }
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' 
-                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
-            }`}
-          >
-            {isFormOpen ? (
-              <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                Close Form
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                Add Customer
-              </>
-            )}
-          </button>
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen 
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' 
+                  : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+              }`}
+            >
+              {isFormOpen ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  Close Form
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                  Add Customer
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateCustomer && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -346,22 +402,26 @@ export default function CustomerPage() {
                       <td className="px-5 py-4">
                          <span className="text-[12px] font-medium text-slate-600 dark:text-slate-200">{c.mobile_number || '-'}</span>
                          <span className="block text-[10px] text-slate-400 font-bold tracking-tighter uppercase">{c.payment_method}</span>
-                      </td>
+                       </td>
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-200">
                         {c.address ? <div className="max-w-[200px] truncate text-[12px]">{c.address}</div> : '-'}
                         {c.nearby && <span className="mt-0.5 block text-[10px] font-bold text-teal-600 dark:text-teal-300 uppercase tracking-tighter">Near: {c.nearby}</span>}
-                      </td>
+                       </td>
                       <td className="px-5 py-4 text-right">
                          <span className={`text-[12px] font-black ${parseFloat(c.previous_balance) > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-slate-700 dark:text-slate-300'}`}>
                            PKR {parseFloat(c.previous_balance || 0).toLocaleString()}
                          </span>
-                      </td>
+                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(c)} />
-                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(c.id)} />
+                          {canUpdateCustomer && (
+                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(c)} />
+                          )}
+                          {canDeleteCustomer && (
+                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(c.id)} />
+                          )}
                         </div>
-                      </td>
+                       </td>
                     </motion.tr>
                   ))}
                 </tbody>

@@ -28,11 +28,8 @@ import ReOrderStock from "./pages/stock/ReOrderStock";
 import Security from "./pages/Security";
 import UserModule from "./pages/security/UserModule";
 import GroupRights from "./pages/security/GroupRights";
-import ModuleFunctions from "./pages/security/ModuleFunctions";
-import ModulesInfo from "./pages/security/ModulesInfo";
 import Company from "./pages/security/Company";
 import Employee from "./pages/security/Employee";
-// import User from "./pages/security/User";
 import UserToGroup from "./pages/security/UserToGroup";
 import AccessControl from "./pages/security/AccessControl";
 import Department from "./pages/setup/Department";
@@ -101,58 +98,308 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
 
         {/* Stock Routes */}
-        <Route path="/stock/opening" element={<ProtectedRoute module="Stock"><OpeningStock /></ProtectedRoute>} />
-        <Route path="/stock/reorder" element={<ProtectedRoute module="Stock"><ReOrderStock /></ProtectedRoute>} />
-        <Route path="/stock/sales-return" element={<ProtectedRoute module="Stock"><SalesReturnPage /></ProtectedRoute>} />
-        <Route path="/stock/purchase-return" element={<ProtectedRoute module="Stock"><PurchaseReturnPage /></ProtectedRoute>} />
-        <Route path="/stock/grn" element={<ProtectedRoute module="Stock"><GoodsReceiptNotePage /></ProtectedRoute>} />
-        <Route path="/stock/transfer" element={<ProtectedRoute module="Stock"><StockTransferPage /></ProtectedRoute>} />
+        <Route
+          path="/stock/opening"
+          element={
+            <ProtectedRoute module="Stock" action="create">
+              <OpeningStock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/reorder"
+          element={
+            <ProtectedRoute module="Stock" action="read">
+              <ReOrderStock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/sales-return"
+          element={
+            <ProtectedRoute module="Stock" action="create">
+              <SalesReturnPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/purchase-return"
+          element={
+            <ProtectedRoute module="Stock" action="create">
+              <PurchaseReturnPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/grn"
+          element={
+            <ProtectedRoute module="Stock" action="create">
+              <GoodsReceiptNotePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/transfer"
+          element={
+            <ProtectedRoute module="Stock" action="transfer">
+              <StockTransferPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Items */}
-        <Route path="/items" element={<ProtectedRoute module="Items"><ItemList /></ProtectedRoute>} />
-        <Route path="/expiry-tags" element={<ProtectedRoute module="Items"><ExpiryTagsPage /></ProtectedRoute>} />
+        <Route
+          path="/items"
+          element={
+            <ProtectedRoute module="Items" action="read">
+              <ItemList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expiry-tags"
+          element={
+            <ProtectedRoute module="Items" action="read">
+              <ExpiryTagsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Sales & Purchase */}
-        <Route path="/purchase" element={<ProtectedRoute module="Purchase"><PurchasePage /></ProtectedRoute>} />
-        <Route path="/sale" element={<ProtectedRoute module="Sale"><Sales /></ProtectedRoute>} />
+        <Route
+          path="/purchase"
+          element={
+            <ProtectedRoute module="Purchase" action="create">
+              <PurchasePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sale"
+          element={
+            <ProtectedRoute module="Sale" action="create">
+              <Sales />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Finance Routes */}
-        <Route path="/finance/supplier-payment" element={<ProtectedRoute module="Finance"><SupplierPaymentPage /></ProtectedRoute>} />
-        <Route path="/finance/amount-payable" element={<ProtectedRoute module="Finance"><AmountPayablePage /></ProtectedRoute>} />
-        <Route path="/finance/supplier-ledger" element={<ProtectedRoute module="Finance"><SupplierLedgerPage /></ProtectedRoute>} />
-        <Route path="/finance/customer-payment" element={<ProtectedRoute module="Finance"><CustomerPaymentPage /></ProtectedRoute>} />
-        <Route path="/finance/amount-receivable" element={<ProtectedRoute module="Finance"><AmountReceivablePage /></ProtectedRoute>} />
+        <Route
+          path="/finance/supplier-payment"
+          element={
+            <ProtectedRoute module="Finance" action="create">
+              <SupplierPaymentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/amount-payable"
+          element={
+            <ProtectedRoute module="Finance" action="read">
+              <AmountPayablePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/supplier-ledger"
+          element={
+            <ProtectedRoute module="Supplier Ledger" action="read">
+              <SupplierLedgerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/customer-payment"
+          element={
+            <ProtectedRoute module="Finance" action="create">
+              <CustomerPaymentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/amount-receivable"
+          element={
+            <ProtectedRoute module="Finance" action="read">
+              <AmountReceivablePage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Customer Routes */}
-        <Route path="/customer/registration" element={<ProtectedRoute module="Customer"><CustomerList /></ProtectedRoute>} />
-        <Route path="/customer/record" element={<ProtectedRoute module="Customer"><CustomerLedger /></ProtectedRoute>} />
-        <Route path="/booking-customers" element={<ProtectedRoute module="Booking"><Bookings /></ProtectedRoute>} />
+        <Route
+          path="/customer/registration"
+          element={
+            <ProtectedRoute module="Customer" action="create">
+              <CustomerList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customer/record"
+          element={
+            <ProtectedRoute module="Customer" action="read">
+              <CustomerLedger />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/booking-customers"
+          element={
+            <ProtectedRoute module="Booking" action="read">
+              <Bookings />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Setup Routes - Protected under 'Setup' or 'Security' as per your preference */}
-        <Route path="/setup/suppliers" element={<ProtectedRoute module="Setup"><SupplierList /></ProtectedRoute>} />
-        <Route path="/setup/manufacturers" element={<ProtectedRoute module="Setup"><Manufacturers /></ProtectedRoute>} />
-        <Route path="/setup/item-category" element={<ProtectedRoute module="Setup"><ItemCategory /></ProtectedRoute>} />
-        <Route path="/setup/item-subcategory" element={<ProtectedRoute module="Setup"><SubCategory /></ProtectedRoute>} />
-        <Route path="/setup/item-type" element={<ProtectedRoute module="Setup"><ItemType /></ProtectedRoute>} />
-        <Route path="/setup/item-unit" element={<ProtectedRoute module="Setup"><ItemUnit /></ProtectedRoute>} />
-        <Route path="/setup/shelve-location" element={<ProtectedRoute module="Setup"><ItemShelve /></ProtectedRoute>} />
-        <Route path="/setup/department" element={<ProtectedRoute module="Setup"><Department /></ProtectedRoute>} />
-        <Route path="/setup/designation" element={<ProtectedRoute module="Setup"><Designation /></ProtectedRoute>} />
+        {/* Setup Routes - Updated with correct module names */}
+        <Route
+          path="/setup/suppliers"
+          element={
+            <ProtectedRoute module="Supplier" action="read">
+              <SupplierList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/manufacturers"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <Manufacturers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/item-category"
+          element={
+            <ProtectedRoute module="Item Category" action="read">
+              <ItemCategory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/item-subcategory"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <SubCategory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/item-type"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <ItemType />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/item-unit"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <ItemUnit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/shelve-location"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <ItemShelve />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/department"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <Department />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/designation"
+          element={
+            <ProtectedRoute module="Setup" action="read">
+              <Designation />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Accounts/Expense Routes */}
-        <Route path="/daybook" element={<ProtectedRoute module="Expense"><Daybook /></ProtectedRoute>} />
-        <Route path="/expense/head" element={<ProtectedRoute module="Expense"><ExpenseHead /></ProtectedRoute>} />
-        <Route path="/expense/voucher" element={<ProtectedRoute module="Expense"><ExpenseVoucher /></ProtectedRoute>} />
-        <Route path="/expense/report" element={<ProtectedRoute module="Expense"><ExpenseReport /></ProtectedRoute>} />
+        {/* Accounts/Expense Routes - FIXED: Changed 'Expense' to correct module names */}
+        <Route
+          path="/daybook"
+          element={
+            <ProtectedRoute module="Day Book" action="read">
+              <Daybook />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expense/head"
+          element={
+            <ProtectedRoute module="Expense Head" action="read">
+              <ExpenseHead />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expense/voucher"
+          element={
+            <ProtectedRoute module="Expense Voucher" action="read">
+              <ExpenseVoucher />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expense/report"
+          element={
+            <ProtectedRoute module="Accounts" action="read">
+              <ExpenseReport />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Security Routes - All protected under 'Security' module */}
-        <Route path="/security" element={<ProtectedRoute module="Security"><Security /></ProtectedRoute>} />
-        <Route path="/security/user-module" element={<ProtectedRoute module="Security"><UserModule /></ProtectedRoute>} />
-        <Route path="/security/group-rights" element={<ProtectedRoute module="Security"><GroupRights /></ProtectedRoute>} />
-        <Route path="/security/module-functions" element={<ProtectedRoute module="Security"><ModuleFunctions /></ProtectedRoute>} />
-        <Route path="/security/module-info" element={<ProtectedRoute module="Security"><ModulesInfo /></ProtectedRoute>} />
-        <Route path="/security/user-to-group" element={<ProtectedRoute module="Security"><UserToGroup /></ProtectedRoute>} />
-        <Route path="/security/access-control" element={<ProtectedRoute module="Security"><AccessControl /></ProtectedRoute>} />
+        {/* Security Routes */}
+        <Route
+          path="/security"
+          element={
+            <ProtectedRoute module="Security" action="read">
+              <Security />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/security/user-module"
+          element={
+            <ProtectedRoute module="Security" action="read">
+              <UserModule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/security/group-rights"
+          element={
+            <ProtectedRoute module="Security" action="read">
+              <GroupRights />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/security/user-to-group"
+          element={
+            <ProtectedRoute module="Security" action="read">
+              <UserToGroup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/security/access-control"
+          element={
+            <ProtectedRoute module="Security" action="read">
+              <AccessControl />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Catch-all route */}

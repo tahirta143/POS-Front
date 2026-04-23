@@ -1,6 +1,4 @@
 // PageShell — wraps page content in a centred, max-width section.
-// Note: the `title`, `description`, and `accent` props passed by some pages
-// are intentionally unused here; the Sidebar topbar already shows the page title.
 export function PageShell({ children }) {
   return (
     <section className="page-shell w-full space-y-6 pb-20">{children}</section>

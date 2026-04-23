@@ -19,7 +19,9 @@ import {
   MdHistory,
   MdPayment,
   MdSearch,
+  MdLock,
 } from "react-icons/md";
+import { usePermissions } from "../../hooks/usePermissions";
 
 const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
@@ -43,38 +45,51 @@ function createEmptyRow() {
 }
 
 export default function Bookings() {
-  const [customers, setCustomers]           = useState([]);
-  const [categories, setCategories]         = useState([]);
-  const [items, setItems]                   = useState([]);
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions();
+  const MODULE_NAME = "Booking";
+
+  const [customers, setCustomers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [items, setItems] = useState([]);
   const [bookingsRecord, setBookingsRecord] = useState([]);
-  const [loading, setLoading]               = useState(false);
-  const [submitting, setSubmitting]         = useState(false);
-  const [isFormOpen, setIsFormOpen]         = useState(false);
-  const [editId, setEditId]                 = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
 
   // Payment modal
-  const [payBooking, setPayBooking]   = useState(null);
-  const [payAmount, setPayAmount]     = useState("");
-  const [payMethod, setPayMethod]     = useState("Cash");
-  const [payRemarks, setPayRemarks]   = useState("");
+  const [payBooking, setPayBooking] = useState(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState("Cash");
+  const [payRemarks, setPayRemarks] = useState("");
 
   // Form state
-  const [mobileNumber, setMobileNumber]               = useState("");
-  const [customerName, setCustomerName]               = useState("");
-  const [customerId, setCustomerId]                   = useState(null);
-  const [address, setAddress]                         = useState("");
-  const [bookingDate, setBookingDate]                 = useState("");
-  const [bookingTime, setBookingTime]                 = useState("");
-  const [invoiceItems, setInvoiceItems]               = useState([createEmptyRow()]);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerId, setCustomerId] = useState(null);
+  const [address, setAddress] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [invoiceItems, setInvoiceItems] = useState([createEmptyRow()]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [paymentMethod, setPaymentMethod]             = useState("Cash");
-  const [discount, setDiscount]                       = useState("");
-  const [givenAmount, setGivenAmount]                 = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [discount, setDiscount] = useState("");
+  const [givenAmount, setGivenAmount] = useState("");
+
+  // Permission checks
+  const canCreateBooking = isAdmin || canCreate(MODULE_NAME);
+  const canReadBooking = isAdmin || canRead(MODULE_NAME);
+  const canUpdateBooking = isAdmin || canUpdate(MODULE_NAME);
+  const canDeleteBooking = isAdmin || canDelete(MODULE_NAME);
+  // For recording payments, we use canCreate since it's a create operation
+  const canRecordPayment = isAdmin || canCreate(MODULE_NAME);
 
   useEffect(() => {
-    fetchInitialData();
-    fetchBookings();
-  }, []);
+    if (canReadBooking) {
+      fetchInitialData();
+      fetchBookings();
+    }
+  }, [canReadBooking]);
 
   async function fetchInitialData() {
     try {
@@ -95,9 +110,8 @@ export default function Bookings() {
   async function fetchBookings() {
     setLoading(true);
     try {
-      const res  = await axiosInstance.get("/bookings");
+      const res = await axiosInstance.get("/bookings");
       const data = res.data;
-      // Controller now returns flat array; handle both shapes for safety
       setBookingsRecord(Array.isArray(data) ? data : data?.data || []);
     } catch {
       setBookingsRecord([]);
@@ -107,6 +121,10 @@ export default function Bookings() {
   }
 
   const handleDelete = async (id) => {
+    if (!canDeleteBooking) {
+      toast.error("You don't have permission to delete bookings.");
+      return;
+    }
     if (!window.confirm("Delete this booking?")) return;
     try {
       await axiosInstance.delete(`/bookings/${id}`);
@@ -119,6 +137,11 @@ export default function Bookings() {
   };
 
   const handleEdit = (rec) => {
+    if (!canUpdateBooking) {
+      toast.error("You don't have permission to edit bookings.");
+      return;
+    }
+    
     setEditId(rec.id);
     setMobileNumber(rec.mobile_number || "");
     setCustomerName(rec.customer_name || "");
@@ -133,13 +156,12 @@ export default function Bookings() {
     if (rec.items && rec.items.length > 0) {
       setInvoiceItems(
         rec.items.map((item) => ({
-          id:          Date.now() + Math.random(),
-          // category_id now comes from backend (item_category_id aliased as category_id)
+          id: Date.now() + Math.random(),
           category_id: String(item.category_id || ""),
-          item_id:     item.item_id,
-          price:       parseFloat(item.price || 0),
-          quantity:    item.qty || 1,
-          total:       parseFloat(item.price || 0) * (item.qty || 1),
+          item_id: item.item_id,
+          price: parseFloat(item.price || 0),
+          quantity: item.qty || 1,
+          total: parseFloat(item.price || 0) * (item.qty || 1),
         }))
       );
     } else {
@@ -187,10 +209,9 @@ export default function Bookings() {
     [payable, givenAmount]
   );
 
-  const isAllPaid     = payable > 0 && Number(givenAmount) >= payable;
-  const isPartialPaid = payable > 0 && Number(givenAmount) > 0 && Number(givenAmount) < payable;
+  const isAllPaid = payable > 0 && Number(givenAmount) >= payable;
 
-  const addRow    = () => setInvoiceItems(prev => [...prev, createEmptyRow()]);
+  const addRow = () => setInvoiceItems(prev => [...prev, createEmptyRow()]);
   const removeRow = (id) => {
     if (invoiceItems.length > 1) setInvoiceItems(prev => prev.filter(r => r.id !== id));
   };
@@ -201,7 +222,6 @@ export default function Bookings() {
       const newRow = { ...row, [field]: value };
       if (field === "item_id" && value) {
         const found = items.find(i => String(i.id) === String(value));
-        // Use sale_price — matches item_details column name
         if (found) newRow.price = found.sale_price || 0;
       }
       if (field === "category_id") { newRow.item_id = ""; newRow.price = ""; }
@@ -212,22 +232,28 @@ export default function Bookings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!canCreateBooking && !canUpdateBooking) {
+      toast.error("You don't have permission to save bookings.");
+      return;
+    }
+    
     if (!mobileNumber || !customerName) { toast.error("Customer Mobile & Name required."); return; }
     const validItems = invoiceItems.filter(r => r.item_id && r.quantity > 0);
     if (validItems.length === 0) { toast.error("Add at least one item."); return; }
 
     setSubmitting(true);
     const payload = {
-      customer_id:    customerId,
-      items:          validItems.map(r => ({ item_id: r.item_id, qty: r.quantity })),
-      sub_total:      subTotal,
-      discount:       Number(discount) || 0,
+      customer_id: customerId,
+      items: validItems.map(r => ({ item_id: r.item_id, qty: r.quantity })),
+      sub_total: subTotal,
+      discount: Number(discount) || 0,
       payable,
-      paid:           Number(givenAmount) || 0,
-      to_be_paid:     remaining,
+      paid: Number(givenAmount) || 0,
+      to_be_paid: remaining,
       payment_method: paymentMethod,
-      booking_date:   bookingDate,
-      booking_time:   bookingTime,
+      booking_date: bookingDate,
+      booking_time: bookingTime,
     };
 
     try {
@@ -250,14 +276,18 @@ export default function Bookings() {
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
+    if (!canRecordPayment) {
+      toast.error("You don't have permission to record payments.");
+      return;
+    }
     if (!payBooking || !payAmount || parseFloat(payAmount) <= 0) return;
     setSubmitting(true);
     try {
       await axiosInstance.post(`/bookings/${payBooking.id}/payments`, {
-        amount:        payAmount,
+        amount: parseFloat(payAmount),
         paymentMethod: payMethod,
-        remarks:       payRemarks,
-        paymentDate:   new Date().toISOString().slice(0, 10),
+        remarks: payRemarks,
+        paymentDate: new Date().toISOString().slice(0, 10),
       });
       toast.success("Payment recorded successfully");
       setPayBooking(null);
@@ -280,6 +310,29 @@ export default function Bookings() {
     setPaymentMethod("Cash");
   };
 
+  // Access Denied
+  if (!canReadBooking) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Bookings.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Booking</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -289,30 +342,32 @@ export default function Bookings() {
             <h1 className="text-xl font-bold text-slate-900">Customer Bookings</h1>
             <p className="text-sm text-slate-500">Record advance orders and booking deposits.</p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm();
-                document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                const opening = !isFormOpen;
-                setIsFormOpen(opening);
-                if (opening) { resetForm(); document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" }); }
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen
-                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
-          >
-            {isFormOpen ? <><MdRemove className="h-5 w-5" /> Close Form</> : <><MdAdd className="h-5 w-5" /> New Booking</>}
-          </button>
+          {canCreateBooking && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
+                  resetForm();
+                  document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  const opening = !isFormOpen;
+                  setIsFormOpen(opening);
+                  if (opening) { resetForm(); document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" }); }
+                }
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen
+                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+              }`}
+            >
+              {isFormOpen ? <><MdRemove className="h-5 w-5" /> Close Form</> : <><MdAdd className="h-5 w-5" /> New Booking</>}
+            </button>
+          )}
         </div>
 
-        {/* Form */}
+        {/* Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateBooking && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -586,11 +641,15 @@ export default function Bookings() {
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex justify-end gap-2">
-                            {Number(s.to_be_paid) > 0 && (
+                            {Number(s.to_be_paid) > 0 && canRecordPayment && (
                               <ActionButton label="Pay" tone="emerald" onClick={() => setPayBooking(s)} />
                             )}
-                            <ActionButton label="Edit"   tone="teal" onClick={() => handleEdit(s)} />
-                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                            {canUpdateBooking && (
+                              <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(s)} />
+                            )}
+                            {canDeleteBooking && (
+                              <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(s.id)} />
+                            )}
                           </div>
                         </td>
                       </motion.tr>
@@ -602,9 +661,9 @@ export default function Bookings() {
           )}
         </Card>
 
-        {/* Payment Modal */}
+        {/* Payment Modal - Only show if user can record payments */}
         <AnimatePresence>
-          {payBooking && (
+          {payBooking && canRecordPayment && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}

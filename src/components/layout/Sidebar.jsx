@@ -44,136 +44,105 @@ import {
 import { logout } from "../../features/auth/authSlice";
 
 // ── Nav tree ──────────────────────────────────────────────────────────────────
-// `module` = the module name that must exist in permissions.modules for this
-//            item to be visible. Items without `module` are always visible.
+
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: MdDashboard },
-  { to: "/items", label: "Item Details", icon: MdInventory, module: "Items" },
-  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "Sale" },
-  {
-    to: "/purchase",
-    label: "Purchase",
-    icon: MdShoppingCart,
-    module: "Purchase",
-  },
+  // Dashboard
+  { to: "/dashboard", label: "Dashboard", icon: MdDashboard, module: "Dashboard", requiredAction: "read" },
+  
+  // Items
+  { to: "/items", label: "Item Details", icon: MdInventory, module: "Items", requiredAction: "read" },
+  
+  // Sales
+  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "Sale", requiredAction: "create" },
+  
+  // Purchase
+  { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "Purchase", requiredAction: "create" },
+  
+  // Stock Management
   {
     id: "stock",
     label: "Stock",
     icon: MdWarehouse,
     module: "Stock",
     children: [
-      { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox },
-      { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh },
-      { to: "/stock/grn", label: "Goods Receipt", icon: MdReceipt },
-      { to: "/stock/transfer", label: "Stock Transfer", icon: MdSwapHoriz },
-      {
-        to: "/stock/sales-return",
-        label: "Sales Return",
-        icon: MdRemoveCircle,
-      },
-      {
-        to: "/stock/purchase-return",
-        label: "Purchase Return",
-        icon: MdRemoveCircle,
-      },
+      { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox, module: "Stock", requiredAction: "create" },
+      { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh, module: "Stock", requiredAction: "read" },
+      { to: "/stock/grn", label: "Goods Receipt", icon: MdReceipt, module: "Stock", requiredAction: "create" },
+      { to: "/stock/transfer", label: "Stock Transfer", icon: MdSwapHoriz, module: "Stock", requiredAction: "transfer" },
+      { to: "/stock/sales-return", label: "Sales Return", icon: MdRemoveCircle, module: "Stock", requiredAction: "create" },
+      { to: "/stock/purchase-return", label: "Purchase Return", icon: MdRemoveCircle, module: "Stock", requiredAction: "create" },
     ],
   },
+  
+  // Finance
   {
     id: "finance",
     label: "Finance",
     icon: MdAccountBalance,
     module: "Finance",
     children: [
-      {
-        to: "/finance/supplier-payment",
-        label: "Supplier Payment",
-        icon: MdMonetizationOn,
-      },
-      {
-        to: "/finance/amount-payable",
-        label: "Amount Payable",
-        icon: MdAssessment,
-      },
-      {
-        to: "/finance/supplier-ledger",
-        label: "Supplier Ledger",
-        icon: MdReceipt,
-      },
-      {
-        to: "/finance/customer-payment",
-        label: "Customer Payment",
-        icon: MdMonetizationOn,
-      },
-      {
-        to: "/finance/amount-receivable",
-        label: "Amount Receivable",
-        icon: MdAssessment,
-      },
+      { to: "/finance/supplier-payment", label: "Supplier Payment", icon: MdMonetizationOn, module: "Finance", requiredAction: "create" },
+      { to: "/finance/amount-payable", label: "Amount Payable", icon: MdAssessment, module: "Finance", requiredAction: "read" },
+      { to: "/finance/supplier-ledger", label: "Supplier Ledger", icon: MdReceipt, module: "Supplier Ledger", requiredAction: "read" },
+      { to: "/finance/customer-payment", label: "Customer Payment", icon: MdMonetizationOn, module: "Finance", requiredAction: "create" },
+      { to: "/finance/amount-receivable", label: "Amount Receivable", icon: MdAssessment, module: "Finance", requiredAction: "read" },
     ],
   },
+  
+  // Customer Management
   {
     id: "customer",
     label: "Customer",
     icon: MdPeople,
     module: "Customer",
     children: [
-      {
-        to: "/customer/registration",
-        label: "Registration",
-        icon: MdAccountBalance,
-      },
-      { to: "/customer/record", label: "Customer Record", icon: MdReceipt },
+      { to: "/customer/registration", label: "Registration", icon: MdAccountBalance, module: "Customer", requiredAction: "create" },
+      { to: "/customer/record", label: "Customer Record", icon: MdReceipt, module: "Customer", requiredAction: "read" },
     ],
   },
-  {
-    to: "/booking-customers",
-    label: "Bookings",
-    icon: MdCalendarToday,
-    module: "Booking",
-  },
+  
+  // Bookings
+  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "Booking", requiredAction: "read" },
+  
+  // Accounts (Expense Management)
   {
     id: "accounts",
     label: "Accounts",
     icon: MdMonetizationOn,
-    module: "Accounts",
     children: [
-      { to: "/daybook", label: "Daybook", icon: MdCalendarToday },
-      { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance },
-      { to: "/expense/voucher", label: "Expense Voucher", icon: MdReceipt },
-      { to: "/expense/report", label: "Expense Report", icon: MdAssessment },
+      { to: "/daybook", label: "Day Book", icon: MdCalendarToday, module: "Day Book", requiredAction: "read" },
+      { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance, module: "Expense Head", requiredAction: "read" },
+      { 
+        to: "/expense/voucher", 
+        label: "Expense Voucher", 
+        icon: MdReceipt, 
+        module: "Expense Voucher", 
+        requiredAction: "read"  // This can be changed based on what action you want to check
+      },
+      { to: "/expense/report", label: "Expense Report", icon: MdAssessment, module: "Expense Report", requiredAction: "read" },
     ],
   },
+  
+  // Setup
   {
     id: "setup",
     label: "Setup",
     icon: MdSettings,
     module: "Setup",
     children: [
-      { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping },
-      { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory },
+      { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping, module: "Supplier", requiredAction: "read" },
+      { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory, module: "Manufacturer", requiredAction: "read" },
       {
         id: "setup-item",
         label: "Item",
         icon: MdWorkspaces,
         children: [
-          {
-            to: "/setup/item-category",
-            label: "Item Category",
-            icon: MdCategory,
-          },
-          {
-            to: "/setup/item-subcategory",
-            label: "Item Subcategory",
-            icon: MdStyle,
-          },
-          { to: "/setup/item-type", label: "Item Type", icon: MdInventory },
-          { to: "/setup/item-unit", label: "Item Unit", icon: MdLabel },
-          { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer },
-          {
-            to: "/setup/shelve-location",
-            label: "Shelve Location",
-            icon: MdLocationOn,
-          },
+          { to: "/setup/item-category", label: "Item Category", icon: MdCategory, module: "Item Category", requiredAction: "read" },
+          { to: "/setup/item-subcategory", label: "Item Subcategory", icon: MdStyle, module: "Setup", requiredAction: "read" },
+          { to: "/setup/item-type", label: "Item Type", icon: MdInventory, module: "Setup", requiredAction: "read" },
+          { to: "/setup/item-unit", label: "Item Unit", icon: MdLabel, module: "Setup", requiredAction: "read" },
+          { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer, module: "Setup", requiredAction: "read" },
+          { to: "/setup/shelve-location", label: "Shelve Location", icon: MdLocationOn, module: "Setup", requiredAction: "read" },
         ],
       },
       {
@@ -181,76 +150,76 @@ const NAV_ITEMS = [
         label: "Company",
         icon: MdCorporateFare,
         children: [
-          { to: "/setup/department", label: "Department", icon: MdApartment },
-          { to: "/setup/designation", label: "Designation", icon: MdBadge },
+          { to: "/setup/department", label: "Department", icon: MdApartment, module: "Setup", requiredAction: "read" },
+          { to: "/setup/designation", label: "Designation", icon: MdBadge, module: "Setup", requiredAction: "read" },
         ],
       },
     ],
   },
+  
+  // Security
   {
     id: "security-settings",
     label: "Security",
     icon: MdSecurity,
     module: "Security",
     children: [
-      { to: "/security", label: "Overview", icon: MdDashboard },
-      {
-        id: "security-manage",
-        label: "Actions",
-        icon: MdExpandMore,
-        children: [
-          {
-            to: "/security/access-control",
-            label: "Access Control",
-            icon: MdSecurity,
-          },
-        ],
-      },
+      { to: "/security", label: "Overview", icon: MdDashboard, module: "Security", requiredAction: "read" },
+      { to: "/security/access-control", label: "Access Control", icon: MdSecurity, module: "Security", requiredAction: "read" },
     ],
   },
 ];
 
-// ── Permission filter ─────────────────────────────────────────────────────────
-/**
- * Recursively filters nav items based on user permissions.
- * Returns a new array with only the items the user can see.
- * Items without `module` are always visible (e.g. Dashboard).
- */
+// Updated filterNavItems function
 function filterNavItems(items, permissions, isAdmin) {
-  if (isAdmin) return items; // admins see everything
+  if (isAdmin) return items;
+
+  const { modules = [], functionalities = [] } = permissions;
+
+  function hasPermission(item) {
+    // Check module access
+    if (item.module) {
+      const hasModule = modules.some((m) => {
+        const moduleName = (m.module_name || m.slug || "").toLowerCase().trim();
+        const requiredModule = item.module.toLowerCase().trim();
+        return moduleName === requiredModule || 
+               moduleName.includes(requiredModule) ||
+               requiredModule.includes(moduleName);
+      });
+      if (!hasModule) return false;
+    }
+
+    // Check action permission
+    if (item.requiredAction) {
+      const hasAction = functionalities.some((func) => {
+        const funcName = (func.name || "").toLowerCase();
+        const requiredAction = item.requiredAction.toLowerCase();
+        const hasRequiredAction = funcName.includes(requiredAction);
+        
+        if (item.module) {
+          const hasModuleInFunc = funcName.includes(item.module.toLowerCase());
+          return hasRequiredAction && hasModuleInFunc;
+        }
+        return hasRequiredAction;
+      });
+      if (!hasAction) return false;
+    }
+
+    return true;
+  }
 
   return items.reduce((acc, item) => {
-    // No module restriction → always visible
-    if (!item.module && !item.children) {
-      acc.push(item);
-      return acc;
-    }
-
-    // Has a module restriction → check permissions.modules
-    if (item.module) {
-      const allowed = permissions?.modules?.some((m) => {
-        const name = (m.name || m.module_name || m.slug || "").toLowerCase();
-        return (
-          name === item.module.toLowerCase() ||
-          name.includes(item.module.toLowerCase())
-        );
-      });
-      if (!allowed) return acc; // skip this item entirely
-    }
-
-    // Has children → recursively filter them
     if (item.children) {
-      const visibleChildren = filterNavItems(
-        item.children,
-        permissions,
-        isAdmin,
-      );
-      if (visibleChildren.length === 0 && item.module) return acc; // no visible children
-      acc.push({ ...item, children: visibleChildren });
+      const visibleChildren = filterNavItems(item.children, permissions, isAdmin);
+      if (visibleChildren.length > 0) {
+        acc.push({ ...item, children: visibleChildren });
+      }
       return acc;
     }
 
-    acc.push(item);
+    if (hasPermission(item)) {
+      acc.push(item);
+    }
     return acc;
   }, []);
 }
@@ -264,20 +233,14 @@ function pathMatchesItem(item, pathname) {
 // ── Level-2 nested dropdown ───────────────────────────────────────────────────
 function NestedDropdown({ item, openId, setOpenId }) {
   const location = useLocation();
-  const isActive = item.children?.some((c) =>
-    pathMatchesItem(c, location.pathname),
-  );
+  const isActive = item.children?.some((c) => pathMatchesItem(c, location.pathname));
   const isOpen = openId === item.id;
 
   return (
     <div>
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={
-          isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
-            : undefined
-        }
+        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white font-medium shadow-sm"
@@ -296,9 +259,7 @@ function NestedDropdown({ item, openId, setOpenId }) {
           </span>
           {item.label}
         </div>
-        <MdExpandMore
-          className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-        />
+        <MdExpandMore className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
@@ -308,9 +269,7 @@ function NestedDropdown({ item, openId, setOpenId }) {
               key={child.to}
               to={child.to}
               style={({ isActive }) =>
-                isActive
-                  ? { backgroundColor: "#14b8a6", color: "#ffffff" }
-                  : undefined
+                isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
               }
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
@@ -330,7 +289,7 @@ function NestedDropdown({ item, openId, setOpenId }) {
   );
 }
 
-// ── Children renderer with its own nested open tracker ───────────────────────
+// ── Children renderer ───────────────────────────────────────────────────────
 function NestedChildren({ children, onNavigate }) {
   const [nestedOpenId, setNestedOpenId] = useState(() => {
     const loc = window.location.pathname;
@@ -342,21 +301,14 @@ function NestedChildren({ children, onNavigate }) {
 
   return children.map((child) =>
     child.children ? (
-      <NestedDropdown
-        key={child.id}
-        item={child}
-        openId={nestedOpenId}
-        setOpenId={setNestedOpenId}
-      />
+      <NestedDropdown key={child.id} item={child} openId={nestedOpenId} setOpenId={setNestedOpenId} />
     ) : (
       <NavLink
         key={child.to}
         to={child.to}
         onClick={onNavigate}
         style={({ isActive }) =>
-          isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
-            : undefined
+          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
@@ -369,7 +321,7 @@ function NestedChildren({ children, onNavigate }) {
         {child.icon && <child.icon className="text-base shrink-0" />}
         {child.label}
       </NavLink>
-    ),
+    )
   );
 }
 
@@ -379,16 +331,13 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
   const isActive = pathMatchesItem(item, location.pathname);
   const isOpen = openId === item.id;
 
-  // Pure link
   if (item.to) {
     return (
       <NavLink
         to={item.to}
         onClick={onNavigate}
         style={({ isActive }) =>
-          isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
-            : undefined
+          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
@@ -416,16 +365,11 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
     );
   }
 
-  // Has children
   return (
     <div className="mb-0.5">
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={
-          isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
-            : undefined
-        }
+        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white shadow-sm"
@@ -464,19 +408,22 @@ function SidebarContent({ onNavigate }) {
   const location = useLocation();
   const { user, permissions } = useSelector((state) => state.auth);
 
-  const isAdmin =
-    user?.is_admin || user?.role === "admin" || permissions?.isAdmin || false;
+  const isAdmin = user?.is_admin || user?.role === "admin" || permissions?.isAdmin || false;
 
-  // Filter nav items based on permissions
   const filteredNavItems = filterNavItems(NAV_ITEMS, permissions, isAdmin);
 
   const [openId, setOpenId] = useState(() => {
     for (const item of filteredNavItems) {
-      if (item.children && pathMatchesItem(item, location.pathname))
-        return item.id;
+      if (item.children && pathMatchesItem(item, location.pathname)) return item.id;
     }
     return null;
   });
+
+  // Debug logging (remove in production)
+  useEffect(() => {
+    console.log("Permissions:", permissions);
+    console.log("Filtered Nav Items:", filteredNavItems);
+  }, [permissions, filteredNavItems]);
 
   return (
     <div className="relative w-64 bg-white/92 dark:bg-slate-900/96 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none backdrop-blur transition-colors duration-300">
@@ -499,20 +446,25 @@ function SidebarContent({ onNavigate }) {
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
-        {filteredNavItems.map((item) => (
-          <SidebarItem
-            key={item.id || item.to}
-            item={item}
-            openId={openId}
-            setOpenId={setOpenId}
-            onNavigate={onNavigate}
-          />
-        ))}
+        {filteredNavItems.length === 0 ? (
+          <div className="text-center text-gray-400 text-sm py-8">
+            No modules available
+          </div>
+        ) : (
+          filteredNavItems.map((item) => (
+            <SidebarItem
+              key={item.id || item.to}
+              item={item}
+              openId={openId}
+              setOpenId={setOpenId}
+              onNavigate={onNavigate}
+            />
+          ))
+        )}
       </div>
 
       {/* User info + Logout */}
       <div className="border-t border-gray-100 dark:border-slate-800 p-3 shrink-0 transition-colors duration-300">
-        {/* User badge and logout in same line */}
         {user && (
           <div className="flex items-center gap-2">
             <NavLink

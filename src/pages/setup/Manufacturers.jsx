@@ -12,6 +12,8 @@ import {
   ActionButton,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { usePermissions } from "../../hooks/usePermissions";
+import { MdLock } from "react-icons/md";
 
 const sectionStyles = {
   emerald: {
@@ -76,6 +78,9 @@ function createEmptyForm() {
 }
 
 export default function Manufacturers() {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions()
+  const MODULE_NAME = "Manufacturers"
+
   const [form, setForm] = useState(createEmptyForm);
   const [manufacturers, setManufacturers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -83,9 +88,17 @@ export default function Manufacturers() {
   const [editId, setEditId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  // Permission checks
+  const canCreateManufacturer = isAdmin || canCreate(MODULE_NAME)
+  const canReadManufacturer = isAdmin || canRead(MODULE_NAME)
+  const canUpdateManufacturer = isAdmin || canUpdate(MODULE_NAME)
+  const canDeleteManufacturer = isAdmin || canDelete(MODULE_NAME)
+
   useEffect(() => {
-    fetchManufacturers();
-  }, []);
+    if (canReadManufacturer) {
+      fetchManufacturers();
+    }
+  }, [canReadManufacturer]);
 
   async function fetchManufacturers() {
     setLoading(true);
@@ -105,6 +118,11 @@ export default function Manufacturers() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (!canCreateManufacturer && !canUpdateManufacturer) {
+      toast.error("You don't have permission to save manufacturers.")
+      return
+    }
 
     if (!form.manufacturerId.trim() || !form.manufacturerName.trim()) {
       toast.error("Manufacturer ID and Name are required.");
@@ -129,9 +147,17 @@ export default function Manufacturers() {
       };
 
       if (editId) {
+        if (!canUpdateManufacturer) {
+          toast.error("You don't have permission to update manufacturers.")
+          return
+        }
         await axiosInstance.put(`/manufacturers/${editId}`, payload);
         toast.success("Manufacturer updated successfully.");
       } else {
+        if (!canCreateManufacturer) {
+          toast.error("You don't have permission to create manufacturers.")
+          return
+        }
         await axiosInstance.post("/manufacturers", payload);
         toast.success("Manufacturer saved successfully.");
       }
@@ -149,6 +175,10 @@ export default function Manufacturers() {
   }
 
   async function handleDelete(id) {
+    if (!canDeleteManufacturer) {
+      toast.error("You don't have permission to delete manufacturers.")
+      return
+    }
     if (!window.confirm("Delete this manufacturer?")) return;
 
     try {
@@ -163,6 +193,10 @@ export default function Manufacturers() {
   }
 
   function handleEdit(m) {
+    if (!canUpdateManufacturer) {
+      toast.error("You don't have permission to edit manufacturers.")
+      return
+    }
     setEditId(m.id);
     setForm({
       manufacturerId: m.manufacturer_id || "",
@@ -190,6 +224,29 @@ export default function Manufacturers() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  // Access Denied
+  if (!canReadManufacturer) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Manufacturers.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Manufacturers</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -204,62 +261,64 @@ export default function Manufacturers() {
               items.
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm();
-              } else {
-                setIsFormOpen(!isFormOpen);
-                if (!isFormOpen) resetForm();
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen
-                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
-                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
-          >
-            {isFormOpen ? (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Close Form
-              </>
-            ) : (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Manufacturer
-              </>
-            )}
-          </button>
+          {canCreateManufacturer && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
+                  resetForm();
+                } else {
+                  setIsFormOpen(!isFormOpen);
+                  if (!isFormOpen) resetForm();
+                }
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+              }`}
+            >
+              {isFormOpen ? (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Close Form
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Manufacturer
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateManufacturer && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -514,16 +573,20 @@ export default function Manufacturers() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton
-                            label="Edit"
-                            tone="teal"
-                            onClick={() => handleEdit(m)}
-                          />
-                          <ActionButton
-                            label="Delete"
-                            tone="rose"
-                            onClick={() => handleDelete(m.id)}
-                          />
+                          {canUpdateManufacturer && (
+                            <ActionButton
+                              label="Edit"
+                              tone="teal"
+                              onClick={() => handleEdit(m)}
+                            />
+                          )}
+                          {canDeleteManufacturer && (
+                            <ActionButton
+                              label="Delete"
+                              tone="rose"
+                              onClick={() => handleDelete(m.id)}
+                            />
+                          )}
                         </div>
                       </td>
                     </motion.tr>

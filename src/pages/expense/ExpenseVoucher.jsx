@@ -11,6 +11,8 @@ import {
   ActionButton,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { usePermissions } from "../../hooks/usePermissions";
+import { MdSecurity, MdLock } from "react-icons/md";
 
 const sectionStyles = {
   emerald: {
@@ -111,6 +113,9 @@ function createEmptyForm() {
 }
 
 export default function ExpenseVoucherPage() {
+  const { canCreate, canRead, canUpdate, canDelete, canPrint, isAdmin } = usePermissions();
+  const MODULE_NAME = "Expense Voucher";
+
   const [form, setForm] = useState(createEmptyForm);
   const [heads, setHeads] = useState([]);
   const [vouchers, setVouchers] = useState([]);
@@ -120,10 +125,19 @@ export default function ExpenseVoucherPage() {
   const [editId, setEditId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  // Permission checks
+  const canCreateVoucher = isAdmin || canCreate(MODULE_NAME);
+  const canReadVoucher = isAdmin || canRead(MODULE_NAME);
+  const canUpdateVoucher = isAdmin || canUpdate(MODULE_NAME);
+  const canDeleteVoucher = isAdmin || canDelete(MODULE_NAME);
+  const canPrintVoucher = isAdmin || canPrint(MODULE_NAME);
+
   useEffect(() => {
-    fetchHeads();
-    fetchVouchers();
-  }, []);
+    if (canReadVoucher) {
+      fetchHeads();
+      fetchVouchers();
+    }
+  }, [canReadVoucher]);
 
   async function fetchHeads() {
     setLoadingHeads(true);
@@ -180,9 +194,17 @@ export default function ExpenseVoucherPage() {
       };
 
       if (editId) {
+        if (!canUpdateVoucher) {
+          toast.error("You don't have permission to update vouchers.");
+          return;
+        }
         await axiosInstance.put(`/expense-vouchers/${editId}`, payload);
         toast.success("Voucher updated successfully.");
       } else {
+        if (!canCreateVoucher) {
+          toast.error("You don't have permission to create vouchers.");
+          return;
+        }
         await axiosInstance.post("/expense-vouchers", payload);
         toast.success("Expense Voucher recorded successfully.");
       }
@@ -198,6 +220,11 @@ export default function ExpenseVoucherPage() {
   }
 
   async function handleDelete(id) {
+    if (!canDeleteVoucher) {
+      toast.error("You don't have permission to delete vouchers.");
+      return;
+    }
+    
     if (!window.confirm("Delete this expense voucher?")) return;
 
     try {
@@ -210,6 +237,11 @@ export default function ExpenseVoucherPage() {
   }
 
   function handleEdit(v) {
+    if (!canUpdateVoucher) {
+      toast.error("You don't have permission to edit vouchers.");
+      return;
+    }
+    
     setEditId(v.id);
     setForm({
       date: v.voucher_date
@@ -236,6 +268,29 @@ export default function ExpenseVoucherPage() {
   const inputCls =
     "h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors";
 
+  // Access Denied
+  if (!canReadVoucher) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Expense Vouchers.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Expense Voucher</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -250,71 +305,73 @@ export default function ExpenseVoucherPage() {
               accountability.
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm();
-                document
-                  .querySelector("main")
-                  ?.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                const opening = !isFormOpen;
-                setIsFormOpen(opening);
-                if (opening) {
+          {canCreateVoucher && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
                   resetForm();
                   document
                     .querySelector("main")
                     ?.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  const opening = !isFormOpen;
+                  setIsFormOpen(opening);
+                  if (opening) {
+                    resetForm();
+                    document
+                      .querySelector("main")
+                      ?.scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen
-                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
-                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
-          >
-            {isFormOpen ? (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Close Form
-              </>
-            ) : (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Issue Voucher
-              </>
-            )}
-          </button>
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+              }`}
+            >
+              {isFormOpen ? (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Close Form
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Issue Voucher
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateVoucher && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -487,16 +544,27 @@ export default function ExpenseVoucherPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton
-                            label="Edit"
-                            tone="teal"
-                            onClick={() => handleEdit(v)}
-                          />
-                          <ActionButton
-                            label="Delete"
-                            tone="rose"
-                            onClick={() => handleDelete(v.id)}
-                          />
+                          {canUpdateVoucher && (
+                            <ActionButton
+                              label="Edit"
+                              tone="teal"
+                              onClick={() => handleEdit(v)}
+                            />
+                          )}
+                          {canDeleteVoucher && (
+                            <ActionButton
+                              label="Delete"
+                              tone="rose"
+                              onClick={() => handleDelete(v.id)}
+                            />
+                          )}
+                          {canPrintVoucher && (
+                            <ActionButton
+                              label="Print"
+                              tone="purple"
+                              onClick={() => window.print()}
+                            />
+                          )}
                         </div>
                       </td>
                     </motion.tr>

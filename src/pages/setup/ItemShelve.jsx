@@ -3,6 +3,8 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, ActionButton, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { usePermissions } from '../../hooks/usePermissions'
+import { MdLock } from 'react-icons/md'
 
 function createEmptyForm() {
   return {
@@ -12,6 +14,9 @@ function createEmptyForm() {
 }
 
 export default function ItemShelvePage() {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions()
+  const MODULE_NAME = "Shelve Location"
+
   const [form, setForm] = useState(createEmptyForm)
   const [shelves, setShelves] = useState([])
   const [loading, setLoading] = useState(false)
@@ -19,9 +24,17 @@ export default function ItemShelvePage() {
   const [editId, setEditId] = useState(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
 
+  // Permission checks
+  const canCreateShelve = isAdmin || canCreate(MODULE_NAME)
+  const canReadShelve = isAdmin || canRead(MODULE_NAME)
+  const canUpdateShelve = isAdmin || canUpdate(MODULE_NAME)
+  const canDeleteShelve = isAdmin || canDelete(MODULE_NAME)
+
   useEffect(() => {
-    fetchShelves()
-  }, [])
+    if (canReadShelve) {
+      fetchShelves()
+    }
+  }, [canReadShelve])
 
   async function fetchShelves() {
     setLoading(true)
@@ -40,6 +53,11 @@ export default function ItemShelvePage() {
   async function handleSubmit(event) {
     event.preventDefault()
 
+    if (!canCreateShelve && !canUpdateShelve) {
+      toast.error("You don't have permission to save shelve locations.")
+      return
+    }
+
     if (!form.shelf_name_code.trim()) {
       toast.error('Shelf Name/Code is required.')
       return
@@ -54,9 +72,17 @@ export default function ItemShelvePage() {
       }
       
       if (editId) {
+        if (!canUpdateShelve) {
+          toast.error("You don't have permission to update shelve locations.")
+          return
+        }
         await axiosInstance.put(`/shelve-locations/${editId}`, payload)
         toast.success('Shelve location updated successfully.')
       } else {
+        if (!canCreateShelve) {
+          toast.error("You don't have permission to create shelve locations.")
+          return
+        }
         await axiosInstance.post('/shelve-locations', payload)
         toast.success('Shelve location created successfully.')
       }
@@ -72,6 +98,10 @@ export default function ItemShelvePage() {
   }
 
   async function handleDelete(id) {
+    if (!canDeleteShelve) {
+      toast.error("You don't have permission to delete shelve locations.")
+      return
+    }
     if (!window.confirm('Delete this shelve location?')) return
 
     try {
@@ -84,6 +114,10 @@ export default function ItemShelvePage() {
   }
 
   function handleEdit(shelf) {
+    if (!canUpdateShelve) {
+      toast.error("You don't have permission to edit shelve locations.")
+      return
+    }
     setEditId(shelf.id)
     setForm({
       shelf_name_code: shelf.shelf_name_code || '',
@@ -98,6 +132,29 @@ export default function ItemShelvePage() {
     setForm(createEmptyForm())
   }
 
+  // Access Denied
+  if (!canReadShelve) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Shelve Locations.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Shelve Location</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
@@ -107,38 +164,40 @@ export default function ItemShelvePage() {
             <h1 className="text-xl font-bold text-slate-900">Shelve Locations</h1>
             <p className="text-sm text-slate-500">Create and manage warehouse or display locations for products.</p>
           </div>
-          <button
-            onClick={() => {
-              if (isFormOpen && editId) {
-                resetForm()
-              } else {
-                setIsFormOpen(!isFormOpen)
-                if (!isFormOpen) resetForm()
-              }
-            }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen 
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
-                : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
-            }`}
-          >
-            {isFormOpen ? (
-              <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                Close Form
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                Add New Shelve
-              </>
-            )}
-          </button>
+          {canCreateShelve && (
+            <button
+              onClick={() => {
+                if (isFormOpen && editId) {
+                  resetForm()
+                } else {
+                  setIsFormOpen(!isFormOpen)
+                  if (!isFormOpen) resetForm()
+                }
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+                isFormOpen 
+                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
+                  : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100'
+              }`}
+            >
+              {isFormOpen ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  Close Form
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                  Add New Shelve
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Collapsible Form */}
+        {/* Collapsible Form - Only show if user can create */}
         <AnimatePresence>
-          {isFormOpen && (
+          {isFormOpen && canCreateShelve && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -251,8 +310,12 @@ export default function ItemShelvePage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(shelf)} />
-                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(shelf.id)} />
+                          {canUpdateShelve && (
+                            <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(shelf)} />
+                          )}
+                          {canDeleteShelve && (
+                            <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(shelf.id)} />
+                          )}
                         </div>
                       </td>
                     </motion.tr>
@@ -273,4 +336,4 @@ function MapPinIcon({ className }) {
 
 function ListIcon({ className }) {
   return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
-}
+}

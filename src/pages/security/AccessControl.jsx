@@ -74,7 +74,7 @@ function getCategoryIcon(categoryName) {
     return <MdSecurity className="h-4 w-4 text-purple-600" />;
   if (name.includes("finance") || name.includes("billing"))
     return <MdPayment className="h-4 w-4 text-amber-600" />;
-  if (name.includes("clinical") || name.includes("patient"))
+  if (name.includes("expense") || name.includes("daybook"))
     return <MdAccountBalance className="h-4 w-4 text-rose-600" />;
   if (name.includes("dashboard"))
     return <MdDashboard className="h-4 w-4 text-teal-600" />;
@@ -233,8 +233,10 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
           "Group Users",
           "Modules",
           "Permissions",
+          "Add Rights",
           "Security Logs",
           "Security",
+          "Staff",
         ],
       },
       "Billing & Finance": {
@@ -250,6 +252,18 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
           "Sale",
           "Setup",
           "Stock",
+        ],
+      },
+      "Expense & DayBook": {
+        id: "cat-billing2",
+        icon: getCategoryIcon("expense"),
+        description:
+          "Invoicing, payment processing, and financial transactions",
+        modules: [
+          "Expense Head",
+          "Expense Voucher",
+          "Expense Report",
+          "Day Book",
         ],
       },
       "Dashboard & Analytics": {
@@ -459,6 +473,35 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         { mod: "item", action: "read" },
         { mod: "customer", action: "read" },
         { mod: "sale", action: "read" },
+        { mod: "staff", action: "read" },
+      ],
+    },
+    {
+      triggerModule: "customer",
+      triggerAction: "update",
+      deps: [
+        { mod: "customer", action: "read" },
+      ],
+    },
+    {
+      triggerModule: "customer",
+      triggerAction: "delete",
+      deps: [
+        { mod: "customer", action: "read" },
+      ],
+    },
+    {
+      triggerModule: "customer payment",
+      triggerAction: "delete",
+      deps: [
+        { mod: "customer payment", action: "read" },
+      ],
+    },
+    {
+      triggerModule: "customer payment",
+      triggerAction: "update",
+      deps: [
+        { mod: "customer payment", action: "read" },
       ],
     },
   ];
@@ -782,7 +825,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
               setGroupNameInput("");
               setEditingGroup(null);
             }}
-            className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[13px] font-bold leading-none shadow-sm"
+            className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[20px] font-normal leading-none pb-[2px] shadow-sm"
             title="Add new group"
           >
             +
@@ -1032,246 +1075,339 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       </AnimatePresence>
 
       {/* Available Permissions - Hierarchical Tree Structure (Parent Category → Child Modules → Functionalities) */}
-    {/* Available Permissions - VS Code Tree View Style */}
-<div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-  {/* Header */}
-  <div className="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-      Available Permissions
-    </span>
-    <div className="flex items-center gap-1">
-      <button
-        onClick={() => expandAll(setExpandedAvailable, filteredAvailableTree)}
-        className="text-[9px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition uppercase tracking-wide"
-      >
-        Expand All
-      </button>
-      <button
-        onClick={() => collapseAll(setExpandedAvailable)}
-        className="text-[9px] text-slate-400 hover:text-slate-600 font-bold hover:bg-slate-100 px-2 py-1 rounded transition uppercase tracking-wide"
-      >
-        Collapse
-      </button>
-      <div className="relative ml-1">
-        <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 h-3 w-3" />
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchAvailable}
-          onChange={e => setSearchAvailable(e.target.value)}
-          className="pl-6 pr-2 py-1 text-[10px] rounded border border-slate-200 outline-none focus:border-teal-400 w-24 focus:w-36 transition-all bg-white"
-        />
-      </div>
-    </div>
-  </div>
-
-  {/* Tree Body */}
-  <div className="flex-1 overflow-y-auto py-1">
-    {filteredAvailableTree.length === 0 ? (
-      <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
-        <MdShield className="h-8 w-8 mb-2" />
-        <p className="text-[11px]">No permissions available</p>
-      </div>
-    ) : (
-      filteredAvailableTree.map((category, catIdx) => {
-        const isCatExpanded = expandedAvailable.has(category.id);
-        // Count assigned funcs in this category
-        const catAssignedCount = category.children.reduce((acc, mod) =>
-          acc + mod.functionalities.filter(f => assignedRightIds.has(f.funcId)).length, 0
-        );
-        const catTotalCount = category.children.reduce((acc, mod) =>
-          acc + mod.functionalities.length, 0
-        );
-
-        return (
-          <div key={category.id}>
-            {/* ── Category Row (Level 1) ─────────────────────────── */}
+      <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        {/* Header */}
+        <div className="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+            Available Permissions
+          </span>
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => toggleExpand(setExpandedAvailable, category.id)}
-              className="w-full flex items-center gap-1.5 px-2 py-1.5 hover:bg-slate-50 transition-colors group"
+              onClick={() =>
+                expandAll(setExpandedAvailable, filteredAvailableTree)
+              }
+              className="text-[9px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-2 py-1 rounded transition uppercase tracking-wide"
             >
-              {/* Chevron */}
-              <svg
-                className={`h-3 w-3 text-slate-400 shrink-0 transition-transform duration-150 ${isCatExpanded ? "rotate-90" : ""}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-              {/* Icon */}
-              <span className="shrink-0">{category.icon}</span>
-              {/* Label */}
-              <span className="flex-1 text-left text-[12px] font-bold text-slate-700 truncate">
-                {category.name}
-              </span>
-              {/* Count badge */}
-              {catTotalCount > 0 && (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 mr-1 ${
-                  catAssignedCount === catTotalCount && catTotalCount > 0
-                    ? "bg-emerald-100 text-emerald-700"
-                    : catAssignedCount > 0
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-slate-100 text-slate-400"
-                }`}>
-                  {catAssignedCount}/{catTotalCount}
-                </span>
-              )}
+              Expand All
             </button>
-
-            {/* ── Module Children (Level 2) ──────────────────────── */}
-            <AnimatePresence initial={false}>
-              {isCatExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.18, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  {category.children.map((module, modIdx) => {
-                    const isModExpanded = expandedAvailable.has(module.id);
-                    const checkState = getModuleCheckState(module);
-                    const modTotal = module.functionalities.length;
-                    const modAssigned = module.functionalities.filter(f => assignedRightIds.has(f.funcId)).length;
-                    const isLastMod = modIdx === category.children.length - 1;
-
-                    return (
-                      <div key={module.id} className="relative">
-                        {/* Vertical tree line from category */}
-                        <div className="absolute left-[18px] top-0 bottom-0 w-px bg-slate-200" style={{ bottom: isLastMod ? "50%" : 0 }} />
-                        {/* Horizontal connector */}
-                        <div className="absolute left-[18px] top-1/2 w-2.5 h-px bg-slate-200" />
-
-                        {/* Module Row */}
-                        <div className={`flex items-center gap-1.5 pl-8 pr-2 py-1.5 hover:bg-slate-50/80 transition-colors ${module.isPlanned ? "opacity-50" : ""}`}>
-                          {/* Checkbox */}
-                          <input
-                            type="checkbox"
-                            checked={checkState === true}
-                            ref={el => { if (el) el.indeterminate = checkState === "indeterminate"; }}
-                            onChange={() => !module.isPlanned && toggleModule(module)}
-                            onClick={e => e.stopPropagation()}
-                            className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
-                            disabled={module.isPlanned}
-                          />
-                          {/* Expand chevron (only if has funcs) */}
-                          {!module.isPlanned && modTotal > 0 ? (
-                            <button
-                              onClick={() => toggleExpand(setExpandedAvailable, module.id)}
-                              className="shrink-0"
-                            >
-                              <svg
-                                className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${isModExpanded ? "rotate-90" : ""}`}
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                              </svg>
-                            </button>
-                          ) : (
-                            <span className="w-3 shrink-0" />
-                          )}
-                          {/* Module icon */}
-                          <span className="text-slate-400 shrink-0">{module.icon}</span>
-                          {/* Module name — clicking also toggles expand */}
-                          <button
-                            onClick={() => !module.isPlanned && modTotal > 0 && toggleExpand(setExpandedAvailable, module.id)}
-                            className="flex-1 text-left min-w-0"
-                            disabled={module.isPlanned}
-                          >
-                            <span className="text-[11px] font-semibold text-slate-700 truncate block">
-                              {module.name}
-                              {module.isPlanned && (
-                                <span className="ml-1.5 text-[8px] bg-slate-100 text-slate-400 font-normal px-1 py-0.5 rounded-full">
-                                  soon
-                                </span>
-                              )}
-                            </span>
-                          </button>
-                          {/* func count badge */}
-                          {modTotal > 0 && (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                              modAssigned === modTotal
-                                ? "bg-emerald-100 text-emerald-700"
-                                : modAssigned > 0
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-slate-100 text-slate-400"
-                            }`}>
-                              {modAssigned}/{modTotal}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* ── Functionality Leaves (Level 3) ──────────── */}
-                        {!module.isPlanned && modTotal > 0 && (
-                          <AnimatePresence initial={false}>
-                            {isModExpanded && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.15, ease: "easeInOut" }}
-                                className="overflow-hidden"
-                              >
-                                {module.functionalities.map((func, funcIdx) => {
-                                  const isLastFunc = funcIdx === module.functionalities.length - 1;
-                                  const isChecked = assignedRightIds.has(func.funcId);
-
-                                  return (
-                                    <div key={func.id} className="relative">
-                                      {/* Vertical tree line from module */}
-                                      <div
-                                        className="absolute left-[34px] top-0 w-px bg-slate-200"
-                                        style={{ bottom: isLastFunc ? "50%" : 0 }}
-                                      />
-                                      {/* Horizontal connector */}
-                                      <div className="absolute left-[34px] top-1/2 w-2.5 h-px bg-slate-200" />
-
-                                      <div
-                                        className={`flex items-center gap-1.5 pl-12 pr-2 py-1 cursor-pointer transition-colors rounded-sm mx-1 ${
-                                          isChecked ? "bg-teal-50/60 hover:bg-teal-50" : "hover:bg-slate-50"
-                                        }`}
-                                        onClick={() => toggleFunctionality(func, module.moduleId)}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={() => toggleFunctionality(func, module.moduleId)}
-                                          onClick={e => e.stopPropagation()}
-                                          className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
-                                        />
-                                        <span className={`text-[10px] flex-1 truncate ${isChecked ? "text-teal-700 font-medium" : "text-slate-500"}`}>
-                                          {func.name}
-                                        </span>
-                                        {func.action && <ActionBadge action={func.action} />}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        )}
-
-                        {/* Planned placeholder */}
-                        {module.isPlanned && (
-                          <div className="pl-12 pr-2 py-1">
-                            <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
-                              <MdSettings className="h-3 w-3" />
-                              Available when module is deployed
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <button
+              onClick={() => collapseAll(setExpandedAvailable)}
+              className="text-[9px] text-slate-400 hover:text-slate-600 font-bold hover:bg-slate-100 px-2 py-1 rounded transition uppercase tracking-wide"
+            >
+              Collapse
+            </button>
+            <div className="relative ml-1">
+              <MdSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 h-3 w-3" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchAvailable}
+                onChange={(e) => setSearchAvailable(e.target.value)}
+                className="pl-6 pr-2 py-1 text-[10px] rounded border border-slate-200 outline-none focus:border-teal-400 w-24 focus:w-36 transition-all bg-white"
+              />
+            </div>
           </div>
-        );
-      })
-    )}
-  </div>
-</div>
+        </div>
+
+        {/* Tree Body */}
+        <div className="flex-1 overflow-y-auto py-1">
+          {filteredAvailableTree.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
+              <MdShield className="h-8 w-8 mb-2" />
+              <p className="text-[11px]">No permissions available</p>
+            </div>
+          ) : (
+            filteredAvailableTree.map((category, catIdx) => {
+              const isCatExpanded = expandedAvailable.has(category.id);
+              // Count assigned funcs in this category
+              const catAssignedCount = category.children.reduce(
+                (acc, mod) =>
+                  acc +
+                  mod.functionalities.filter((f) =>
+                    assignedRightIds.has(f.funcId),
+                  ).length,
+                0,
+              );
+              const catTotalCount = category.children.reduce(
+                (acc, mod) => acc + mod.functionalities.length,
+                0,
+              );
+
+              return (
+                <div key={category.id}>
+                  {/* ── Category Row (Level 1) ─────────────────────────── */}
+                  <button
+                    onClick={() =>
+                      toggleExpand(setExpandedAvailable, category.id)
+                    }
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 hover:bg-slate-50 transition-colors group"
+                  >
+                    {/* Chevron */}
+                    <svg
+                      className={`h-3 w-3 text-slate-400 shrink-0 transition-transform duration-150 ${isCatExpanded ? "rotate-90" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                    {/* Icon */}
+                    <span className="shrink-0">{category.icon}</span>
+                    {/* Label */}
+                    <span className="flex-1 text-left text-[12px] font-bold text-slate-700 truncate">
+                      {category.name}
+                    </span>
+                    {/* Count badge */}
+                    {catTotalCount > 0 && (
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 mr-1 ${
+                          catAssignedCount === catTotalCount &&
+                          catTotalCount > 0
+                            ? "bg-emerald-100 text-emerald-700"
+                            : catAssignedCount > 0
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-slate-100 text-slate-400"
+                        }`}
+                      >
+                        {catAssignedCount}/{catTotalCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* ── Module Children (Level 2) ──────────────────────── */}
+                  <AnimatePresence initial={false}>
+                    {isCatExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        {category.children.map((module, modIdx) => {
+                          const isModExpanded = expandedAvailable.has(
+                            module.id,
+                          );
+                          const checkState = getModuleCheckState(module);
+                          const modTotal = module.functionalities.length;
+                          const modAssigned = module.functionalities.filter(
+                            (f) => assignedRightIds.has(f.funcId),
+                          ).length;
+                          const isLastMod =
+                            modIdx === category.children.length - 1;
+
+                          return (
+                            <div key={module.id} className="relative">
+                              {/* Vertical tree line from category */}
+                              <div
+                                className="absolute left-[18px] top-0 bottom-0 w-px bg-slate-200"
+                                style={{ bottom: isLastMod ? "50%" : 0 }}
+                              />
+                              {/* Horizontal connector */}
+                              <div className="absolute left-[18px] top-1/2 w-2.5 h-px bg-slate-200" />
+
+                              {/* Module Row */}
+                              <div
+                                className={`flex items-center gap-1.5 pl-8 pr-2 py-1.5 hover:bg-slate-50/80 transition-colors ${module.isPlanned ? "opacity-50" : ""}`}
+                              >
+                                {/* Checkbox */}
+                                <input
+                                  type="checkbox"
+                                  checked={checkState === true}
+                                  ref={(el) => {
+                                    if (el)
+                                      el.indeterminate =
+                                        checkState === "indeterminate";
+                                  }}
+                                  onChange={() =>
+                                    !module.isPlanned && toggleModule(module)
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
+                                  disabled={module.isPlanned}
+                                />
+                                {/* Expand chevron (only if has funcs) */}
+                                {!module.isPlanned && modTotal > 0 ? (
+                                  <button
+                                    onClick={() =>
+                                      toggleExpand(
+                                        setExpandedAvailable,
+                                        module.id,
+                                      )
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    <svg
+                                      className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${isModExpanded ? "rotate-90" : ""}`}
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={3}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M9 5l7 7-7 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                ) : (
+                                  <span className="w-3 shrink-0" />
+                                )}
+                                {/* Module icon */}
+                                <span className="text-slate-400 shrink-0">
+                                  {module.icon}
+                                </span>
+                                {/* Module name — clicking also toggles expand */}
+                                <button
+                                  onClick={() =>
+                                    !module.isPlanned &&
+                                    modTotal > 0 &&
+                                    toggleExpand(
+                                      setExpandedAvailable,
+                                      module.id,
+                                    )
+                                  }
+                                  className="flex-1 text-left min-w-0"
+                                  disabled={module.isPlanned}
+                                >
+                                  <span className="text-[11px] font-semibold text-slate-700 truncate block">
+                                    {module.name}
+                                    {module.isPlanned && (
+                                      <span className="ml-1.5 text-[8px] bg-slate-100 text-slate-400 font-normal px-1 py-0.5 rounded-full">
+                                        soon
+                                      </span>
+                                    )}
+                                  </span>
+                                </button>
+                                {/* func count badge */}
+                                {modTotal > 0 && (
+                                  <span
+                                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                                      modAssigned === modTotal
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : modAssigned > 0
+                                          ? "bg-amber-100 text-amber-700"
+                                          : "bg-slate-100 text-slate-400"
+                                    }`}
+                                  >
+                                    {modAssigned}/{modTotal}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* ── Functionality Leaves (Level 3) ──────────── */}
+                              {!module.isPlanned && modTotal > 0 && (
+                                <AnimatePresence initial={false}>
+                                  {isModExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{
+                                        duration: 0.15,
+                                        ease: "easeInOut",
+                                      }}
+                                      className="overflow-hidden"
+                                    >
+                                      {module.functionalities.map(
+                                        (func, funcIdx) => {
+                                          const isLastFunc =
+                                            funcIdx ===
+                                            module.functionalities.length - 1;
+                                          const isChecked =
+                                            assignedRightIds.has(func.funcId);
+
+                                          return (
+                                            <div
+                                              key={func.id}
+                                              className="relative"
+                                            >
+                                              {/* Vertical tree line from module */}
+                                              <div
+                                                className="absolute left-[34px] top-0 w-px bg-slate-200"
+                                                style={{
+                                                  bottom: isLastFunc
+                                                    ? "50%"
+                                                    : 0,
+                                                }}
+                                              />
+                                              {/* Horizontal connector */}
+                                              <div className="absolute left-[34px] top-1/2 w-2.5 h-px bg-slate-200" />
+
+                                              <div
+                                                className={`flex items-center gap-1.5 pl-12 pr-2 py-1 cursor-pointer transition-colors rounded-sm mx-1 ${
+                                                  isChecked
+                                                    ? "bg-teal-50/60 hover:bg-teal-50"
+                                                    : "hover:bg-slate-50"
+                                                }`}
+                                                onClick={() =>
+                                                  toggleFunctionality(
+                                                    func,
+                                                    module.moduleId,
+                                                  )
+                                                }
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  checked={isChecked}
+                                                  onChange={() =>
+                                                    toggleFunctionality(
+                                                      func,
+                                                      module.moduleId,
+                                                    )
+                                                  }
+                                                  onClick={(e) =>
+                                                    e.stopPropagation()
+                                                  }
+                                                  className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
+                                                />
+                                                <span
+                                                  className={`text-[10px] flex-1 truncate ${isChecked ? "text-teal-700 font-medium" : "text-slate-500"}`}
+                                                >
+                                                  {func.name}
+                                                </span>
+                                                {func.action && (
+                                                  <ActionBadge
+                                                    action={func.action}
+                                                  />
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        },
+                                      )}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              )}
+
+                              {/* Planned placeholder */}
+                              {module.isPlanned && (
+                                <div className="pl-12 pr-2 py-1">
+                                  <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
+                                    <MdSettings className="h-3 w-3" />
+                                    Available when module is deployed
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
 
       {/* Assigned to Group Panel */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -2096,10 +2232,40 @@ function UsersTab({ groups, allUsers, onRefresh }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PERMISSIONS CATALOG TAB
 // ═══════════════════════════════════════════════════════════════════════════════
-function PermissionsTab({ modules, functionalities }) {
+function PermissionsTab({ modules, functionalities, onRefresh }) {
   const [search, setSearch] = useState("");
   const [expandedModules, setExpandedModules] = useState(new Set());
 
+  // Module modal state
+  const [moduleModal, setModuleModal] = useState(null); // null | 'add' | 'edit'
+  const [editingModule, setEditingModule] = useState(null);
+  const [moduleForm, setModuleForm] = useState({
+    moduleName: "",
+    description: "",
+  });
+  const [moduleSubmitting, setModuleSubmitting] = useState(false);
+
+  // Functionality modal state
+  const [funcModal, setFuncModal] = useState(null); // null | 'add' | 'edit'
+  const [funcTargetModule, setFuncTargetModule] = useState(null);
+  const [editingFunc, setEditingFunc] = useState(null);
+  const [funcForm, setFuncForm] = useState({ name: "" });
+  const [funcSubmitting, setFuncSubmitting] = useState(false);
+
+  // Three-dot menu state
+  const [openFuncMenu, setOpenFuncMenu] = useState(null);
+
+  // Close three-dot menu on outside click
+  useEffect(() => {
+    if (!openFuncMenu) return;
+    function handler() {
+      setOpenFuncMenu(null);
+    }
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [openFuncMenu]);
+
+  // Group and filter modules with their functionalities
   const grouped = useMemo(() => {
     const q = search.toLowerCase();
     return modules
@@ -2123,6 +2289,7 @@ function PermissionsTab({ modules, functionalities }) {
     if (n.includes("UPDATE") || n.includes("EDIT")) return "UPDATE";
     if (n.includes("READ") || n.includes("VIEW") || n.includes("GET"))
       return "READ";
+    if (n.includes("PRINT")) return "PRINT";
     return null;
   }
 
@@ -2142,8 +2309,143 @@ function PermissionsTab({ modules, functionalities }) {
     setExpandedModules(new Set());
   }
 
+  // ── Module CRUD ────────────────────────────────────────────────────────────
+  function openAddModule() {
+    setEditingModule(null);
+    setModuleForm({ moduleName: "", description: "" });
+    setModuleModal("add");
+  }
+
+  function openEditModule(mod, e) {
+    e.stopPropagation();
+    setEditingModule(mod);
+    setModuleForm({
+      moduleName: mod.module_name || "",
+      description: mod.description || "",
+    });
+    setModuleModal("edit");
+  }
+
+  function closeModuleModal() {
+    setModuleModal(null);
+    setEditingModule(null);
+    setModuleForm({ moduleName: "", description: "" });
+  }
+
+  async function handleModuleSubmit() {
+    if (!moduleForm.moduleName.trim()) {
+      toast.error("Module name is required.");
+      return;
+    }
+    setModuleSubmitting(true);
+    try {
+      const payload = {
+        moduleName: moduleForm.moduleName.trim(),
+        description: moduleForm.description.trim(),
+      };
+      if (moduleModal === "edit" && editingModule) {
+        await axiosInstance.put(`/modules/${editingModule.id}`, payload);
+        toast.success("Module updated successfully.");
+      } else {
+        await axiosInstance.post("/modules", payload);
+        toast.success("Module created successfully.");
+      }
+      closeModuleModal();
+      onRefresh();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Unable to save module.");
+    } finally {
+      setModuleSubmitting(false);
+    }
+  }
+
+  async function handleModuleDelete(mod, e) {
+    e.stopPropagation();
+    if (
+      !window.confirm(
+        `Delete module "${mod.module_name}"?\nAll its permissions will also be removed.`,
+      )
+    )
+      return;
+    try {
+      await axiosInstance.delete(`/modules/${mod.id}`);
+      toast.success("Module deleted successfully.");
+      onRefresh();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Unable to delete module.");
+    }
+  }
+
+  // ── Functionality CRUD ─────────────────────────────────────────────────────
+  function openAddFunc(mod, e) {
+    e.stopPropagation();
+    setFuncTargetModule(mod);
+    setEditingFunc(null);
+    setFuncForm({ name: "" });
+    setFuncModal("add");
+  }
+
+  function openEditFunc(func) {
+    setEditingFunc(func);
+    setFuncForm({ name: func.name || "" });
+    setFuncModal("edit");
+    setOpenFuncMenu(null);
+  }
+
+  function closeFuncModal() {
+    setFuncModal(null);
+    setEditingFunc(null);
+    setFuncTargetModule(null);
+    setFuncForm({ name: "" });
+  }
+
+  async function handleFuncSubmit() {
+    if (!funcForm.name.trim()) {
+      toast.error("Permission name is required.");
+      return;
+    }
+    setFuncSubmitting(true);
+    try {
+      const payload = {
+        moduleId: Number(funcTargetModule.id),
+        name: funcForm.name.trim(),
+      };
+      if (funcModal === "edit" && editingFunc) {
+        await axiosInstance.put(`/functionalities/${editingFunc.id}`, payload);
+        toast.success("Permission updated successfully.");
+      } else {
+        await axiosInstance.post("/functionalities", payload);
+        toast.success("Permission created successfully.");
+      }
+      closeFuncModal();
+      onRefresh();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Unable to save permission.");
+    } finally {
+      setFuncSubmitting(false);
+    }
+  }
+
+  async function handleFuncDelete(func) {
+    if (!window.confirm(`Delete permission "${func.name}"?`)) return;
+    setOpenFuncMenu(null);
+    try {
+      await axiosInstance.delete(`/functionalities/${func.id}`);
+      toast.success("Permission deleted successfully.");
+      onRefresh();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Unable to delete permission.",
+      );
+    }
+  }
+
+  const inputCls =
+    "w-full h-9 px-3 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition bg-white";
+
   return (
     <div className="space-y-6">
+      {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="relative max-w-sm w-full">
           <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
@@ -2168,13 +2470,40 @@ function PermissionsTab({ modules, functionalities }) {
           >
             Collapse All
           </button>
+          <button
+            onClick={openAddModule}
+            className="flex items-center gap-1.5 px-3 py-2 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition shadow-sm"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Module
+          </button>
           <div className="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-[13px] font-bold">
             {functionalities.length} total permissions
           </div>
         </div>
       </div>
 
+      {/* Module list */}
       <div className="space-y-2">
+        {grouped.length === 0 && search && (
+          <div className="text-center py-12 text-slate-400">
+            <p className="text-[13px]">
+              No modules or permissions match "{search}"
+            </p>
+          </div>
+        )}
         {grouped.map((m) => {
           const isExpanded = expandedModules.has(m.id);
           return (
@@ -2182,27 +2511,99 @@ function PermissionsTab({ modules, functionalities }) {
               key={m.id}
               className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
-              <button
-                onClick={() => toggleModule(m.id)}
-                className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <MdViewModule className="text-teal-500 h-5 w-5" />
-                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">
+              {/* Module header */}
+              <div className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                <button
+                  onClick={() => toggleModule(m.id)}
+                  className="flex items-center gap-3 flex-1 text-left min-w-0"
+                >
+                  <MdViewModule className="text-teal-500 h-5 w-5 shrink-0" />
+                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight truncate">
                     {m.module_name}
                   </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] bg-teal-100 text-teal-700 font-bold px-2 py-0.5 rounded-full">
+                </button>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] bg-teal-100 text-teal-700 font-bold px-2 py-0.5 rounded-full mr-1">
                     {m.funcs.length} PERMS
                   </span>
-                  {isExpanded ? (
-                    <MdExpandLess className="text-slate-400 h-5 w-5" />
-                  ) : (
-                    <MdExpandMore className="text-slate-400 h-5 w-5" />
-                  )}
+
+                  {/* + Add Perm */}
+                  <button
+                    onClick={(e) => openAddFunc(m, e)}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-100 rounded-lg transition"
+                    title="Add permission to this module"
+                  >
+                    <svg
+                      className="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Perm
+                  </button>
+
+                  {/* Edit module */}
+                  <button
+                    onClick={(e) => openEditModule(m, e)}
+                    className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition"
+                    title="Edit module"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Delete module */}
+                  <button
+                    onClick={(e) => handleModuleDelete(m, e)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    title="Delete module"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Chevron */}
+                  <button onClick={() => toggleModule(m.id)} className="p-1">
+                    {isExpanded ? (
+                      <MdExpandLess className="text-slate-400 h-5 w-5" />
+                    ) : (
+                      <MdExpandMore className="text-slate-400 h-5 w-5" />
+                    )}
+                  </button>
                 </div>
-              </button>
+              </div>
+
+              {/* Functionalities */}
               <AnimatePresence initial={false}>
                 {isExpanded && (
                   <motion.div
@@ -2212,21 +2613,116 @@ function PermissionsTab({ modules, functionalities }) {
                     transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 space-y-2 border-t border-slate-100">
+                    <div className="p-4 space-y-1 border-t border-slate-100">
+                      {m.funcs.length === 0 && (
+                        <p className="text-[11px] text-slate-400 italic text-center py-3">
+                          No permissions yet — click "+ Add Perm" above.
+                        </p>
+                      )}
                       {m.funcs.map((f) => {
                         const action =
                           f.slug?.toUpperCase() || inferAction(f.name);
+                        const isMenuOpen = openFuncMenu === f.id;
+
+                        // Generate display name
+                        let displayName = f.name;
+                        const modulePrefix = m.module_name.toUpperCase();
+                        const funcUpper = f.name.toUpperCase();
+                        if (funcUpper.startsWith(modulePrefix)) {
+                          displayName = f.name
+                            .substring(modulePrefix.length)
+                            .trim();
+                        }
+
                         return (
                           <div
                             key={f.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors"
+                            className="relative flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors group"
                           >
                             <div className="h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
                             <span className="text-[11px] font-bold text-slate-700 flex-1 truncate">
-                              {m.module_name.toUpperCase()}.
-                              {f.name.split(" ").slice(-1)[0].toUpperCase()}
+                              {displayName || f.name}
                             </span>
                             {action && <ActionBadge action={action} />}
+
+                            {/* Three-dot */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenFuncMenu((prev) =>
+                                  prev === f.id ? null : f.id,
+                                );
+                              }}
+                              className={`shrink-0 p-1 rounded-md transition ${
+                                isMenuOpen
+                                  ? "bg-slate-200 text-slate-700"
+                                  : "opacity-0 group-hover:opacity-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+                              }`}
+                            >
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle cx="5" cy="12" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="19" cy="12" r="1.5" />
+                              </svg>
+                            </button>
+
+                            {/* Dropdown */}
+                            <AnimatePresence>
+                              {isMenuOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                                  transition={{ duration: 0.12 }}
+                                  className="absolute right-0 top-full mt-1 z-20 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => openEditFunc(f)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition"
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={2.5}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                                      />
+                                    </svg>
+                                    Edit Permission
+                                  </button>
+                                  <div className="h-px bg-slate-100" />
+                                  <button
+                                    onClick={() => handleFuncDelete(f)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition"
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={2.5}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         );
                       })}
@@ -2238,6 +2734,244 @@ function PermissionsTab({ modules, functionalities }) {
           );
         })}
       </div>
+
+      {/* Add/Edit Module Modal */}
+      <AnimatePresence>
+        {moduleModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={closeModuleModal}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 16 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-teal-100">
+                    <MdViewModule className="h-4 w-4 text-teal-600" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-black text-slate-800">
+                      {moduleModal === "edit" ? "Edit Module" : "New Module"}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {moduleModal === "edit"
+                        ? `Editing: ${editingModule?.module_name}`
+                        : "Register a new system module"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModuleModal}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <MdClose className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-5 py-5 space-y-3">
+                {moduleModal === "edit" && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Module ID
+                    </label>
+                    <input
+                      type="text"
+                      value={`MOD-${String(editingModule?.id || "").padStart(4, "0")}`}
+                      disabled
+                      className="w-full h-9 px-3 rounded-lg border border-slate-100 bg-slate-50 text-[12px] font-mono text-slate-400"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Module Name <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={moduleForm.moduleName}
+                    onChange={(e) =>
+                      setModuleForm((p) => ({
+                        ...p,
+                        moduleName: e.target.value,
+                      }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleModuleSubmit();
+                      if (e.key === "Escape") closeModuleModal();
+                    }}
+                    placeholder="e.g. Inventory Management"
+                    autoFocus
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={moduleForm.description}
+                    onChange={(e) =>
+                      setModuleForm((p) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder="Define the purpose of this module..."
+                    rows={3}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition bg-white resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30">
+                <button
+                  onClick={closeModuleModal}
+                  className="px-4 py-2 text-[12px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModuleSubmit}
+                  disabled={moduleSubmitting || !moduleForm.moduleName.trim()}
+                  className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white rounded-lg text-[12px] font-bold hover:bg-teal-700 transition disabled:opacity-50 shadow-sm"
+                >
+                  <MdSave className="h-3.5 w-3.5" />
+                  {moduleSubmitting
+                    ? "Saving..."
+                    : moduleModal === "edit"
+                      ? "Update Module"
+                      : "Create Module"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add/Edit Functionality Modal */}
+      <AnimatePresence>
+        {funcModal && funcTargetModule && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={closeFuncModal}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 16 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-teal-100">
+                    <MdSecurity className="h-4 w-4 text-teal-600" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-black text-slate-800">
+                      {funcModal === "edit"
+                        ? "Edit Permission"
+                        : "New Permission"}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      Module:{" "}
+                      <span className="font-bold text-teal-600">
+                        {funcTargetModule.module_name}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeFuncModal}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <MdClose className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-5 py-5 space-y-3">
+                {funcModal === "edit" && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Permission ID
+                    </label>
+                    <input
+                      type="text"
+                      value={`FUNC-${String(editingFunc?.id || "").padStart(4, "0")}`}
+                      disabled
+                      className="w-full h-9 px-3 rounded-lg border border-slate-100 bg-slate-50 text-[12px] font-mono text-slate-400"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Module
+                  </label>
+                  <input
+                    type="text"
+                    value={funcTargetModule.module_name || ""}
+                    disabled
+                    className="w-full h-9 px-3 rounded-lg border border-slate-100 bg-slate-50 text-[12px] text-slate-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Function Name <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={funcForm.name}
+                    onChange={(e) =>
+                      setFuncForm((p) => ({ ...p, name: e.target.value }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleFuncSubmit();
+                      if (e.key === "Escape") closeFuncModal();
+                    }}
+                    placeholder="e.g. Create Sale Invoice"
+                    autoFocus
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30">
+                <button
+                  onClick={closeFuncModal}
+                  className="px-4 py-2 text-[12px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFuncSubmit}
+                  disabled={funcSubmitting || !funcForm.name.trim()}
+                  className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white rounded-lg text-[12px] font-bold hover:bg-teal-700 transition disabled:opacity-50 shadow-sm"
+                >
+                  <MdSave className="h-3.5 w-3.5" />
+                  {funcSubmitting
+                    ? "Saving..."
+                    : funcModal === "edit"
+                      ? "Update Permission"
+                      : "Create Permission"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -2452,6 +3186,7 @@ export default function AccessControl() {
                 <PermissionsTab
                   modules={modules}
                   functionalities={functionalities}
+                  onRefresh={fetchAll}
                 />
               )}
               {tab === "tracking" && <IPTrackingTab />}
