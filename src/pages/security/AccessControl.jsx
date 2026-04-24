@@ -99,7 +99,7 @@ function getModuleIcon(moduleName) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // GROUPS TAB - with Hierarchical Tree Structure (Parent Categories → Child Modules)
 // ═══════════════════════════════════════════════════════════════════════════════
-function GroupsTab({ groups, modules, functionalities, onRefresh }) {
+function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [assignedRightIds, setAssignedRightIds] = useState(new Set());
   const [assignedModuleIds, setAssignedModuleIds] = useState(new Set());
@@ -113,6 +113,10 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   const [groupNameInput, setGroupNameInput] = useState("");
   const [groupSubmitting, setGroupSubmitting] = useState(false);
   const [expandedGroupActions, setExpandedGroupActions] = useState(null);
+  const [groupUsersModal, setGroupUsersModal] = useState(null); // group object | null
+  const [groupUserIds, setGroupUserIds] = useState([]); // selected user id strings
+  const [userSearch, setUserSearch] = useState("");
+  const [savingGroupUsers, setSavingGroupUsers] = useState(false);
 
   function toggleExpand(setFn, id) {
     setFn((prev) => {
@@ -203,6 +207,33 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
     }
   }
 
+  async function openGroupUsersModal(g) {
+    setExpandedGroupActions(null);
+    // Pre-select users already in this group
+    setGroupUserIds((g.users || []).map((u) => String(u.id)));
+    setUserSearch("");
+    setGroupUsersModal(g);
+  }
+
+  async function handleSaveGroupUsers() {
+    if (!groupUsersModal) return;
+    setSavingGroupUsers(true);
+    try {
+      await axiosInstance.put(`/group-users/${groupUsersModal.id}/users`, {
+        userIds: groupUserIds.map(Number),
+      });
+      toast.success(`Users updated for "${groupUsersModal.group_name}"`);
+      setGroupUsersModal(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update group users.",
+      );
+    } finally {
+      setSavingGroupUsers(false);
+    }
+  }
+
   // Build hierarchical tree structure: Parent Categories → Child Modules → Functionalities
   const availableTree = useMemo(() => {
     const categoryStructure = {
@@ -244,15 +275,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         icon: getCategoryIcon("finance"),
         description:
           "Invoicing, payment processing, and financial transactions",
-        modules: [
-          "Accounts",
-          "Booking",
-          "Finance",
-          "Purchase",
-          "Sale",
-          "Setup",
-          "Stock",
-        ],
+        modules: ["Booking", "Purchase", "Sale", "Stock"],
       },
       "Expense & DayBook": {
         id: "cat-billing2",
@@ -389,6 +412,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       triggerModule: "item",
       triggerAction: "create",
       deps: [
+        { mod: "item", action: "read" },
         { mod: "item category", action: "read" },
         { mod: "item type", action: "read" },
         { mod: "sub category", action: "read" },
@@ -402,6 +426,7 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       triggerModule: "item",
       triggerAction: "update",
       deps: [
+        { mod: "item", action: "read" },
         { mod: "item category", action: "read" },
         { mod: "item type", action: "read" },
         { mod: "sub category", action: "read" },
@@ -436,12 +461,14 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         { mod: "customer", action: "read" },
         { mod: "item", action: "read" },
         { mod: "item category", action: "read" },
+        { mod: "booking", action: "read" },
       ],
     },
     {
       triggerModule: "booking",
       triggerAction: "update",
       deps: [
+        { mod: "booking", action: "read" },
         { mod: "customer", action: "read" },
         { mod: "item", action: "read" },
         { mod: "item category", action: "read" },
@@ -476,33 +503,41 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
         { mod: "staff", action: "read" },
       ],
     },
+    // Security permission trigger
+    {
+      triggerModule: "security",
+      triggerAction: "read",
+      deps: [
+        { mod: "add rights", action: "read" },
+        { mod: "permissions", action: "read" },
+        { mod: "groups", action: "read" },
+        { mod: "users", action: "read" },
+        { mod: "group users", action: "read" },
+        { mod: "modules", action: "read" },
+        { mod: "security logs", action: "read" },
+        
+      ],
+    },
+    // Customer permission trigger
     {
       triggerModule: "customer",
       triggerAction: "update",
-      deps: [
-        { mod: "customer", action: "read" },
-      ],
+      deps: [{ mod: "customer", action: "read" }],
     },
     {
       triggerModule: "customer",
       triggerAction: "delete",
-      deps: [
-        { mod: "customer", action: "read" },
-      ],
+      deps: [{ mod: "customer", action: "read" }],
     },
     {
       triggerModule: "customer payment",
       triggerAction: "delete",
-      deps: [
-        { mod: "customer payment", action: "read" },
-      ],
+      deps: [{ mod: "customer payment", action: "read" }],
     },
     {
-      triggerModule: "customer payment",
-      triggerAction: "update",
-      deps: [
-        { mod: "customer payment", action: "read" },
-      ],
+      triggerModule: "sub category",
+      triggerAction: "read",
+      deps: [{ mod: "item category", action: "read" }],
     },
   ];
 
@@ -589,18 +624,9 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
 
         // Rule matched — resolve each dep
         rule.deps.forEach(({ mod, action }) => {
-          // Find a functionality where:
-          //   its module name includes `mod`
-          //   AND its own func name includes `action`
-          // Special case: mod="item" should NOT match "item category", "item type" etc.
-          // Use exact boundary check for short names
           const match = allFunctionalities.find((f) => {
             const fName = f.name.toLowerCase();
             const mName = moduleNameById.get(f.module_id) || "";
-
-            // Module name match: for short fragments like "item" or "supplier",
-            // check it equals OR starts with the fragment but isn't a longer compound name
-            // e.g. mod="item" should match module "Items" but NOT "Item Category"
             const modMatches = mod.includes(" ")
               ? mName.includes(mod) // multi-word: substring is fine
               : mName === mod ||
@@ -693,6 +719,39 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
       }
 
       syncModuleIds(next);
+      return next;
+    });
+  }
+
+  function removeModule(module) {
+    const funcIds = module.functionalities.map((f) => f.funcId);
+    setAssignedRightIds((prev) => {
+      const next = new Set(prev);
+      funcIds.forEach((id) => next.delete(id));
+      return next;
+    });
+    setAssignedModuleIds((prev) => {
+      const next = new Set(prev);
+      next.delete(module.moduleId ?? module.id);
+      return next;
+    });
+  }
+
+  function removeFunctionality(func) {
+    setAssignedRightIds((prev) => {
+      const next = new Set(prev);
+      next.delete(func.funcId);
+      return next;
+    });
+    setAssignedModuleIds((prev) => {
+      const next = new Set(prev);
+      const moduleStillHasFuncs = [...assignedRightIds].some(
+        (id) =>
+          id !== func.funcId &&
+          functionalities.find((f) => f.id === id)?.module_id ===
+            func.module_id,
+      );
+      if (!moduleStillHasFuncs) next.delete(func.module_id);
       return next;
     });
   }
@@ -813,7 +872,6 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
   return (
     <div className="flex gap-4 h-[calc(106vh-280px)]">
       {/* Groups Sidebar */}
-      {/* Groups Sidebar */}
       <div className="w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">
@@ -898,6 +956,34 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                     transition={{ duration: 0.15 }}
                     className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-lg px-1.5 py-1 z-10"
                   >
+                    {/* + Users */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openGroupUsersModal(g);
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 rounded transition"
+                      title="Add/remove users in this group"
+                    >
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        />
+                      </svg>
+                      Users
+                    </button>
+
+                    <div className="w-px h-4 bg-slate-200" />
+
+                    {/* Edit */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -924,7 +1010,10 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                       </svg>
                       Edit
                     </button>
+
                     <div className="w-px h-4 bg-slate-200" />
+
+                    {/* Delete */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1068,6 +1157,154 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                       ? "Update Group"
                       : "Create Group"}
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {groupUsersModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setGroupUsersModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 16 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden flex flex-col max-h-[80vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-blue-100">
+                    <MdPeople className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-black text-slate-800">
+                      Manage Users
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      Group:{" "}
+                      <span className="font-bold text-blue-600">
+                        {groupUsersModal?.group_name}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setGroupUsersModal(null)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <MdClose className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="px-4 pt-3 pb-2 shrink-0">
+                <div className="relative">
+                  <MdSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="w-full h-8 pl-8 pr-3 text-[12px] rounded-lg border border-slate-200 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5 px-0.5">
+                  {groupUserIds.length} user
+                  {groupUserIds.length !== 1 ? "s" : ""} selected
+                </p>
+              </div>
+
+              {/* User list */}
+              <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-0.5">
+                {(allUsers || [])
+                  .filter((u) => {
+                    const q = userSearch.toLowerCase();
+                    return (
+                      !q ||
+                      (u.username || u.name || "").toLowerCase().includes(q) ||
+                      (u.email || "").toLowerCase().includes(q)
+                    );
+                  })
+                  .map((user) => {
+                    const uid = String(user.id);
+                    const checked = groupUserIds.includes(uid);
+                    return (
+                      <label
+                        key={user.id}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border ${
+                          checked
+                            ? "bg-blue-50 border-blue-100"
+                            : "hover:bg-slate-50 border-transparent"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setGroupUserIds((prev) =>
+                              prev.includes(uid)
+                                ? prev.filter((x) => x !== uid)
+                                : [...prev, uid],
+                            )
+                          }
+                          className="h-3.5 w-3.5 rounded accent-blue-600 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-slate-800 truncate">
+                            {user.username || user.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400 truncate">
+                            {user.email || "No email"}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider shrink-0 ${
+                            user.role === "admin"
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {user.role || "user"}
+                        </span>
+                      </label>
+                    );
+                  })}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30 shrink-0">
+                <button
+                  onClick={() => setGroupUserIds([])}
+                  className="text-[11px] text-slate-400 hover:text-slate-600 font-semibold transition"
+                >
+                  Clear all
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setGroupUsersModal(null)}
+                    className="px-4 py-2 text-[12px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveGroupUsers}
+                    disabled={savingGroupUsers}
+                    className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-[12px] font-bold hover:bg-blue-700 transition disabled:opacity-50 shadow-sm"
+                  >
+                    <MdSave className="h-3.5 w-3.5" />
+                    {savingGroupUsers ? "Saving..." : "Save Users"}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1461,25 +1698,39 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                   key={category.id}
                   className="rounded-lg border border-teal-100 overflow-hidden"
                 >
-                  <button
-                    onClick={() =>
-                      toggleExpand(setExpandedAssigned, category.id)
-                    }
-                    className="w-full flex items-center gap-2 px-3 py-2.5 bg-teal-50/50 hover:bg-teal-50 transition-colors"
-                  >
-                    {category.icon}
-                    <span className="text-[11px] font-bold text-teal-800 flex-1 text-left truncate">
-                      {category.name}
-                    </span>
-                    <span className="text-[9px] bg-teal-200 text-teal-800 font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                      {category.children.length}
-                    </span>
-                    {isCategoryExpanded ? (
-                      <MdExpandLess className="text-teal-400 h-5 w-5 shrink-0" />
-                    ) : (
-                      <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />
-                    )}
-                  </button>
+                  {/* ── Category header ── */}
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-teal-50/50 hover:bg-teal-50 transition-colors">
+                    {/* Expand/collapse — takes all remaining space */}
+                    <button
+                      onClick={() =>
+                        toggleExpand(setExpandedAssigned, category.id)
+                      }
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    >
+                      {category.icon}
+                      <span className="text-[11px] font-bold text-teal-800 flex-1 truncate">
+                        {category.name}
+                      </span>
+                      <span className="text-[9px] bg-teal-200 text-teal-800 font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                        {category.children.length}
+                      </span>
+                      {isCategoryExpanded ? (
+                        <MdExpandLess className="text-teal-400 h-5 w-5 shrink-0" />
+                      ) : (
+                        <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        category.children.forEach((mod) => removeModule(mod));
+                      }}
+                      className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition"
+                      title="Remove all permissions in this category"
+                    >
+                      <MdDelete className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
                   <AnimatePresence initial={false}>
                     {isCategoryExpanded && (
@@ -1501,26 +1752,46 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                                 key={module.id}
                                 className="border-b border-teal-50 last:border-0"
                               >
-                                <button
-                                  onClick={() =>
-                                    toggleExpand(setExpandedAssigned, module.id)
-                                  }
-                                  className="w-full flex items-center gap-2 pl-8 pr-3 py-2 hover:bg-teal-50/30 transition-colors"
-                                >
-                                  <MdCheck className="text-emerald-500 h-3 w-3 shrink-0" />
-                                  <span className="text-[11px] font-medium text-slate-700 flex-1 text-left truncate">
-                                    {module.name}
-                                  </span>
-                                  <span className="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                                    {module.functionalities.length}
-                                  </span>
-                                  {isModuleExpanded ? (
-                                    <MdExpandLess className="text-slate-400 h-4 w-4 shrink-0" />
-                                  ) : (
-                                    <MdExpandMore className="text-slate-400 h-4 w-4 shrink-0" />
-                                  )}
-                                </button>
+                                {/* ── Module row ── */}
+                                <div className="flex items-center pl-8 pr-2 py-2 hover:bg-teal-50/30 transition-colors group">
+                                  {/* Expand toggle */}
+                                  <button
+                                    onClick={() =>
+                                      toggleExpand(
+                                        setExpandedAssigned,
+                                        module.id,
+                                      )
+                                    }
+                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                                  >
+                                    <MdCheck className="text-emerald-500 h-3 w-3 shrink-0" />
+                                    <span className="text-[11px] font-medium text-slate-700 flex-1 truncate">
+                                      {module.name}
+                                    </span>
+                                    <span className="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                      {module.functionalities.length}
+                                    </span>
+                                    {isModuleExpanded ? (
+                                      <MdExpandLess className="text-slate-400 h-4 w-4 shrink-0" />
+                                    ) : (
+                                      <MdExpandMore className="text-slate-400 h-4 w-4 shrink-0" />
+                                    )}
+                                  </button>
 
+                                  {/* Remove entire module button */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeModule(module);
+                                    }}
+                                    className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100"
+                                    title={`Remove all ${module.name} permissions`}
+                                  >
+                                    <MdDelete className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* ── Functionality rows ── */}
                                 <AnimatePresence initial={false}>
                                   {isModuleExpanded && (
                                     <motion.div
@@ -1533,11 +1804,11 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                                       }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="pl-14 pr-3 py-1 bg-slate-50/30">
+                                      <div className="pl-14 pr-2 py-1 bg-slate-50/30">
                                         {module.functionalities.map((func) => (
                                           <div
                                             key={func.id}
-                                            className="flex items-center gap-2 py-1.5"
+                                            className="flex items-center gap-2 py-1.5 group/func hover:bg-rose-50/40 rounded transition-colors px-1"
                                           >
                                             <MdCheck className="text-emerald-400 h-2.5 w-2.5 shrink-0" />
                                             <span className="text-[10px] text-slate-600 flex-1">
@@ -1548,6 +1819,17 @@ function GroupsTab({ groups, modules, functionalities, onRefresh }) {
                                                 action={func.action}
                                               />
                                             )}
+
+                                            {/* Remove single functionality */}
+                                            <button
+                                              onClick={() =>
+                                                removeFunctionality(func)
+                                              }
+                                              className="shrink-0 p-0.5 rounded text-rose-300 hover:text-rose-600 hover:bg-rose-100 transition opacity-0 group-hover/func:opacity-100"
+                                              title={`Remove "${func.name}"`}
+                                            >
+                                              <MdClose className="h-3 w-3" />
+                                            </button>
                                           </div>
                                         ))}
                                       </div>
@@ -3172,6 +3454,7 @@ export default function AccessControl() {
                   groups={groups}
                   modules={modules}
                   functionalities={functionalities}
+                  allUsers={allUsers}
                   onRefresh={fetchAll}
                 />
               )}

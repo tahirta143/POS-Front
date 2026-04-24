@@ -69,26 +69,29 @@ export default function ItemPage() {
   const canReadItem = isAdmin || canRead(MODULE_NAME);
   const canUpdateItem = isAdmin || canUpdate(MODULE_NAME);
   const canDeleteItem = isAdmin || canDelete(MODULE_NAME);
+  
+  // Check if user can perform write operations (create/update)
+  const canWriteItem = canCreateItem || canUpdateItem;
+
+  // Only fetch lookup data if user can create/update items
+  const shouldFetchLookups = canWriteItem;
 
   useEffect(() => {
     if (canReadItem) {
-      fetchLookups();
       fetchItems();
+      // Only fetch lookup data if user can create/update
+      if (shouldFetchLookups) {
+        fetchLookups();
+      }
     }
-  }, [canReadItem]);
+  }, [canReadItem, shouldFetchLookups]);
 
   const enabledCategories = useMemo(
-    () =>
-      categories.filter(
-        (category) => category.is_enable === 1 || category.is_enable === true,
-      ),
+    () => categories.filter((c) => c.is_enable === 1 || c.is_enable === true),
     [categories],
   );
   const enabledItemTypes = useMemo(
-    () =>
-      itemTypes.filter(
-        (itemType) => itemType.is_enable === 1 || itemType.is_enable === true,
-      ),
+    () => itemTypes.filter((t) => t.is_enable === 1 || t.is_enable === true),
     [itemTypes],
   );
   const enabledManufacturers = useMemo(
@@ -106,47 +109,37 @@ export default function ItemPage() {
     );
   }, [subcategories, form.category_id]);
 
-  async function fetchLookups() {
+  // Silent fetch helper - only called when user has write permissions
+  async function safeFetch(url) {
     try {
-      const [catRes, typeRes, mfgRes, supRes, locRes, unitRes, subcatRes] =
-        await Promise.all([
-          axiosInstance.get("/categories"),
-          axiosInstance.get("/item-types"),
-          axiosInstance.get("/manufacturers"),
-          axiosInstance.get("/suppliers"),
-          axiosInstance.get("/shelve-locations"),
-          axiosInstance.get("/item-units"),
-          axiosInstance.get("/sub-categories/list"),
-        ]);
-
-      setCategories(
-        Array.isArray(catRes.data) ? catRes.data : catRes.data?.data || [],
-      );
-      setItemTypes(
-        Array.isArray(typeRes.data) ? typeRes.data : typeRes.data?.data || [],
-      );
-      setManufacturers(
-        Array.isArray(mfgRes.data) ? mfgRes.data : mfgRes.data?.data || [],
-      );
-      setSuppliers(
-        Array.isArray(supRes.data) ? supRes.data : supRes.data?.data || [],
-      );
-      setLocations(
-        Array.isArray(locRes.data) ? locRes.data : locRes.data?.data || [],
-      );
-      setUnits(
-        Array.isArray(unitRes.data) ? unitRes.data : unitRes.data?.data || [],
-      );
-      setSubcategories(
-        Array.isArray(subcatRes.data)
-          ? subcatRes.data
-          : subcatRes.data?.data || [],
-      );
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Unable to load some dropdown options.",
-      );
+      const res = await axiosInstance.get(url);
+      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+    } catch {
+      return [];
     }
+  }
+
+  async function fetchLookups() {
+    // These APIs are only called when user has create/update permissions
+    // So 403 errors won't occur for read-only users
+    const [catRes, typeRes, mfgRes, supRes, locRes, unitRes, subcatRes] =
+      await Promise.all([
+        safeFetch("/categories"),
+        safeFetch("/item-types"),
+        safeFetch("/manufacturers"),
+        safeFetch("/suppliers"),
+        safeFetch("/shelve-locations"),
+        safeFetch("/item-units"),
+        safeFetch("/sub-categories/list"),
+      ]);
+
+    setCategories(catRes);
+    setItemTypes(typeRes);
+    setManufacturers(mfgRes);
+    setSuppliers(supRes);
+    setLocations(locRes);
+    setUnits(unitRes);
+    setSubcategories(subcatRes);
   }
 
   async function fetchItems() {
@@ -156,7 +149,10 @@ export default function ItemPage() {
       const data = response.data;
       setItems(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to load items.");
+      // Only show error if it's not a 403 (permission denied)
+      if (err.response?.status !== 403) {
+        toast.error(err?.response?.data?.message || "Failed to load items.");
+      }
     } finally {
       setLoading(false);
     }
@@ -189,17 +185,14 @@ export default function ItemPage() {
       if (form.store_location)
         formData.append("shelveLocationId", form.store_location);
       if (form.item_unit) formData.append("itemUnitId", form.item_unit);
-      if (form.barcode.trim()) {
-        formData.append("barCode", form.barcode.trim());
-      }
+      if (form.barcode.trim()) formData.append("barCode", form.barcode.trim());
+
       formData.append("description", form.description.trim());
       formData.append("reorder", parseFloat(form.reorder_level) || 0);
       formData.append("perUnit", parseInt(form.per_unit) || 1);
       formData.append("isEnable", form.is_enable ? 1 : 0);
 
-      if (form.image_file) {
-        formData.append("itemImage", form.image_file);
-      }
+      if (form.image_file) formData.append("itemImage", form.image_file);
 
       if (editId) {
         if (!canUpdateItem) {
@@ -238,7 +231,6 @@ export default function ItemPage() {
       toast.error("You don't have permission to delete items.");
       return;
     }
-
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       await axiosInstance.delete(`/item-details/${id}`);
@@ -254,7 +246,18 @@ export default function ItemPage() {
       toast.error("You don't have permission to edit items.");
       return;
     }
+    
+    // Ensure lookup data is loaded before opening edit form
+    if (shouldFetchLookups && categories.length === 0) {
+      fetchLookups().then(() => {
+        populateEditForm(item);
+      });
+    } else {
+      populateEditForm(item);
+    }
+  }
 
+  function populateEditForm(item) {
     setEditId(item.id);
     setForm({
       category_id: item.item_category_id || item.category_id || "",
@@ -299,7 +302,7 @@ export default function ItemPage() {
     setEditId(null);
   }
 
-  // Access Denied
+  // ── Access Denied ──────────────────────────────────────────────────────────
   if (!canReadItem) {
     return (
       <PageShell>
@@ -352,6 +355,10 @@ export default function ItemPage() {
                   setIsFormOpen(opening);
                   if (opening) {
                     resetForm();
+                    // Load lookup data when opening create form
+                    if (shouldFetchLookups && categories.length === 0) {
+                      fetchLookups();
+                    }
                     document
                       .querySelector("main")
                       ?.scrollTo({ top: 0, behavior: "smooth" });
@@ -430,9 +437,9 @@ export default function ItemPage() {
                         required
                         value={form.category_id}
                         onChange={(value) => updateField("category_id", value)}
-                        options={enabledCategories.map((category) => ({
-                          value: category.id,
-                          label: category.category_name,
+                        options={enabledCategories.map((c) => ({
+                          value: c.id,
+                          label: c.category_name,
                         }))}
                         placeholder="Select category"
                       />
@@ -441,9 +448,9 @@ export default function ItemPage() {
                         required
                         value={form.item_type_id}
                         onChange={(value) => updateField("item_type_id", value)}
-                        options={enabledItemTypes.map((itemType) => ({
-                          value: itemType.id,
-                          label: itemType.type_name,
+                        options={enabledItemTypes.map((t) => ({
+                          value: t.id,
+                          label: t.type_name,
                         }))}
                         placeholder="Select item type"
                       />
@@ -453,9 +460,9 @@ export default function ItemPage() {
                         onChange={(value) =>
                           updateField("subcategory_id", value)
                         }
-                        options={enabledSubcategories.map((item) => ({
-                          value: item.id,
-                          label: item.sub_category_name,
+                        options={enabledSubcategories.map((s) => ({
+                          value: s.id,
+                          label: s.sub_category_name,
                         }))}
                         placeholder="Select sub-category"
                       />
@@ -467,8 +474,8 @@ export default function ItemPage() {
                         <input
                           type="text"
                           value={form.item_name}
-                          onChange={(event) =>
-                            updateField("item_name", event.target.value)
+                          onChange={(e) =>
+                            updateField("item_name", e.target.value)
                           }
                           placeholder="Enter item name"
                           className="h-8 w-full max-w-lg rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
@@ -506,8 +513,8 @@ export default function ItemPage() {
                           <input
                             type="text"
                             value={form.barcode}
-                            onChange={(event) =>
-                              updateField("barcode", event.target.value)
+                            onChange={(e) =>
+                              updateField("barcode", e.target.value)
                             }
                             placeholder="Enter barcode"
                             className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
@@ -518,25 +525,21 @@ export default function ItemPage() {
                         <CompactInput
                           label="Purchase price"
                           value={form.purchase_price}
-                          onChange={(value) =>
-                            updateField("purchase_price", value)
-                          }
+                          onChange={(v) => updateField("purchase_price", v)}
                           placeholder="0.00"
                           suffix="PKR"
                         />
                         <CompactInput
                           label="Sale price"
                           value={form.sale_price}
-                          onChange={(value) => updateField("sale_price", value)}
+                          onChange={(v) => updateField("sale_price", v)}
                           placeholder="0.00"
                           suffix="PKR"
                         />
                         <CompactInput
                           label="Opening stock"
                           value={form.opening_stock}
-                          onChange={(value) =>
-                            updateField("opening_stock", value)
-                          }
+                          onChange={(v) => updateField("opening_stock", v)}
                           placeholder="0"
                           suffix="units"
                         />
@@ -551,8 +554,8 @@ export default function ItemPage() {
                           <textarea
                             rows={2}
                             value={form.description}
-                            onChange={(event) =>
-                              updateField("description", event.target.value)
+                            onChange={(e) =>
+                              updateField("description", e.target.value)
                             }
                             placeholder="Enter item description..."
                             className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
@@ -585,16 +588,14 @@ export default function ItemPage() {
                         <CompactInput
                           label="Per unit"
                           value={form.per_unit}
-                          onChange={(value) => updateField("per_unit", value)}
+                          onChange={(v) => updateField("per_unit", v)}
                           placeholder="0"
                           suffix="per pack"
                         />
                         <CompactInput
                           label="Reorder level"
                           value={form.reorder_level}
-                          onChange={(value) =>
-                            updateField("reorder_level", value)
-                          }
+                          onChange={(v) => updateField("reorder_level", v)}
                           placeholder="0"
                           suffix="units"
                         />
@@ -611,14 +612,14 @@ export default function ItemPage() {
                           className="hidden"
                           onChange={handleImageChange}
                         />
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-teal-500 dark:text-teal-400 shadow-sm transition-colors">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-teal-500 dark:text-teal-400 shadow-sm">
                           <UploadIcon className="h-3.5 w-3.5" />
                         </div>
-                        <div className="min-w-0 transition-colors">
+                        <div className="min-w-0">
                           <p className="text-[12px] font-semibold text-teal-600 dark:text-teal-400">
                             Upload image
                           </p>
-                          <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-500">
+                          <p className="mt-0.5 truncate text-[10px] text-slate-500">
                             {form.image_name || "PNG, JPG, SVG up to 10MB"}
                           </p>
                         </div>
@@ -708,7 +709,7 @@ export default function ItemPage() {
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50/50">
                   <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
-                    <th className="px-5 py-3 w-12 dark:text-teal-400">#</th>
+                    <th className="px-5 py-3 w-12">#</th>
                     <th className="px-5 py-3">Item Details</th>
                     <th className="px-5 py-3">Category</th>
                     <th className="px-5 py-3">Price (Sale)</th>
@@ -717,7 +718,7 @@ export default function ItemPage() {
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900">
                   {items.map((item, index) => (
                     <motion.tr
                       key={item.id}
@@ -751,7 +752,12 @@ export default function ItemPage() {
                       </td>
                       <td className="px-5 py-4">
                         <span
-                          className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <= (item.reorder || item.reorder_level || 0) ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-300"}`}
+                          className={`text-[12px] font-semibold ${
+                            parseFloat(item.stock || item.opening_stock || 0) <=
+                            (item.reorder || item.reorder_level || 0)
+                              ? "text-rose-600 dark:text-rose-400"
+                              : "text-slate-700 dark:text-slate-300"
+                          }`}
                         >
                           {item.stock || item.opening_stock || 0}
                         </span>
@@ -806,13 +812,14 @@ export default function ItemPage() {
   );
 }
 
+// ── Sub-components (unchanged) ─────────────────────────────────────────────────
+
 function SectionCard({ color, title, children }) {
   const style = sectionStyles[color] ?? sectionStyles.lime;
-
   return (
     <div className="bg-white dark:bg-slate-900/50 p-2 transition-colors">
       <div
-        className={`mb-1.5 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
+        className={`mb-1.5 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header} dark:bg-teal-600 dark:border-teal-500/50`}
       >
         <span
           className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
@@ -839,17 +846,17 @@ function SelectField({
       <div className="relative">
         <select
           value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-8 w-full appearance-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-7 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 w-full appearance-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-7 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         >
           <option value="">{placeholder}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-500 transition-colors">
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-500">
           <ChevronDownIcon className="h-3.5 w-3.5" />
         </div>
       </div>
@@ -864,11 +871,11 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
         <input
           type="text"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-7 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-8 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-colors"
+          className="h-7 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-8 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
         />
-        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-medium uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 transition-colors">
+        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[9px] font-medium uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">
           {suffix}
         </span>
       </div>
@@ -878,12 +885,12 @@ function CompactInput({ label, value, onChange, placeholder, suffix }) {
 
 function ItemStatusToggle({ enabled, onChange, label, description }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 transition-colors">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3">
       <div>
-        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200 transition-colors">
+        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200">
           {label}
         </p>
-        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 transition-colors">
+        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
           {description}
         </p>
       </div>
@@ -892,15 +899,11 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
         className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-          enabled
-            ? "bg-teal-600"
-            : "bg-slate-300 dark:bg-slate-700 transition-colors"
+          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
         }`}
       >
         <span
-          className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${
-            enabled ? "translate-x-7" : "translate-x-1"
-          }`}
+          className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${enabled ? "translate-x-7" : "translate-x-1"}`}
         />
       </button>
     </div>

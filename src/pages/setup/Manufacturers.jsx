@@ -79,7 +79,7 @@ function createEmptyForm() {
 
 export default function Manufacturers() {
   const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions()
-  const MODULE_NAME = "Manufacturers"
+  const MODULE_NAME = "Manufacturer"
 
   const [form, setForm] = useState(createEmptyForm);
   const [manufacturers, setManufacturers] = useState([]);

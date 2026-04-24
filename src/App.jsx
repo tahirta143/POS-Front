@@ -101,7 +101,7 @@ const App = () => {
         <Route
           path="/stock/opening"
           element={
-            <ProtectedRoute module="Stock" action="create">
+            <ProtectedRoute module="Items" action="read">
               <OpeningStock />
             </ProtectedRoute>
           }
@@ -109,7 +109,7 @@ const App = () => {
         <Route
           path="/stock/reorder"
           element={
-            <ProtectedRoute module="Stock" action="read">
+            <ProtectedRoute module="Reorder" action="read">
               <ReOrderStock />
             </ProtectedRoute>
           }
@@ -117,7 +117,7 @@ const App = () => {
         <Route
           path="/stock/sales-return"
           element={
-            <ProtectedRoute module="Stock" action="create">
+            <ProtectedRoute module="Sale Return" action="create">
               <SalesReturnPage />
             </ProtectedRoute>
           }
@@ -125,7 +125,7 @@ const App = () => {
         <Route
           path="/stock/purchase-return"
           element={
-            <ProtectedRoute module="Stock" action="create">
+            <ProtectedRoute module="Purchase Return" action="read">
               <PurchaseReturnPage />
             </ProtectedRoute>
           }
@@ -133,7 +133,7 @@ const App = () => {
         <Route
           path="/stock/grn"
           element={
-            <ProtectedRoute module="Stock" action="create">
+            <ProtectedRoute module="Goods Receipt" action="read">
               <GoodsReceiptNotePage />
             </ProtectedRoute>
           }
@@ -169,7 +169,7 @@ const App = () => {
         <Route
           path="/purchase"
           element={
-            <ProtectedRoute module="Purchase" action="create">
+            <ProtectedRoute module="Purchase" action="read">
               <PurchasePage />
             </ProtectedRoute>
           }
@@ -177,7 +177,7 @@ const App = () => {
         <Route
           path="/sale"
           element={
-            <ProtectedRoute module="Sale" action="create">
+            <ProtectedRoute module="Sale" action="read">
               <Sales />
             </ProtectedRoute>
           }
@@ -187,7 +187,7 @@ const App = () => {
         <Route
           path="/finance/supplier-payment"
           element={
-            <ProtectedRoute module="Finance" action="create">
+            <ProtectedRoute module="Supplier Payment" action="read">
               <SupplierPaymentPage />
             </ProtectedRoute>
           }
@@ -195,7 +195,7 @@ const App = () => {
         <Route
           path="/finance/amount-payable"
           element={
-            <ProtectedRoute module="Finance" action="read">
+            <ProtectedRoute module="Supplier Payment" action="read">
               <AmountPayablePage />
             </ProtectedRoute>
           }
@@ -211,7 +211,7 @@ const App = () => {
         <Route
           path="/finance/customer-payment"
           element={
-            <ProtectedRoute module="Finance" action="create">
+            <ProtectedRoute module="Customer Payment" action="create">
               <CustomerPaymentPage />
             </ProtectedRoute>
           }
@@ -219,7 +219,7 @@ const App = () => {
         <Route
           path="/finance/amount-receivable"
           element={
-            <ProtectedRoute module="Finance" action="read">
+            <ProtectedRoute module="Customer Payment" action="read">
               <AmountReceivablePage />
             </ProtectedRoute>
           }
@@ -229,7 +229,7 @@ const App = () => {
         <Route
           path="/customer/registration"
           element={
-            <ProtectedRoute module="Customer" action="create">
+            <ProtectedRoute module="Customer" action="read">
               <CustomerList />
             </ProtectedRoute>
           }
@@ -263,7 +263,7 @@ const App = () => {
         <Route
           path="/setup/manufacturers"
           element={
-            <ProtectedRoute module="Setup" action="read">
+            <ProtectedRoute module="Manufacturer" action="read">
               <Manufacturers />
             </ProtectedRoute>
           }
@@ -279,7 +279,7 @@ const App = () => {
         <Route
           path="/setup/item-subcategory"
           element={
-            <ProtectedRoute module="Setup" action="read">
+            <ProtectedRoute module="Sub Category" action="read">
               <SubCategory />
             </ProtectedRoute>
           }
@@ -287,7 +287,7 @@ const App = () => {
         <Route
           path="/setup/item-type"
           element={
-            <ProtectedRoute module="Setup" action="read">
+            <ProtectedRoute module="Item Type" action="read">
               <ItemType />
             </ProtectedRoute>
           }
@@ -295,7 +295,7 @@ const App = () => {
         <Route
           path="/setup/item-unit"
           element={
-            <ProtectedRoute module="Setup" action="read">
+            <ProtectedRoute module="Item Unit" action="read">
               <ItemUnit />
             </ProtectedRoute>
           }
@@ -303,7 +303,7 @@ const App = () => {
         <Route
           path="/setup/shelve-location"
           element={
-            <ProtectedRoute module="Setup" action="read">
+            <ProtectedRoute module="Shelve Location" action="read">
               <ItemShelve />
             </ProtectedRoute>
           }
@@ -325,7 +325,7 @@ const App = () => {
           }
         />
 
-        {/* Accounts/Expense Routes - FIXED: Changed 'Expense' to correct module names */}
+        {/* Accounts/Expense Routes */}
         <Route
           path="/daybook"
           element={

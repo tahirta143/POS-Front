@@ -47,17 +47,41 @@ import { logout } from "../../features/auth/authSlice";
 
 const NAV_ITEMS = [
   // Dashboard
-  { to: "/dashboard", label: "Dashboard", icon: MdDashboard, module: "Dashboard", requiredAction: "read" },
-  
+  {
+    to: "/dashboard",
+    label: "Dashboard",
+    icon: MdDashboard,
+    module: "Dashboard",
+    requiredAction: "read",
+  },
+
   // Items
-  { to: "/items", label: "Item Details", icon: MdInventory, module: "Items", requiredAction: "read" },
-  
+  {
+    to: "/items",
+    label: "Item Details",
+    icon: MdInventory,
+    module: "Items",
+    requiredAction: "read",
+  },
+
   // Sales
-  { to: "/sale", label: "Sales Invoice", icon: MdReceipt, module: "Sale", requiredAction: "create" },
-  
+  {
+    to: "/sale",
+    label: "Sales Invoice",
+    icon: MdReceipt,
+    module: "Sale",
+    requiredAction: "create",
+  },
+
   // Purchase
-  { to: "/purchase", label: "Purchase", icon: MdShoppingCart, module: "Purchase", requiredAction: "create" },
-  
+  {
+    to: "/purchase",
+    label: "Purchase",
+    icon: MdShoppingCart,
+    module: "Purchase",
+    requiredAction: "create",
+  },
+
   // Stock Management
   {
     id: "stock",
@@ -65,30 +89,95 @@ const NAV_ITEMS = [
     icon: MdWarehouse,
     module: "Stock",
     children: [
-      { to: "/stock/opening", label: "Opening Stock", icon: MdAddBox, module: "Stock", requiredAction: "create" },
-      { to: "/stock/reorder", label: "Reorder Stock", icon: MdRefresh, module: "Stock", requiredAction: "read" },
-      { to: "/stock/grn", label: "Goods Receipt", icon: MdReceipt, module: "Stock", requiredAction: "create" },
-      { to: "/stock/transfer", label: "Stock Transfer", icon: MdSwapHoriz, module: "Stock", requiredAction: "transfer" },
-      { to: "/stock/sales-return", label: "Sales Return", icon: MdRemoveCircle, module: "Stock", requiredAction: "create" },
-      { to: "/stock/purchase-return", label: "Purchase Return", icon: MdRemoveCircle, module: "Stock", requiredAction: "create" },
+      {
+        to: "/stock/opening",
+        label: "Opening Stock",
+        icon: MdAddBox,
+        module: "Stock",
+        requiredAction: "create",
+      },
+      {
+        to: "/stock/reorder",
+        label: "Reorder Stock",
+        icon: MdRefresh,
+        module: "Stock",
+        requiredAction: "read",
+      },
+      {
+        to: "/stock/grn",
+        label: "Goods Receipt",
+        icon: MdReceipt,
+        module: "Stock",
+        requiredAction: "create",
+      },
+      {
+        to: "/stock/transfer",
+        label: "Stock Transfer",
+        icon: MdSwapHoriz,
+        module: "Stock",
+        requiredAction: "transfer",
+      },
+      {
+        to: "/stock/sales-return",
+        label: "Sales Return",
+        icon: MdRemoveCircle,
+        module: "Stock",
+        requiredAction: "create",
+      },
+      {
+        to: "/stock/purchase-return",
+        label: "Purchase Return",
+        icon: MdRemoveCircle,
+        module: "Stock",
+        requiredAction: "create",
+      },
     ],
   },
-  
+
   // Finance
   {
     id: "finance",
     label: "Finance",
     icon: MdAccountBalance,
-    module: "Finance",
     children: [
-      { to: "/finance/supplier-payment", label: "Supplier Payment", icon: MdMonetizationOn, module: "Finance", requiredAction: "create" },
-      { to: "/finance/amount-payable", label: "Amount Payable", icon: MdAssessment, module: "Finance", requiredAction: "read" },
-      { to: "/finance/supplier-ledger", label: "Supplier Ledger", icon: MdReceipt, module: "Supplier Ledger", requiredAction: "read" },
-      { to: "/finance/customer-payment", label: "Customer Payment", icon: MdMonetizationOn, module: "Finance", requiredAction: "create" },
-      { to: "/finance/amount-receivable", label: "Amount Receivable", icon: MdAssessment, module: "Finance", requiredAction: "read" },
+      {
+        to: "/finance/supplier-payment",
+        label: "Supplier Payment",
+        icon: MdMonetizationOn,
+        module: "Supplier Payment",
+        requiredAction: "read",
+      },
+      {
+        to: "/finance/amount-payable",
+        label: "Amount Payable",
+        icon: MdAssessment,
+        module: "Supplier Payment",
+        requiredAction: "read",
+      },
+      {
+        to: "/finance/supplier-ledger",
+        label: "Supplier Ledger",
+        icon: MdReceipt,
+        module: "Supplier Ledger",
+        requiredAction: "read",
+      },
+      {
+        to: "/finance/customer-payment",
+        label: "Customer Payment",
+        icon: MdMonetizationOn,
+        module: "Customer Payment",
+        requiredAction: "create",
+      },
+      {
+        to: "/finance/amount-receivable",
+        label: "Amount Receivable",
+        icon: MdAssessment,
+        module: "Customer Payment",
+        requiredAction: "read",
+      },
     ],
   },
-  
+
   // Customer Management
   {
     id: "customer",
@@ -96,67 +185,142 @@ const NAV_ITEMS = [
     icon: MdPeople,
     module: "Customer",
     children: [
-      { to: "/customer/registration", label: "Registration", icon: MdAccountBalance, module: "Customer", requiredAction: "create" },
-      { to: "/customer/record", label: "Customer Record", icon: MdReceipt, module: "Customer", requiredAction: "read" },
+      {
+        to: "/customer/registration",
+        label: "Registration",
+        icon: MdAccountBalance,
+        module: "Customer",
+        requiredAction: "read",
+      },
+      {
+        to: "/customer/record",
+        label: "Customer Record",
+        icon: MdReceipt,
+        module: "Customer",
+        requiredAction: "read",
+      },
     ],
   },
-  
+
   // Bookings
-  { to: "/booking-customers", label: "Bookings", icon: MdCalendarToday, module: "Booking", requiredAction: "read" },
-  
+  {
+    to: "/booking-customers",
+    label: "Bookings",
+    icon: MdCalendarToday,
+    module: "Booking",
+    requiredAction: "read",
+  },
+
   // Accounts (Expense Management)
   {
     id: "accounts",
     label: "Accounts",
     icon: MdMonetizationOn,
     children: [
-      { to: "/daybook", label: "Day Book", icon: MdCalendarToday, module: "Day Book", requiredAction: "read" },
-      { to: "/expense/head", label: "Expense Head", icon: MdAccountBalance, module: "Expense Head", requiredAction: "read" },
-      { 
-        to: "/expense/voucher", 
-        label: "Expense Voucher", 
-        icon: MdReceipt, 
-        module: "Expense Voucher", 
-        requiredAction: "read"  // This can be changed based on what action you want to check
+      {
+        to: "/daybook",
+        label: "Day Book",
+        icon: MdCalendarToday,
+        module: "Day Book",
+        requiredAction: "read",
       },
-      { to: "/expense/report", label: "Expense Report", icon: MdAssessment, module: "Expense Report", requiredAction: "read" },
+      {
+        to: "/expense/head",
+        label: "Expense Head",
+        icon: MdAccountBalance,
+        module: "Expense Head",
+        requiredAction: "read",
+      },
+      {
+        to: "/expense/voucher",
+        label: "Expense Voucher",
+        icon: MdReceipt,
+        module: "Expense Voucher",
+        requiredAction: "read",
+      },
+      {
+        to: "/expense/report",
+        label: "Expense Report",
+        icon: MdAssessment,
+        module: "Expense Report",
+        requiredAction: "read",
+      },
     ],
   },
-  
+
   // Setup
   {
     id: "setup",
     label: "Setup",
     icon: MdSettings,
-    module: "Setup",
     children: [
-      { to: "/setup/suppliers", label: "Suppliers", icon: MdLocalShipping, module: "Supplier", requiredAction: "read" },
-      { to: "/setup/manufacturers", label: "Manufacturers", icon: MdFactory, module: "Manufacturer", requiredAction: "read" },
+      {
+        to: "/setup/suppliers",
+        label: "Suppliers",
+        icon: MdLocalShipping,
+        module: "Supplier",
+        requiredAction: "read",
+      },
+      {
+        to: "/setup/manufacturers",
+        label: "Manufacturers",
+        icon: MdFactory,
+        module: "Manufacturer",
+        requiredAction: "read",
+      },
       {
         id: "setup-item",
         label: "Item",
         icon: MdWorkspaces,
         children: [
-          { to: "/setup/item-category", label: "Item Category", icon: MdCategory, module: "Item Category", requiredAction: "read" },
-          { to: "/setup/item-subcategory", label: "Item Subcategory", icon: MdStyle, module: "Setup", requiredAction: "read" },
-          { to: "/setup/item-type", label: "Item Type", icon: MdInventory, module: "Setup", requiredAction: "read" },
-          { to: "/setup/item-unit", label: "Item Unit", icon: MdLabel, module: "Setup", requiredAction: "read" },
-          { to: "/expiry-tags", label: "Expiry Tags", icon: MdLocalOffer, module: "Setup", requiredAction: "read" },
-          { to: "/setup/shelve-location", label: "Shelve Location", icon: MdLocationOn, module: "Setup", requiredAction: "read" },
+          {
+            to: "/setup/item-category",
+            label: "Item Category",
+            icon: MdCategory,
+            module: "Item Category",
+            requiredAction: "read", // This will match "Read Category" because it contains "read"
+          },
+          {
+            to: "/setup/item-subcategory",
+            label: "Item Subcategory",
+            icon: MdStyle,
+            module: "Sub Category",
+            requiredAction: "read",
+          },
+          {
+            to: "/setup/item-type",
+            label: "Item Type",
+            icon: MdInventory,
+            module: "Item Type",
+            requiredAction: "read",
+          },
+          {
+            to: "/setup/item-unit",
+            label: "Item Unit",
+            icon: MdLabel,
+            module: "Item Unit",
+            requiredAction: "read",
+          },
+          {
+            to: "/expiry-tags",
+            label: "Expiry Tags",
+            icon: MdLocalOffer,
+            module: "Setup",
+            requiredAction: "read",
+          },
+          {
+            to: "/setup/shelve-location",
+            label: "Shelve Location",
+            icon: MdLocationOn,
+            module: "Shelve Location",
+            requiredAction: "read",
+          },
         ],
       },
-      {
-        id: "setup-company",
-        label: "Company",
-        icon: MdCorporateFare,
-        children: [
-          { to: "/setup/department", label: "Department", icon: MdApartment, module: "Setup", requiredAction: "read" },
-          { to: "/setup/designation", label: "Designation", icon: MdBadge, module: "Setup", requiredAction: "read" },
-        ],
-      },
+      // ... rest
     ],
   },
-  
+
   // Security
   {
     id: "security-settings",
@@ -164,13 +328,26 @@ const NAV_ITEMS = [
     icon: MdSecurity,
     module: "Security",
     children: [
-      { to: "/security", label: "Overview", icon: MdDashboard, module: "Security", requiredAction: "read" },
-      { to: "/security/access-control", label: "Access Control", icon: MdSecurity, module: "Security", requiredAction: "read" },
+      {
+        to: "/security",
+        label: "Overview",
+        icon: MdDashboard,
+        module: "Security",
+        requiredAction: "read",
+      },
+      {
+        to: "/security/access-control",
+        label: "Access Control",
+        icon: MdSecurity,
+        module: "Security",
+        requiredAction: "read",
+      },
     ],
   },
 ];
 
 // Updated filterNavItems function
+// Updated filterNavItems function - More flexible matching
 function filterNavItems(items, permissions, isAdmin) {
   if (isAdmin) return items;
 
@@ -189,18 +366,16 @@ function filterNavItems(items, permissions, isAdmin) {
       if (!hasModule) return false;
     }
 
-    // Check action permission
+    // Check action permission - FLEXIBLE matching
     if (item.requiredAction) {
       const hasAction = functionalities.some((func) => {
         const funcName = (func.name || "").toLowerCase();
         const requiredAction = item.requiredAction.toLowerCase();
-        const hasRequiredAction = funcName.includes(requiredAction);
         
-        if (item.module) {
-          const hasModuleInFunc = funcName.includes(item.module.toLowerCase());
-          return hasRequiredAction && hasModuleInFunc;
-        }
-        return hasRequiredAction;
+        // Simply check if the functionality name contains the required action
+        // "Read Category" contains "read" → true ✅
+        // "Create Sale" contains "create" → true ✅
+        return funcName.includes(requiredAction);
       });
       if (!hasAction) return false;
     }
@@ -223,7 +398,6 @@ function filterNavItems(items, permissions, isAdmin) {
     return acc;
   }, []);
 }
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function pathMatchesItem(item, pathname) {
   if (item.to) return pathname.startsWith(item.to);
@@ -233,14 +407,20 @@ function pathMatchesItem(item, pathname) {
 // ── Level-2 nested dropdown ───────────────────────────────────────────────────
 function NestedDropdown({ item, openId, setOpenId }) {
   const location = useLocation();
-  const isActive = item.children?.some((c) => pathMatchesItem(c, location.pathname));
+  const isActive = item.children?.some((c) =>
+    pathMatchesItem(c, location.pathname),
+  );
   const isOpen = openId === item.id;
 
   return (
     <div>
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white font-medium shadow-sm"
@@ -259,7 +439,9 @@ function NestedDropdown({ item, openId, setOpenId }) {
           </span>
           {item.label}
         </div>
-        <MdExpandMore className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <MdExpandMore
+          className={`text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -269,7 +451,9 @@ function NestedDropdown({ item, openId, setOpenId }) {
               key={child.to}
               to={child.to}
               style={({ isActive }) =>
-                isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
+                isActive
+                  ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+                  : undefined
               }
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
@@ -301,14 +485,21 @@ function NestedChildren({ children, onNavigate }) {
 
   return children.map((child) =>
     child.children ? (
-      <NestedDropdown key={child.id} item={child} openId={nestedOpenId} setOpenId={setNestedOpenId} />
+      <NestedDropdown
+        key={child.id}
+        item={child}
+        openId={nestedOpenId}
+        setOpenId={setNestedOpenId}
+      />
     ) : (
       <NavLink
         key={child.to}
         to={child.to}
         onClick={onNavigate}
         style={({ isActive }) =>
-          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
@@ -321,7 +512,7 @@ function NestedChildren({ children, onNavigate }) {
         {child.icon && <child.icon className="text-base shrink-0" />}
         {child.label}
       </NavLink>
-    )
+    ),
   );
 }
 
@@ -337,7 +528,9 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
         to={item.to}
         onClick={onNavigate}
         style={({ isActive }) =>
-          isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
@@ -369,7 +562,11 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
     <div className="mb-0.5">
       <button
         onClick={() => setOpenId(isOpen ? null : item.id)}
-        style={isActive ? { backgroundColor: "#14b8a6", color: "#ffffff" } : undefined}
+        style={
+          isActive
+            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            : undefined
+        }
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
           isActive
             ? "bg-teal-500 text-white shadow-sm"
@@ -408,13 +605,15 @@ function SidebarContent({ onNavigate }) {
   const location = useLocation();
   const { user, permissions } = useSelector((state) => state.auth);
 
-  const isAdmin = user?.is_admin || user?.role === "admin" || permissions?.isAdmin || false;
+  const isAdmin =
+    user?.is_admin || user?.role === "admin" || permissions?.isAdmin || false;
 
   const filteredNavItems = filterNavItems(NAV_ITEMS, permissions, isAdmin);
 
   const [openId, setOpenId] = useState(() => {
     for (const item of filteredNavItems) {
-      if (item.children && pathMatchesItem(item, location.pathname)) return item.id;
+      if (item.children && pathMatchesItem(item, location.pathname))
+        return item.id;
     }
     return null;
   });

@@ -14,34 +14,6 @@ import {
 
 // Route paths match App.jsx exactly
 const MODULE_DATA = [
-  // {
-  //   path: "/security/company",
-  //   category: "Organization",
-  //   title: "Company",
-  //   desc: "Manage company information",
-  //   icon: <MdBusiness />,
-  // },
-  // {
-  //   path: "/security/employee",
-  //   category: "Organization",
-  //   title: "Employee",
-  //   desc: "Manage employee records",
-  //   icon: <MdPeople />,
-  // },
-  // {
-  //   path: "/security/software-group",
-  //   category: "Access Control",
-  //   title: "Software Group",
-  //   desc: "Configure software groups",
-  //   icon: <MdGroupWork />,
-  // },
-  // {
-  //   path: "/security/user",
-  //   category: "User Management",
-  //   title: "Users",
-  //   desc: "Manage user accounts",
-  //   icon: <MdLockPerson />,
-  // },
 
   {
     path: "/security/user-to-group",
@@ -50,27 +22,6 @@ const MODULE_DATA = [
     desc: "Link users to groups",
     icon: <MdGroupWork />,
   },
-  // {
-  //   path: "/security/security-log",
-  //   category: "Monitoring",
-  //   title: "Security Log",
-  //   desc: "View security activities",
-  //   icon: <MdHistory />,
-  // },
-  // {
-  //   path: "/security/module-info",
-  //   category: "System",
-  //   title: "Modules",
-  //   desc: "Manage system modules",
-  //   icon: <MdViewModule />,
-  // },
-  // {
-  //   path: "/security/module-functions",
-  //   category: "System",
-  //   title: "Module Functions",
-  //   desc: "Configure functionalities",
-  //   icon: <MdExtension />,
-  // },
   {
     path: "/security/group-rights",
     category: "Access Control",
