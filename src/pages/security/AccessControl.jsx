@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosInstance from "../../services/axiosInstance";
+import { usePermissions } from "../../hooks/usePermissions";
 import {
   MdSave,
   MdSearch,
@@ -25,6 +26,7 @@ import {
   MdAccountBalance,
   MdSettings,
   MdDashboard,
+  MdLock,
 } from "react-icons/md";
 
 // ─── Shared Components ────────────────────────────────────────────────────────
@@ -78,6 +80,8 @@ function getCategoryIcon(categoryName) {
     return <MdAccountBalance className="h-4 w-4 text-rose-600" />;
   if (name.includes("dashboard"))
     return <MdDashboard className="h-4 w-4 text-teal-600" />;
+  if (name.includes("setup") || name.includes("emergency"))
+    return <MdSettings className="h-4 w-4 text-slate-600" />;
   return <MdFolder className="h-4 w-4 text-slate-500" />;
 }
 
@@ -87,19 +91,44 @@ function getModuleIcon(moduleName) {
   if (name === "customer") return <MdPerson className="h-3.5 w-3.5" />;
   if (name.includes("payment")) return <MdPayment className="h-3.5 w-3.5" />;
   if (name.includes("ledger")) return <MdReceipt className="h-3.5 w-3.5" />;
-  if (name === "supplier") return <MdLocalShipping className="h-3.5 w-3.5" />;
-  if (name === "groups") return <MdPeople className="h-3.5 w-3.5" />;
-  if (name === "users") return <MdPeople className="h-3.5 w-3.5" />;
-  if (name === "modules") return <MdViewModule className="h-3.5 w-3.5" />;
-  if (name.includes("permission"))
+  if (name === "supplier" || name === "manufacturer")
+    return <MdLocalShipping className="h-3.5 w-3.5" />;
+  if (name === "group" || name === "user" || name === "staff" || name === "group user")
+    return <MdPeople className="h-3.5 w-3.5" />;
+  if (name === "module") return <MdViewModule className="h-3.5 w-3.5" />;
+  if (name.includes("permission") || name === "add right" || name === "security")
     return <MdSecurity className="h-3.5 w-3.5" />;
+  if (name === "sale" || name === "sale return")
+    return <MdReceipt className="h-3.5 w-3.5" />;
+  if (name === "purchase" || name === "purchase return" || name === "goods receipt")
+    return <MdLocalShipping className="h-3.5 w-3.5" />;
+  if (name === "booking" || name === "reorder")
+    return <MdFolder className="h-3.5 w-3.5" />;
+  if (name === "dashboard") return <MdDashboard className="h-3.5 w-3.5" />;
+  if (name.includes("expense") || name === "day book")
+    return <MdAccountBalance className="h-3.5 w-3.5" />;
+  if (
+    name.includes("item") ||
+    name.includes("category") ||
+    name.includes("type") ||
+    name.includes("unit") ||
+    name.includes("shelve") ||
+    name.includes("sub category")
+  )
+    return <MdSettings className="h-3.5 w-3.5" />;
+  if (name === "stock") return <MdFolderOpen className="h-3.5 w-3.5" />;
+  if (name === "security log") return <MdHistory className="h-3.5 w-3.5" />;
   return <MdFolder className="h-3.5 w-3.5" />;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GROUPS TAB - with Hierarchical Tree Structure (Parent Categories → Child Modules)
+// GROUPS TAB - with Permission-based controls
 // ═══════════════════════════════════════════════════════════════════════════════
 function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
+    usePermissions();
+  const MODULE_NAME = "Group";
+
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [assignedRightIds, setAssignedRightIds] = useState(new Set());
   const [assignedModuleIds, setAssignedModuleIds] = useState(new Set());
@@ -108,15 +137,24 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   const [searchAssigned, setSearchAssigned] = useState("");
   const [expandedAvailable, setExpandedAvailable] = useState(new Set());
   const [expandedAssigned, setExpandedAssigned] = useState(new Set());
-  const [groupModal, setGroupModal] = useState(null); // null | 'add' | 'edit'
+  const [groupModal, setGroupModal] = useState(null);
   const [editingGroup, setEditingGroup] = useState(null);
   const [groupNameInput, setGroupNameInput] = useState("");
   const [groupSubmitting, setGroupSubmitting] = useState(false);
   const [expandedGroupActions, setExpandedGroupActions] = useState(null);
-  const [groupUsersModal, setGroupUsersModal] = useState(null); // group object | null
-  const [groupUserIds, setGroupUserIds] = useState([]); // selected user id strings
+  const [groupUsersModal, setGroupUsersModal] = useState(null);
+  const [groupUserIds, setGroupUserIds] = useState([]);
   const [userSearch, setUserSearch] = useState("");
   const [savingGroupUsers, setSavingGroupUsers] = useState(false);
+
+  // Permission checks for Groups module
+  const canCreateGroup = isAdmin || canCreate(MODULE_NAME);
+  const canReadGroup = isAdmin || canRead(MODULE_NAME);
+  const canUpdateGroup = isAdmin || canUpdate(MODULE_NAME);
+  const canDeleteGroup = isAdmin || canDelete(MODULE_NAME);
+  const canAssignUsers = isAdmin || canUpdate(MODULE_NAME);
+  const hasGroupActions =
+    canAssignUsers || canUpdateGroup || canDeleteGroup;
 
   function toggleExpand(setFn, id) {
     setFn((prev) => {
@@ -135,9 +173,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   useEffect(() => {
-    if (!selectedGroup) return;
+    if (!selectedGroup || !canReadGroup) return;
     loadGroupRights(selectedGroup.id);
-  }, [selectedGroup]);
+  }, [selectedGroup, canReadGroup]);
 
   async function loadGroupRights(groupId) {
     try {
@@ -168,11 +206,19 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     setGroupSubmitting(true);
     try {
       if (groupModal === "edit" && editingGroup) {
+        if (!canUpdateGroup) {
+          toast.error("You don't have permission to update groups.");
+          return;
+        }
         await axiosInstance.put(`/groups/${editingGroup.id}`, {
           group_name: groupNameInput.trim(),
         });
         toast.success("Group updated successfully.");
       } else {
+        if (!canCreateGroup) {
+          toast.error("You don't have permission to create groups.");
+          return;
+        }
         await axiosInstance.post("/groups", {
           group_name: groupNameInput.trim(),
         });
@@ -190,6 +236,10 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   async function handleGroupDelete(group) {
+    if (!canDeleteGroup) {
+      toast.error("You don't have permission to delete groups.");
+      return;
+    }
     if (
       !window.confirm(
         `Delete "${group.group_name}"? This may affect assigned users.`,
@@ -208,8 +258,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   async function openGroupUsersModal(g) {
+    if (!canAssignUsers) {
+      toast.error("You don't have permission to manage group users.");
+      return;
+    }
     setExpandedGroupActions(null);
-    // Pre-select users already in this group
     setGroupUserIds((g.users || []).map((u) => String(u.id)));
     setUserSearch("");
     setGroupUsersModal(g);
@@ -234,7 +287,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     }
   }
 
-  // Build hierarchical tree structure: Parent Categories → Child Modules → Functionalities
+  // Build hierarchical tree structure
   const availableTree = useMemo(() => {
     const categoryStructure = {
       "Customer Management": {
@@ -259,14 +312,14 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         icon: getCategoryIcon("security"),
         description: "System security, user roles, and permission management",
         modules: [
-          "Groups",
-          "Users",
-          "Group Users",
-          "Modules",
-          "Permissions",
-          "Add Rights",
-          "Security Logs",
           "Security",
+          "Group",
+          "User",
+          "Group User",
+          "Module",
+          "Permission",
+          "Add Right",
+          "Security Log",
           "Staff",
         ],
       },
@@ -275,13 +328,22 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         icon: getCategoryIcon("finance"),
         description:
           "Invoicing, payment processing, and financial transactions",
-        modules: ["Booking", "Purchase", "Sale", "Stock"],
+        modules: [
+          "Booking",
+          "Purchase",
+          "Purchase Return",
+          "Sale",
+          "Sale Return",
+          "Stock",
+          "Reorder",
+          "Goods Receipt",
+        ],
       },
       "Expense & DayBook": {
         id: "cat-billing2",
         icon: getCategoryIcon("expense"),
         description:
-          "Invoicing, payment processing, and financial transactions",
+          "Expense tracking, vouchers, and daily financial records",
         modules: [
           "Expense Head",
           "Expense Voucher",
@@ -293,7 +355,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         id: "cat-dashboard",
         icon: getCategoryIcon("dashboard"),
         description: "System dashboards, reports, and analytics",
-        modules: ["Dashboard", "Reports", "Analytics"],
+        modules: ["Dashboard"],
       },
       Setup: {
         id: "cat-emergency",
@@ -310,7 +372,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       },
     };
 
-    // Create a map of module_id to module object from API
     const moduleMap = new Map();
     modules.forEach((m) => {
       moduleMap.set(m.id, {
@@ -321,7 +382,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       });
     });
 
-    // Group functionalities under their modules
     functionalities.forEach((f) => {
       const module = moduleMap.get(f.module_id);
       if (module) {
@@ -335,18 +395,15 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       }
     });
 
-    // Build the tree structure
     const tree = [];
 
     Object.entries(categoryStructure).forEach(([categoryName, category]) => {
       const childModules = [];
 
       category.modules.forEach((moduleName) => {
-        // Find matching module from API data
         let matchingModule = null;
         for (const [_, mod] of moduleMap) {
           if (mod.name.toLowerCase() === moduleName.toLowerCase()) {
-            // Exact match, not includes
             matchingModule = mod;
             break;
           }
@@ -363,7 +420,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
             functionalities: matchingModule.functionalities,
           });
         } else {
-          // If module doesn't exist in DB, show as planned
           childModules.push({
             id: `planned-${moduleName.replace(/\s/g, "-")}`,
             moduleId: `planned-${moduleName.replace(/\s/g, "-")}`,
@@ -377,7 +433,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         }
       });
 
-      // Only add category if it has at least one module (or always show for planned)
       if (childModules.length > 0) {
         tree.push({
           id: category.id,
@@ -395,7 +450,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
 
   function inferAction(name) {
     const n = name.toUpperCase();
-    if (n.includes("CREATE") || n.includes("ADD")) return "CREATE";
+    if (n.includes("CREATE")) return "CREATE";
     if (n.includes("DELETE") || n.includes("REMOVE")) return "DELETE";
     if (n.includes("UPDATE") || n.includes("EDIT")) return "UPDATE";
     if (n.includes("READ") || n.includes("VIEW") || n.includes("GET"))
@@ -404,8 +459,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     if (n.includes("EXPORT")) return "READ";
     return null;
   }
-
-  // ── Permission Dependency Map ─────────────────────────────────────────────────
 
   const PERMISSION_DEPS = [
     {
@@ -503,41 +556,38 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         { mod: "staff", action: "read" },
       ],
     },
-    // Security permission trigger
     {
       triggerModule: "security",
       triggerAction: "read",
       deps: [
-        { mod: "add rights", action: "read" },
-        { mod: "permissions", action: "read" },
-        { mod: "groups", action: "read" },
-        { mod: "users", action: "read" },
-        { mod: "group users", action: "read" },
-        { mod: "modules", action: "read" },
-        { mod: "security logs", action: "read" },
-        
+        { mod: "add right", action: "read" },
+        { mod: "permission", action: "read" },
+        { mod: "group", action: "read" },
+        { mod: "user", action: "read" },
+        { mod: "group user", action: "read" },
+        { mod: "module", action: "read" },
+        { mod: "security log", action: "read" },
       ],
-    },
-    // Customer permission trigger
-    {
-      triggerModule: "customer",
-      triggerAction: "update",
-      deps: [{ mod: "customer", action: "read" }],
-    },
-    {
-      triggerModule: "customer",
-      triggerAction: "delete",
-      deps: [{ mod: "customer", action: "read" }],
-    },
-    {
-      triggerModule: "customer payment",
-      triggerAction: "delete",
-      deps: [{ mod: "customer payment", action: "read" }],
     },
     {
       triggerModule: "sub category",
       triggerAction: "read",
       deps: [{ mod: "item category", action: "read" }],
+    },
+    {
+      triggerModule: "sub category",
+      triggerAction: "create",
+      deps: [{ mod: "item category", action: "read" },{ mod: "sub category", action: "read" }],
+    },
+    {
+      triggerModule: "supplier ledger",
+      triggerAction: "read",
+      deps: [{ mod: "supplier", action: "read" }],
+    },
+    {
+      triggerModule: "customer ledger",
+      triggerAction: "read",
+      deps: [{ mod: "customer", action: "read" }],
     },
   ];
 
@@ -596,57 +646,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     });
   }
 
-  function resolveDependencies(
-    triggeredFuncIds,
-    allFunctionalities,
-    allModules,
-  ) {
-    const extraIds = new Set();
-
-    // Build a lookup: module_id → module_name (lowercase)
-    const moduleNameById = new Map();
-    allModules.forEach((m) =>
-      moduleNameById.set(m.id, m.module_name.toLowerCase()),
-    );
-
-    triggeredFuncIds.forEach((funcId) => {
-      const triggerFunc = allFunctionalities.find((f) => f.id === funcId);
-      if (!triggerFunc) return;
-
-      const triggerFuncName = triggerFunc.name.toLowerCase();
-      const triggerModuleName = moduleNameById.get(triggerFunc.module_id) || "";
-
-      // Check every rule
-      PERMISSION_DEPS.forEach((rule) => {
-        const moduleMatch = triggerModuleName.includes(rule.triggerModule);
-        const actionMatch = triggerFuncName.includes(rule.triggerAction);
-        if (!moduleMatch || !actionMatch) return;
-
-        // Rule matched — resolve each dep
-        rule.deps.forEach(({ mod, action }) => {
-          const match = allFunctionalities.find((f) => {
-            const fName = f.name.toLowerCase();
-            const mName = moduleNameById.get(f.module_id) || "";
-            const modMatches = mod.includes(" ")
-              ? mName.includes(mod) // multi-word: substring is fine
-              : mName === mod ||
-                mName.startsWith(mod + " ") ||
-                mName === mod + "s";
-
-            const actionMatches = fName.includes(action);
-
-            return modMatches && actionMatches;
-          });
-
-          if (match) extraIds.add(match.id);
-        });
-      });
-    });
-
-    return extraIds;
-  }
-
-  // Toggle entire module selection (select/deselect all functionalities under a module)
   function toggleModule(module) {
     const childFuncIds = module.functionalities
       .map((f) => f.funcId)
@@ -660,7 +659,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       const moduleNameById = buildModuleNameMap();
 
       if (allChecked) {
-        // Uncheck all: remove children, then clean up orphaned deps
         childFuncIds.forEach((id) => next.delete(id));
         const stillNeeded = getAllRequiredDeps([...next]);
         childFuncIds.forEach((funcId) => {
@@ -680,7 +678,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           });
         });
       } else {
-        // Check all: add children + their deps
         childFuncIds.forEach((id) => next.add(id));
         getAllRequiredDeps(childFuncIds).forEach((id) => next.add(id));
       }
@@ -690,14 +687,12 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     });
   }
 
-  // Toggle single functionality
   function toggleFunctionality(func, moduleId) {
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
       const moduleNameById = buildModuleNameMap();
 
       if (next.has(func.funcId)) {
-        // Uncheck: remove it, then remove its deps if no other perm still needs them
         next.delete(func.funcId);
         const stillNeeded = getAllRequiredDeps([...next]);
         const fName = func.name.toLowerCase();
@@ -713,7 +708,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           }
         });
       } else {
-        // Check: add it + add all its deps
         next.add(func.funcId);
         getAllRequiredDeps([func.funcId]).forEach((id) => next.add(id));
       }
@@ -756,7 +750,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     });
   }
 
-  // Build assigned tree (only categories and modules with assigned functionalities)
   const assignedTree = useMemo(() => {
     return availableTree
       .map((category) => ({
@@ -773,7 +766,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       .filter((category) => category.children.length > 0);
   }, [availableTree, assignedRightIds]);
 
-  // Filter available tree based on search
   const filteredAvailableTree = useMemo(() => {
     const q = searchAvailable.toLowerCase();
     if (!q) return availableTree;
@@ -797,7 +789,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       );
   }, [availableTree, searchAvailable]);
 
-  // Filter assigned tree based on search
   const filteredAssignedTree = useMemo(() => {
     const q = searchAssigned.toLowerCase();
     if (!q) return assignedTree;
@@ -856,7 +847,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     }
   }
 
-  // Calculate module check state (for indeterminate checkbox)
   function getModuleCheckState(module) {
     const childFuncIds = module.functionalities.map((f) => f.funcId);
     if (childFuncIds.length === 0) return false;
@@ -869,6 +859,31 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     return "indeterminate";
   }
 
+  // Access Denied for Groups tab
+  if (!canReadGroup) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-5xl text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-500 mb-4">
+            You don't have permission to manage Groups.
+          </p>
+          <div className="bg-slate-50 rounded-lg p-3 text-left">
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+              Required Permission:
+            </p>
+            <p className="text-[12px] font-mono text-slate-700">Read Groups</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-4 h-[calc(106vh-280px)]">
       {/* Groups Sidebar */}
@@ -877,17 +892,19 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">
             Groups
           </span>
-          <button
-            onClick={() => {
-              setGroupModal("add");
-              setGroupNameInput("");
-              setEditingGroup(null);
-            }}
-            className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[20px] font-normal leading-none pb-[2px] shadow-sm"
-            title="Add new group"
-          >
-            +
-          </button>
+          {canCreateGroup && (
+            <button
+              onClick={() => {
+                setGroupModal("add");
+                setGroupNameInput("");
+                setEditingGroup(null);
+              }}
+              className="flex items-center justify-center h-6 w-6 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition text-[20px] font-normal leading-none pb-[2px] shadow-sm"
+              title="Add new group"
+            >
+              +
+            </button>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto py-1">
           {groups.map((g) => (
@@ -916,39 +933,39 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                 </p>
               </button>
 
-              {/* ">" action toggle button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedGroupActions((prev) =>
-                    prev === g.id ? null : g.id,
-                  );
-                }}
-                className={`shrink-0 mr-2 p-1 rounded transition text-[11px] font-bold ${
-                  expandedGroupActions === g.id
-                    ? "bg-slate-200 text-slate-700"
-                    : "text-slate-300 hover:text-slate-500 hover:bg-slate-100"
-                }`}
-                title="Group actions"
-              >
-                <svg
-                  className={`h-3.5 w-3.5 transition-transform duration-200 ${expandedGroupActions === g.id ? "rotate-90" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
+              {hasGroupActions && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedGroupActions((prev) =>
+                      prev === g.id ? null : g.id,
+                    );
+                  }}
+                  className={`shrink-0 mr-2 p-1 rounded transition text-[11px] font-bold ${
+                    expandedGroupActions === g.id
+                      ? "bg-slate-200 text-slate-700"
+                      : "text-slate-300 hover:text-slate-500 hover:bg-slate-100"
+                  }`}
+                  title="Group actions"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${expandedGroupActions === g.id ? "rotate-90" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              )}
 
-              {/* Inline action buttons (edit / delete) */}
               <AnimatePresence>
-                {expandedGroupActions === g.id && (
+                {hasGroupActions && expandedGroupActions === g.id && (
                   <motion.div
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -956,87 +973,92 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                     transition={{ duration: 0.15 }}
                     className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-lg px-1.5 py-1 z-10"
                   >
-                    {/* + Users */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openGroupUsersModal(g);
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 rounded transition"
-                      title="Add/remove users in this group"
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
+                    {canAssignUsers && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openGroupUsersModal(g);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 rounded transition"
+                          title="Add/remove users in this group"
+                        >
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                            />
+                          </svg>
+                          Users
+                        </button>
+                        <div className="w-px h-4 bg-slate-200" />
+                      </>
+                    )}
+
+                    {canUpdateGroup && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingGroup(g);
+                            setGroupNameInput(g.group_name);
+                            setGroupModal("edit");
+                            setExpandedGroupActions(null);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-50 rounded transition"
+                          title="Edit group"
+                        >
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
+                        <div className="w-px h-4 bg-slate-200" />
+                      </>
+                    )}
+
+                    {canDeleteGroup && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGroupDelete(g);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded transition"
+                        title="Delete group"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                        />
-                      </svg>
-                      Users
-                    </button>
-
-                    <div className="w-px h-4 bg-slate-200" />
-
-                    {/* Edit */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingGroup(g);
-                        setGroupNameInput(g.group_name);
-                        setGroupModal("edit");
-                        setExpandedGroupActions(null);
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-50 rounded transition"
-                      title="Edit group"
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
-                        />
-                      </svg>
-                      Edit
-                    </button>
-
-                    <div className="w-px h-4 bg-slate-200" />
-
-                    {/* Delete */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGroupDelete(g);
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded transition"
-                      title="Delete group"
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                      Delete
-                    </button>
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        Delete
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1067,7 +1089,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
               className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-2.5">
                   <div className="p-1.5 rounded-lg bg-teal-100">
@@ -1096,7 +1117,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                 </button>
               </div>
 
-              {/* Modal Body */}
               <div className="px-5 py-5 space-y-4">
                 {groupModal === "edit" && (
                   <div>
@@ -1133,7 +1153,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30">
                 <button
                   onClick={() => {
@@ -1180,7 +1199,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
               className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden flex flex-col max-h-[80vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="p-1.5 rounded-lg bg-blue-100">
@@ -1206,7 +1224,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                 </button>
               </div>
 
-              {/* Search */}
               <div className="px-4 pt-3 pb-2 shrink-0">
                 <div className="relative">
                   <MdSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
@@ -1224,7 +1241,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                 </p>
               </div>
 
-              {/* User list */}
               <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-0.5">
                 {(allUsers || [])
                   .filter((u) => {
@@ -1281,7 +1297,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                   })}
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30 shrink-0">
                 <button
                   onClick={() => setGroupUserIds([])}
@@ -1311,9 +1326,8 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         )}
       </AnimatePresence>
 
-      {/* Available Permissions - Hierarchical Tree Structure (Parent Category → Child Modules → Functionalities) */}
+      {/* Available Permissions */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        {/* Header */}
         <div className="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
             Available Permissions
@@ -1346,7 +1360,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           </div>
         </div>
 
-        {/* Tree Body */}
         <div className="flex-1 overflow-y-auto py-1">
           {filteredAvailableTree.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
@@ -1356,7 +1369,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           ) : (
             filteredAvailableTree.map((category, catIdx) => {
               const isCatExpanded = expandedAvailable.has(category.id);
-              // Count assigned funcs in this category
               const catAssignedCount = category.children.reduce(
                 (acc, mod) =>
                   acc +
@@ -1372,14 +1384,12 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
 
               return (
                 <div key={category.id}>
-                  {/* ── Category Row (Level 1) ─────────────────────────── */}
                   <button
                     onClick={() =>
                       toggleExpand(setExpandedAvailable, category.id)
                     }
                     className="w-full flex items-center gap-1.5 px-2 py-1.5 hover:bg-slate-50 transition-colors group"
                   >
-                    {/* Chevron */}
                     <svg
                       className={`h-3 w-3 text-slate-400 shrink-0 transition-transform duration-150 ${isCatExpanded ? "rotate-90" : ""}`}
                       fill="none"
@@ -1393,13 +1403,10 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                    {/* Icon */}
                     <span className="shrink-0">{category.icon}</span>
-                    {/* Label */}
                     <span className="flex-1 text-left text-[12px] font-bold text-slate-700 truncate">
                       {category.name}
                     </span>
-                    {/* Count badge */}
                     {catTotalCount > 0 && (
                       <span
                         className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 mr-1 ${
@@ -1416,7 +1423,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                     )}
                   </button>
 
-                  {/* ── Module Children (Level 2) ──────────────────────── */}
                   <AnimatePresence initial={false}>
                     {isCatExpanded && (
                       <motion.div
@@ -1440,19 +1446,15 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
 
                           return (
                             <div key={module.id} className="relative">
-                              {/* Vertical tree line from category */}
                               <div
                                 className="absolute left-[18px] top-0 bottom-0 w-px bg-slate-200"
                                 style={{ bottom: isLastMod ? "50%" : 0 }}
                               />
-                              {/* Horizontal connector */}
                               <div className="absolute left-[18px] top-1/2 w-2.5 h-px bg-slate-200" />
 
-                              {/* Module Row */}
                               <div
                                 className={`flex items-center gap-1.5 pl-8 pr-2 py-1.5 hover:bg-slate-50/80 transition-colors ${module.isPlanned ? "opacity-50" : ""}`}
                               >
-                                {/* Checkbox */}
                                 <input
                                   type="checkbox"
                                   checked={checkState === true}
@@ -1468,7 +1470,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                   className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
                                   disabled={module.isPlanned}
                                 />
-                                {/* Expand chevron (only if has funcs) */}
                                 {!module.isPlanned && modTotal > 0 ? (
                                   <button
                                     onClick={() =>
@@ -1496,11 +1497,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                 ) : (
                                   <span className="w-3 shrink-0" />
                                 )}
-                                {/* Module icon */}
                                 <span className="text-slate-400 shrink-0">
                                   {module.icon}
                                 </span>
-                                {/* Module name — clicking also toggles expand */}
                                 <button
                                   onClick={() =>
                                     !module.isPlanned &&
@@ -1522,7 +1521,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )}
                                   </span>
                                 </button>
-                                {/* func count badge */}
                                 {modTotal > 0 && (
                                   <span
                                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
@@ -1538,7 +1536,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                 )}
                               </div>
 
-                              {/* ── Functionality Leaves (Level 3) ──────────── */}
                               {!module.isPlanned && modTotal > 0 && (
                                 <AnimatePresence initial={false}>
                                   {isModExpanded && (
@@ -1565,7 +1562,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                               key={func.id}
                                               className="relative"
                                             >
-                                              {/* Vertical tree line from module */}
                                               <div
                                                 className="absolute left-[34px] top-0 w-px bg-slate-200"
                                                 style={{
@@ -1574,7 +1570,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                     : 0,
                                                 }}
                                               />
-                                              {/* Horizontal connector */}
                                               <div className="absolute left-[34px] top-1/2 w-2.5 h-px bg-slate-200" />
 
                                               <div
@@ -1624,7 +1619,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                 </AnimatePresence>
                               )}
 
-                              {/* Planned placeholder */}
                               {module.isPlanned && (
                                 <div className="pl-12 pr-2 py-1">
                                   <p className="text-[9px] text-slate-400 italic flex items-center gap-1">
@@ -1698,9 +1692,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                   key={category.id}
                   className="rounded-lg border border-teal-100 overflow-hidden"
                 >
-                  {/* ── Category header ── */}
                   <div className="flex items-center gap-2 px-3 py-2.5 bg-teal-50/50 hover:bg-teal-50 transition-colors">
-                    {/* Expand/collapse — takes all remaining space */}
                     <button
                       onClick={() =>
                         toggleExpand(setExpandedAssigned, category.id)
@@ -1752,9 +1744,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                 key={module.id}
                                 className="border-b border-teal-50 last:border-0"
                               >
-                                {/* ── Module row ── */}
                                 <div className="flex items-center pl-8 pr-2 py-2 hover:bg-teal-50/30 transition-colors group">
-                                  {/* Expand toggle */}
                                   <button
                                     onClick={() =>
                                       toggleExpand(
@@ -1778,7 +1768,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )}
                                   </button>
 
-                                  {/* Remove entire module button */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1791,7 +1780,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                   </button>
                                 </div>
 
-                                {/* ── Functionality rows ── */}
                                 <AnimatePresence initial={false}>
                                   {isModuleExpanded && (
                                     <motion.div
@@ -1820,7 +1808,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                               />
                                             )}
 
-                                            {/* Remove single functionality */}
                                             <button
                                               onClick={() =>
                                                 removeFunctionality(func)
@@ -1854,23 +1841,31 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// USERS TAB (unchanged)
+// USERS TAB - with Permission-based controls
 // ═══════════════════════════════════════════════════════════════════════════════
-
 function UsersTab({ groups, allUsers, onRefresh }) {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
+    usePermissions();
+  const MODULE_NAME = "User";
+
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
 
-  // ── User CRUD modal state ──────────────────────────────────────────────────
-  const [userModal, setUserModal] = useState(null); // null | 'add' | 'edit'
+  const [userModal, setUserModal] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState(emptyUserForm());
   const [userSubmitting, setUserSubmitting] = useState(false);
-
-  // ── Inline action toggle (same pattern as Groups sidebar) ─────────────────
   const [expandedUserActions, setExpandedUserActions] = useState(null);
+
+  // Permission checks
+  const canCreateUser = isAdmin || canCreate(MODULE_NAME);
+  const canReadUser = isAdmin || canRead(MODULE_NAME);
+  const canUpdateUser = isAdmin || canUpdate(MODULE_NAME);
+  const canDeleteUser = isAdmin || canDelete(MODULE_NAME);
+  const canAssignToGroup = isAdmin || canUpdate(MODULE_NAME);
+  const hasUserActions = canUpdateUser || canDeleteUser;
 
   function emptyUserForm() {
     return {
@@ -1884,17 +1879,25 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   }
 
   function openAddModal() {
+    if (!canCreateUser) {
+      toast.error("You don't have permission to create users.");
+      return;
+    }
     setEditingUser(null);
     setUserForm(emptyUserForm());
     setUserModal("add");
   }
 
   function openEditModal(user) {
+    if (!canUpdateUser) {
+      toast.error("You don't have permission to edit users.");
+      return;
+    }
     setEditingUser(user);
     setUserForm({
       username: user.username || user.name || "",
       email: user.email || "",
-      password: "", // blank = keep current
+      password: "",
       role: user.role || "user",
       group_id: user.group_id || "",
       status: user.status || "active",
@@ -1947,6 +1950,10 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   }
 
   async function handleUserDelete(user) {
+    if (!canDeleteUser) {
+      toast.error("You don't have permission to delete users.");
+      return;
+    }
     if (
       !window.confirm(
         `Delete "${user.username || user.name}"? This cannot be undone.`,
@@ -1963,7 +1970,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
     }
   }
 
-  // ── Group assignment helpers ───────────────────────────────────────────────
   const selectedGroup = groups.find(
     (g) => String(g.id) === String(selectedGroupId),
   );
@@ -1995,6 +2001,10 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   }, [allUsers, search]);
 
   async function handleSave() {
+    if (!canAssignToGroup) {
+      toast.error("You don't have permission to assign users to groups.");
+      return;
+    }
     if (!selectedGroupId) {
       toast.error("Select a group first");
       return;
@@ -2028,6 +2038,10 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   );
 
   async function removeAssignment(groupId, userId) {
+    if (!canAssignToGroup) {
+      toast.error("You don't have permission to remove users from groups.");
+      return;
+    }
     if (!window.confirm("Remove this user from the group?")) return;
     try {
       await axiosInstance.delete(`/group-users/${groupId}/user/${userId}`);
@@ -2038,14 +2052,38 @@ function UsersTab({ groups, allUsers, onRefresh }) {
     }
   }
 
-  // ── Input class shared across modal fields ─────────────────────────────────
   const inputCls =
     "w-full h-9 px-3 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition bg-white";
+
+  // Access Denied for Users tab
+  if (!canReadUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-5xl text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-500 mb-4">
+            You don't have permission to manage Users.
+          </p>
+          <div className="bg-slate-50 rounded-lg p-3 text-left">
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+              Required Permission:
+            </p>
+            <p className="text-[12px] font-mono text-slate-700">Read Users</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ── Left card: Assign Users ───────────────────────────────────────── */}
+        {/* Left card: Assign Users */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[600px]">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-start justify-between gap-3">
             <div>
@@ -2056,26 +2094,27 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                 Add or remove users from the selected group.
               </p>
             </div>
-            {/* ── + Create User button ── */}
-            <button
-              onClick={openAddModal}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition shadow-sm"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
+            {canCreateUser && (
+              <button
+                onClick={openAddModal}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition shadow-sm"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Create User
-            </button>
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Create User
+              </button>
+            )}
           </div>
 
           <div className="p-4 border-b border-slate-50 space-y-4">
@@ -2092,14 +2131,16 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={handleSave}
-                disabled={!selectedGroupId || saving}
-                className="px-4 py-2 bg-teal-600 text-white rounded-xl text-[13px] font-bold hover:bg-teal-700 transition disabled:opacity-50 flex items-center gap-2"
-              >
-                <MdSave className="h-4 w-4" />
-                {saving ? "Saving..." : "Save"}
-              </button>
+              {canAssignToGroup && (
+                <button
+                  onClick={handleSave}
+                  disabled={!selectedGroupId || saving}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-xl text-[13px] font-bold hover:bg-teal-700 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  <MdSave className="h-4 w-4" />
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              )}
             </div>
             <div className="relative">
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -2113,7 +2154,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
             </div>
           </div>
 
-          {/* User list with inline ">" action toggle */}
           <div className="flex-1 overflow-y-auto p-2">
             {filtered.map((user) => {
               const uid = String(user.id);
@@ -2129,13 +2169,13 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                       : "hover:bg-slate-50 border-transparent"
                   }`}
                 >
-                  {/* Checkbox + user info */}
                   <label className="flex items-center gap-3 flex-1 p-3 cursor-pointer min-w-0">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleUser(uid)}
                       className="h-4 w-4 rounded accent-teal-600 shrink-0"
+                      disabled={!canAssignToGroup}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-slate-800 truncate">
@@ -2156,39 +2196,39 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                     </span>
                   </label>
 
-                  {/* ">" action toggle — same pattern as Groups sidebar */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpandedUserActions((prev) =>
-                        prev === user.id ? null : user.id,
-                      );
-                    }}
-                    className={`shrink-0 mr-2 p-1 rounded transition text-[11px] font-bold ${
-                      isActionsOpen
-                        ? "bg-slate-200 text-slate-700"
-                        : "text-slate-300 hover:text-slate-500 hover:bg-slate-100"
-                    }`}
-                    title="User actions"
-                  >
-                    <svg
-                      className={`h-3.5 w-3.5 transition-transform duration-200 ${isActionsOpen ? "rotate-90" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
+                  {hasUserActions && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedUserActions((prev) =>
+                          prev === user.id ? null : user.id,
+                        );
+                      }}
+                      className={`shrink-0 mr-2 p-1 rounded transition text-[11px] font-bold ${
+                        isActionsOpen
+                          ? "bg-slate-200 text-slate-700"
+                          : "text-slate-300 hover:text-slate-500 hover:bg-slate-100"
+                      }`}
+                      title="User actions"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className={`h-3.5 w-3.5 transition-transform duration-200 ${isActionsOpen ? "rotate-90" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  )}
 
-                  {/* Inline action popup: Edit / Delete */}
                   <AnimatePresence>
-                    {isActionsOpen && (
+                    {hasUserActions && isActionsOpen && (
                       <motion.div
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -2196,53 +2236,59 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                         transition={{ duration: 0.15 }}
                         className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-lg px-1.5 py-1 z-10"
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(user);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-50 rounded transition"
-                          title="Edit user"
-                        >
-                          <svg
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
+                        {canUpdateUser && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(user);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-50 rounded transition"
+                              title="Edit user"
+                            >
+                              <svg
+                                className="h-3 w-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                                />
+                              </svg>
+                              Edit
+                            </button>
+                            <div className="w-px h-4 bg-slate-200" />
+                          </>
+                        )}
+                        {canDeleteUser && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUserDelete(user);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded transition"
+                            title="Delete user"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
-                            />
-                          </svg>
-                          Edit
-                        </button>
-                        <div className="w-px h-4 bg-slate-200" />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUserDelete(user);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded transition"
-                          title="Delete user"
-                        >
-                          <svg
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          Delete
-                        </button>
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            Delete
+                          </button>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -2252,7 +2298,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
           </div>
         </div>
 
-        {/* ── Right card: Active Assignments (unchanged) ────────────────────── */}
+        {/* Right card: Active Assignments */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[600px]">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-[15px] font-black text-slate-800 uppercase tracking-tight">
@@ -2289,12 +2335,14 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right">
-                      <button
-                        onClick={() => removeAssignment(a.groupId, a.userId)}
-                        className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                      >
-                        <MdDelete className="h-4 w-4" />
-                      </button>
+                      {canAssignToGroup && (
+                        <button
+                          onClick={() => removeAssignment(a.groupId, a.userId)}
+                          className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        >
+                          <MdDelete className="h-4 w-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -2304,9 +2352,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          Create / Edit User Modal  —  same structure as the Groups modal
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* Create/Edit User Modal */}
       <AnimatePresence>
         {userModal && (
           <motion.div
@@ -2324,7 +2370,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
               className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-2.5">
                   <div className="p-1.5 rounded-lg bg-teal-100">
@@ -2349,9 +2394,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                 </button>
               </div>
 
-              {/* Modal Body */}
               <div className="px-5 py-5 space-y-3">
-                {/* User ID (edit only) */}
                 {userModal === "edit" && (
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -2366,7 +2409,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   </div>
                 )}
 
-                {/* Username */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Username <span className="text-rose-400">*</span>
@@ -2383,7 +2425,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   />
                 </div>
 
-                {/* Email */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Email Address <span className="text-rose-400">*</span>
@@ -2399,7 +2440,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   />
                 </div>
 
-                {/* Password */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Password{" "}
@@ -2420,7 +2460,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   />
                 </div>
 
-                {/* Role + Status row */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -2456,7 +2495,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   </div>
                 </div>
 
-                {/* Security Group */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Security Group
@@ -2478,7 +2516,6 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/30">
                 <button
                   onClick={closeUserModal}
@@ -2512,14 +2549,18 @@ function UsersTab({ groups, allUsers, onRefresh }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PERMISSIONS CATALOG TAB
+// PERMISSIONS CATALOG TAB - with Permission-based controls
 // ═══════════════════════════════════════════════════════════════════════════════
 function PermissionsTab({ modules, functionalities, onRefresh }) {
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
+    usePermissions();
+  const MODULE_CRUD_NAME = "Module";
+  const PERMISSION_NAME = "Permission";
+
   const [search, setSearch] = useState("");
   const [expandedModules, setExpandedModules] = useState(new Set());
 
-  // Module modal state
-  const [moduleModal, setModuleModal] = useState(null); // null | 'add' | 'edit'
+  const [moduleModal, setModuleModal] = useState(null);
   const [editingModule, setEditingModule] = useState(null);
   const [moduleForm, setModuleForm] = useState({
     moduleName: "",
@@ -2527,17 +2568,24 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   });
   const [moduleSubmitting, setModuleSubmitting] = useState(false);
 
-  // Functionality modal state
-  const [funcModal, setFuncModal] = useState(null); // null | 'add' | 'edit'
+  const [funcModal, setFuncModal] = useState(null);
   const [funcTargetModule, setFuncTargetModule] = useState(null);
   const [editingFunc, setEditingFunc] = useState(null);
   const [funcForm, setFuncForm] = useState({ name: "" });
   const [funcSubmitting, setFuncSubmitting] = useState(false);
 
-  // Three-dot menu state
   const [openFuncMenu, setOpenFuncMenu] = useState(null);
 
-  // Close three-dot menu on outside click
+  // Permission checks
+  const canCreateModule = isAdmin || canCreate(MODULE_CRUD_NAME);
+  const canReadModule = isAdmin || canRead(MODULE_CRUD_NAME);
+  const canUpdateModule = isAdmin || canUpdate(MODULE_CRUD_NAME);
+  const canDeleteModule = isAdmin || canDelete(MODULE_CRUD_NAME);
+
+  const canCreatePermission = isAdmin || canCreate(PERMISSION_NAME);
+  const canUpdatePermission = isAdmin || canUpdate(PERMISSION_NAME);
+  const canDeletePermission = isAdmin || canDelete(PERMISSION_NAME);
+
   useEffect(() => {
     if (!openFuncMenu) return;
     function handler() {
@@ -2547,7 +2595,6 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
     return () => document.removeEventListener("click", handler);
   }, [openFuncMenu]);
 
-  // Group and filter modules with their functionalities
   const grouped = useMemo(() => {
     const q = search.toLowerCase();
     return modules
@@ -2566,7 +2613,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
 
   function inferAction(name) {
     const n = name.toUpperCase();
-    if (n.includes("CREATE") || n.includes("ADD")) return "CREATE";
+    if (n.includes("CREATE")) return "CREATE";
     if (n.includes("DELETE") || n.includes("REMOVE")) return "DELETE";
     if (n.includes("UPDATE") || n.includes("EDIT")) return "UPDATE";
     if (n.includes("READ") || n.includes("VIEW") || n.includes("GET"))
@@ -2591,14 +2638,21 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
     setExpandedModules(new Set());
   }
 
-  // ── Module CRUD ────────────────────────────────────────────────────────────
   function openAddModule() {
+    if (!canCreateModule) {
+      toast.error("You don't have permission to create modules.");
+      return;
+    }
     setEditingModule(null);
     setModuleForm({ moduleName: "", description: "" });
     setModuleModal("add");
   }
 
   function openEditModule(mod, e) {
+    if (!canUpdateModule) {
+      toast.error("You don't have permission to edit modules.");
+      return;
+    }
     e.stopPropagation();
     setEditingModule(mod);
     setModuleForm({
@@ -2642,6 +2696,10 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   }
 
   async function handleModuleDelete(mod, e) {
+    if (!canDeleteModule) {
+      toast.error("You don't have permission to delete modules.");
+      return;
+    }
     e.stopPropagation();
     if (
       !window.confirm(
@@ -2658,8 +2716,11 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
     }
   }
 
-  // ── Functionality CRUD ─────────────────────────────────────────────────────
   function openAddFunc(mod, e) {
+    if (!canCreatePermission) {
+      toast.error("You don't have permission to create permissions.");
+      return;
+    }
     e.stopPropagation();
     setFuncTargetModule(mod);
     setEditingFunc(null);
@@ -2668,6 +2729,10 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   }
 
   function openEditFunc(func) {
+    if (!canUpdatePermission) {
+      toast.error("You don't have permission to edit permissions.");
+      return;
+    }
     setEditingFunc(func);
     setFuncForm({ name: func.name || "" });
     setFuncModal("edit");
@@ -2709,6 +2774,10 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   }
 
   async function handleFuncDelete(func) {
+    if (!canDeletePermission) {
+      toast.error("You don't have permission to delete permissions.");
+      return;
+    }
     if (!window.confirm(`Delete permission "${func.name}"?`)) return;
     setOpenFuncMenu(null);
     try {
@@ -2725,9 +2794,33 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   const inputCls =
     "w-full h-9 px-3 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition bg-white";
 
+  // Access Denied for Permissions tab
+  if (!canReadModule) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-5xl text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-500 mb-4">
+            You don't have permission to view Modules & Permissions.
+          </p>
+          <div className="bg-slate-50 rounded-lg p-3 text-left">
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+              Required Permission:
+            </p>
+            <p className="text-[12px] font-mono text-slate-700">Read Modules</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="relative max-w-sm w-full">
           <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
@@ -2752,32 +2845,33 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
           >
             Collapse All
           </button>
-          <button
-            onClick={openAddModule}
-            className="flex items-center gap-1.5 px-3 py-2 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition shadow-sm"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
+          {canCreateModule && (
+            <button
+              onClick={openAddModule}
+              className="flex items-center gap-1.5 px-3 py-2 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition shadow-sm"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add Module
-          </button>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Module
+            </button>
+          )}
           <div className="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-[13px] font-bold">
             {functionalities.length} total permissions
           </div>
         </div>
       </div>
 
-      {/* Module list */}
       <div className="space-y-2">
         {grouped.length === 0 && search && (
           <div className="text-center py-12 text-slate-400">
@@ -2793,7 +2887,6 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
               key={m.id}
               className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
-              {/* Module header */}
               <div className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                 <button
                   onClick={() => toggleModule(m.id)}
@@ -2810,71 +2903,73 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                     {m.funcs.length} PERMS
                   </span>
 
-                  {/* + Add Perm */}
-                  <button
-                    onClick={(e) => openAddFunc(m, e)}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-100 rounded-lg transition"
-                    title="Add permission to this module"
-                  >
-                    <svg
-                      className="h-3 w-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
+                  {canCreatePermission && (
+                    <button
+                      onClick={(e) => openAddFunc(m, e)}
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-100 rounded-lg transition"
+                      title="Add permission to this module"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    Add Perm
-                  </button>
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      Add Perm
+                    </button>
+                  )}
 
-                  {/* Edit module */}
-                  <button
-                    onClick={(e) => openEditModule(m, e)}
-                    className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition"
-                    title="Edit module"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
+                  {canUpdateModule && (
+                    <button
+                      onClick={(e) => openEditModule(m, e)}
+                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition"
+                      title="Edit module"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                        />
+                      </svg>
+                    </button>
+                  )}
 
-                  {/* Delete module */}
-                  <button
-                    onClick={(e) => handleModuleDelete(m, e)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                    title="Delete module"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
+                  {canDeleteModule && (
+                    <button
+                      onClick={(e) => handleModuleDelete(m, e)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      title="Delete module"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  )}
 
-                  {/* Chevron */}
                   <button onClick={() => toggleModule(m.id)} className="p-1">
                     {isExpanded ? (
                       <MdExpandLess className="text-slate-400 h-5 w-5" />
@@ -2885,7 +2980,6 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                 </div>
               </div>
 
-              {/* Functionalities */}
               <AnimatePresence initial={false}>
                 {isExpanded && (
                   <motion.div
@@ -2906,7 +3000,6 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                           f.slug?.toUpperCase() || inferAction(f.name);
                         const isMenuOpen = openFuncMenu === f.id;
 
-                        // Generate display name
                         let displayName = f.name;
                         const modulePrefix = m.module_name.toUpperCase();
                         const funcUpper = f.name.toUpperCase();
@@ -2927,32 +3020,32 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                             </span>
                             {action && <ActionBadge action={action} />}
 
-                            {/* Three-dot */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenFuncMenu((prev) =>
-                                  prev === f.id ? null : f.id,
-                                );
-                              }}
-                              className={`shrink-0 p-1 rounded-md transition ${
-                                isMenuOpen
-                                  ? "bg-slate-200 text-slate-700"
-                                  : "opacity-0 group-hover:opacity-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-                              }`}
-                            >
-                              <svg
-                                className="h-3.5 w-3.5"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
+                            {(canUpdatePermission || canDeletePermission) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenFuncMenu((prev) =>
+                                    prev === f.id ? null : f.id,
+                                  );
+                                }}
+                                className={`shrink-0 p-1 rounded-md transition ${
+                                  isMenuOpen
+                                    ? "bg-slate-200 text-slate-700"
+                                    : "opacity-0 group-hover:opacity-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+                                }`}
                               >
-                                <circle cx="5" cy="12" r="1.5" />
-                                <circle cx="12" cy="12" r="1.5" />
-                                <circle cx="19" cy="12" r="1.5" />
-                              </svg>
-                            </button>
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle cx="5" cy="12" r="1.5" />
+                                  <circle cx="12" cy="12" r="1.5" />
+                                  <circle cx="19" cy="12" r="1.5" />
+                                </svg>
+                              </button>
+                            )}
 
-                            {/* Dropdown */}
                             <AnimatePresence>
                               {isMenuOpen && (
                                 <motion.div
@@ -2963,45 +3056,51 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                                   className="absolute right-0 top-full mt-1 z-20 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <button
-                                    onClick={() => openEditFunc(f)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition"
-                                  >
-                                    <svg
-                                      className="h-3 w-3"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                      strokeWidth={2.5}
+                                  {canUpdatePermission && (
+                                    <>
+                                      <button
+                                        onClick={() => openEditFunc(f)}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition"
+                                      >
+                                        <svg
+                                          className="h-3 w-3"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                          strokeWidth={2.5}
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
+                                          />
+                                        </svg>
+                                        Edit Permission
+                                      </button>
+                                      <div className="h-px bg-slate-100" />
+                                    </>
+                                  )}
+                                  {canDeletePermission && (
+                                    <button
+                                      onClick={() => handleFuncDelete(f)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition"
                                     >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
-                                      />
-                                    </svg>
-                                    Edit Permission
-                                  </button>
-                                  <div className="h-px bg-slate-100" />
-                                  <button
-                                    onClick={() => handleFuncDelete(f)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition"
-                                  >
-                                    <svg
-                                      className="h-3 w-3"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                      strokeWidth={2.5}
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                      />
-                                    </svg>
-                                    Delete
-                                  </button>
+                                      <svg
+                                        className="h-3 w-3"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.5}
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                        />
+                                      </svg>
+                                      Delete
+                                    </button>
+                                  )}
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -3259,15 +3358,22 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// IP TRACKING TAB
+// IP TRACKING TAB - with Permission-based controls
 // ═══════════════════════════════════════════════════════════════════════════════
 function IPTrackingTab() {
+  const { canRead, isAdmin } = usePermissions();
+  const MODULE_NAME = "Security Log";
+
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const canReadLogs = isAdmin || canRead(MODULE_NAME);
+
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    if (canReadLogs) {
+      fetchLogs();
+    }
+  }, [canReadLogs]);
 
   async function fetchLogs() {
     setLoading(true);
@@ -3279,6 +3385,33 @@ function IPTrackingTab() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Access Denied
+  if (!canReadLogs) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-5xl text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-500 mb-4">
+            You don't have permission to view Security Logs.
+          </p>
+          <div className="bg-slate-50 rounded-lg p-3 text-left">
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+              Required Permission:
+            </p>
+            <p className="text-[12px] font-mono text-slate-700">
+              Read Security Logs
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -3354,12 +3487,80 @@ function IPTrackingTab() {
 // MAIN ACCESS CONTROL PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AccessControl() {
+  const { canRead, isAdmin, canAccess, permissions } = usePermissions();
   const [tab, setTab] = useState("groups");
   const [groups, setGroups] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [modules, setModules] = useState([]);
   const [functionalities, setFunctionalities] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Check if user can access any of the tabs - Also allow if user has Security module access
+  const hasSecurityAccess = isAdmin || canAccess("Security");
+  const canReadGroups =
+    isAdmin ||
+    canRead("Group") ||
+    (hasSecurityAccess &&
+      permissions?.modules?.some((m) => m.module_name === "Group"));
+  const canReadUsers =
+    isAdmin ||
+    canRead("User") ||
+    (hasSecurityAccess &&
+      permissions?.modules?.some((m) => m.module_name === "User"));
+  const canReadModules =
+    isAdmin ||
+    canRead("Module") ||
+    (hasSecurityAccess &&
+      permissions?.modules?.some((m) => m.module_name === "Module"));
+  const canReadSecurityLogs =
+    isAdmin ||
+    canRead("Security Log") ||
+    (hasSecurityAccess &&
+      permissions?.modules?.some((m) => m.module_name === "Security Log"));
+
+  // Also check if user has any security-related functionalities
+  const hasSecurityFunctionality =
+    isAdmin ||
+    (permissions?.functionalities || []).some((f) =>
+      f.name?.toLowerCase().includes("security"),
+    );
+
+  // Combined permission - show tabs if user has Security module OR specific read permissions
+  const showGroupsTab =
+    canReadGroups || (hasSecurityAccess && hasSecurityFunctionality);
+  const showUsersTab =
+    canReadUsers || (hasSecurityAccess && hasSecurityFunctionality);
+  const showPermissionsTab =
+    canReadModules || (hasSecurityAccess && hasSecurityFunctionality);
+  const showTrackingTab =
+    canReadSecurityLogs || (hasSecurityAccess && hasSecurityFunctionality);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("=== Access Control Permission Debug ===");
+    console.log("isAdmin:", isAdmin);
+    console.log("hasSecurityAccess:", hasSecurityAccess);
+    console.log("hasSecurityFunctionality:", hasSecurityFunctionality);
+    console.log("canReadGroups:", canReadGroups);
+    console.log("canReadUsers:", canReadUsers);
+    console.log("canReadModules:", canReadModules);
+    console.log("canReadSecurityLogs:", canReadSecurityLogs);
+    console.log("showGroupsTab:", showGroupsTab);
+    console.log("showUsersTab:", showUsersTab);
+    console.log("showPermissionsTab:", showPermissionsTab);
+    console.log("showTrackingTab:", showTrackingTab);
+    console.log("Available Modules:", permissions?.modules);
+    console.log("Available Functionalities:", permissions?.functionalities);
+  }, [
+    isAdmin,
+    hasSecurityAccess,
+    hasSecurityFunctionality,
+    canReadGroups,
+    canReadUsers,
+    canReadModules,
+    canReadSecurityLogs,
+    permissions,
+  ]);
 
   useEffect(() => {
     fetchAll();
@@ -3397,6 +3598,62 @@ export default function AccessControl() {
     );
   }
 
+  // If user has no access to any tab, show access denied
+  if (
+    !showGroupsTab &&
+    !showUsersTab &&
+    !showPermissionsTab &&
+    !showTrackingTab
+  ) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              Access Denied
+            </h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to access the Access Control page.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                Your Permissions:
+              </p>
+              <div className="space-y-1 mt-2">
+                <p className="text-[11px]">
+                  <span className="font-mono">Security Module:</span>{" "}
+                  {hasSecurityAccess ? "✅" : "❌"}
+                </p>
+                <p className="text-[11px]">
+                  <span className="font-mono">Groups:</span>{" "}
+                  {showGroupsTab ? "✅" : "❌"}
+                </p>
+                <p className="text-[11px]">
+                  <span className="font-mono">Users:</span>{" "}
+                  {showUsersTab ? "✅" : "❌"}
+                </p>
+                <p className="text-[11px]">
+                  <span className="font-mono">Modules:</span>{" "}
+                  {showPermissionsTab ? "✅" : "❌"}
+                </p>
+                <p className="text-[11px]">
+                  <span className="font-mono">Security Logs:</span>{" "}
+                  {showTrackingTab ? "✅" : "❌"}
+                </p>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-3">
+                Required: Security module access OR specific read permissions
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <header className="space-y-1">
@@ -3410,34 +3667,42 @@ export default function AccessControl() {
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="flex border-b border-slate-200 bg-slate-50/30">
-          <TabButton
-            active={tab === "groups"}
-            onClick={() => setTab("groups")}
-            icon={MdSecurity}
-          >
-            Groups
-          </TabButton>
-          <TabButton
-            active={tab === "users"}
-            onClick={() => setTab("users")}
-            icon={MdPeople}
-          >
-            Users
-          </TabButton>
-          <TabButton
-            active={tab === "permissions"}
-            onClick={() => setTab("permissions")}
-            icon={MdViewModule}
-          >
-            Permissions
-          </TabButton>
-          <TabButton
-            active={tab === "tracking"}
-            onClick={() => setTab("tracking")}
-            icon={MdHistory}
-          >
-            IP Tracking
-          </TabButton>
+          {showGroupsTab && (
+            <TabButton
+              active={tab === "groups"}
+              onClick={() => setTab("groups")}
+              icon={MdSecurity}
+            >
+              Groups
+            </TabButton>
+          )}
+          {showUsersTab && (
+            <TabButton
+              active={tab === "users"}
+              onClick={() => setTab("users")}
+              icon={MdPeople}
+            >
+              Users
+            </TabButton>
+          )}
+          {showPermissionsTab && (
+            <TabButton
+              active={tab === "permissions"}
+              onClick={() => setTab("permissions")}
+              icon={MdViewModule}
+            >
+              Permissions
+            </TabButton>
+          )}
+          {showTrackingTab && (
+            <TabButton
+              active={tab === "tracking"}
+              onClick={() => setTab("tracking")}
+              icon={MdHistory}
+            >
+              IP Tracking
+            </TabButton>
+          )}
         </div>
 
         <div className="p-6 min-h-[500px]">
@@ -3449,7 +3714,7 @@ export default function AccessControl() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {tab === "groups" && (
+              {tab === "groups" && showGroupsTab && (
                 <GroupsTab
                   groups={groups}
                   modules={modules}
@@ -3458,21 +3723,21 @@ export default function AccessControl() {
                   onRefresh={fetchAll}
                 />
               )}
-              {tab === "users" && (
+              {tab === "users" && showUsersTab && (
                 <UsersTab
                   groups={groups}
                   allUsers={allUsers}
                   onRefresh={fetchAll}
                 />
               )}
-              {tab === "permissions" && (
+              {tab === "permissions" && showPermissionsTab && (
                 <PermissionsTab
                   modules={modules}
                   functionalities={functionalities}
                   onRefresh={fetchAll}
                 />
               )}
-              {tab === "tracking" && <IPTrackingTab />}
+              {tab === "tracking" && showTrackingTab && <IPTrackingTab />}
             </motion.div>
           </AnimatePresence>
         </div>

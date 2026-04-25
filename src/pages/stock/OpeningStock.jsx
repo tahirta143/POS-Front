@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Card, PageShell, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { usePermissions } from '../../hooks/usePermissions'
+import { MdLock } from 'react-icons/md'
 
 function RefreshIcon({ className }) {
   return (
@@ -37,6 +39,9 @@ function toLocalYMD(d) {
 }
 
 export default function OpeningStockPage() {
+  const { canRead, canUpdate, isAdmin } = usePermissions()
+  const MODULE_NAME = "Items"
+
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
   const [suppliers, setSuppliers] = useState([])
@@ -53,7 +58,13 @@ export default function OpeningStockPage() {
   const [dateFilter, setDateFilter] = useState('')
   const today = useMemo(() => toLocalYMD(new Date()), [])
 
+  // Permission checks
+  const canReadStock = isAdmin || canRead(MODULE_NAME)
+  const canUpdateStock = isAdmin || canUpdate(MODULE_NAME)
+
   async function fetchData() {
+    if (!canReadStock) return
+    
     setLoading(true)
     setStockSaveError('')
     try {
@@ -94,19 +105,27 @@ export default function OpeningStockPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchData()
+      if (canReadStock) {
+        fetchData()
+      }
     }, 0)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [canReadStock])
 
   const handleStockInputChange = (itemId, newStockRaw) => {
+    if (!canUpdateStock) return
     setItems((prev) =>
       prev.map((i) => (i.id === itemId ? { ...i, stock: newStockRaw } : i)),
     )
   }
 
   async function commitStockChange(itemId, newStockRaw) {
+    if (!canUpdateStock) {
+      toast.error("You don't have permission to update stock.")
+      return
+    }
+    
     const lastSaved = originalStockByIdRef.current.get(itemId) ?? 0
     const nextNumber = newStockRaw === '' ? 0 : Number(newStockRaw)
     if (Number.isNaN(nextNumber)) return
@@ -162,6 +181,33 @@ export default function OpeningStockPage() {
   const totalStock = items.reduce((sum, item) => sum + (Number(item.stock) || 0), 0)
   const purchaseValue = items.reduce((sum, item) => sum + ((Number(item.stock) || 0) * (Number(item.purchase_price) || 0)), 0)
   const saleValue = items.reduce((sum, item) => sum + ((Number(item.stock) || 0) * (Number(item.sale_price) || 0)), 0)
+
+  // Access Denied
+  if (!canReadStock) {
+    return (
+      <PageShell
+        title="Access Denied"
+        description="You don't have permission to view Opening Stock."
+        accent="from-rose-600 to-red-700"
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-5xl text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <p className="text-slate-500 mb-4">
+              You don't have permission to view Opening Stock.
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[12px] font-mono text-slate-700">Read Items</p>
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    )
+  }
 
   return (
     <PageShell
@@ -239,7 +285,6 @@ export default function OpeningStockPage() {
                 className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
               >
                 <option value="">All Suppliers</option>
-                {/* Fallback to unique item suppliers if supplier list is empty */}
                 {suppliers.length > 0 ? (
                    suppliers.map(s => <option key={s.id} value={s.supplier_name || s.id}>{s.supplier_name || s.id}</option>)
                 ) : (
@@ -305,7 +350,7 @@ export default function OpeningStockPage() {
                     <td colSpan="10">
                       <TableState message="No items match the current filters." />
                     </td>
-                  </tr>
+                   </tr>
                 ) : (
                   filteredItems.map((item, idx) => (
                     <tr key={item.id || idx} className="text-[12px] transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
@@ -313,19 +358,18 @@ export default function OpeningStockPage() {
                       <td className="px-4 py-3">
                         <div className="font-bold text-slate-800">{item.item_name}</div>
                         <div className="text-[10px] text-slate-400 font-mono mt-0.5 max-w-[120px] truncate">{item.label_barcode || item.id}</div>
-                      </td>
+                       </td>
                       <td className="px-4 py-3">
-                        {/* Purple pill for category */}
                         <span className="inline-flex items-center rounded-full bg-teal-50 border border-teal-100 px-2.5 py-1 text-[12px] font-semibold text-teal-700">
                           {getCategoryName(item.item_category_id)}
                         </span>
-                      </td>
+                       </td>
                       <td className="px-4 py-3 text-slate-600 truncate max-w-[140px]">{item.supplier_name || '-'}</td>
                       <td className="px-4 py-3 text-slate-600">
                         <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[12px] font-semibold text-slate-700">
                           {item.shelf_name_code || '-'}
                         </span>
-                      </td>
+                       </td>
                       <td className="px-4 py-3 text-slate-600">{item.unit_name || '-'}</td>
                       <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(item.purchase_price || 0).toFixed(2)}</td>
                       <td className="px-4 py-3 text-right font-semibold text-teal-600">Rs {Number(item.sale_price || 0).toFixed(2)}</td>
@@ -338,20 +382,25 @@ export default function OpeningStockPage() {
                             value={item.stock ?? ''}
                             onChange={(e) => handleStockInputChange(item.id, e.target.value === '' ? '' : e.target.value)}
                             onBlur={(e) => commitStockChange(item.id, e.target.value)}
-                            className="h-8 w-24 rounded-full border border-teal-200 bg-teal-50 pr-7 text-center font-bold text-teal-900 outline-none transition hover:bg-teal-100 focus:border-teal-400 focus:bg-teal-100 focus:ring-2 focus:ring-teal-200/50 cursor-text"
+                            disabled={!canUpdateStock}
+                            className={`h-8 w-24 rounded-full border border-teal-200 bg-teal-50 pr-7 text-center font-bold text-teal-900 outline-none transition hover:bg-teal-100 focus:border-teal-400 focus:bg-teal-100 focus:ring-2 focus:ring-teal-200/50 cursor-text ${
+                              !canUpdateStock ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
                           />
-                          <svg
-                            className="absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-teal-500 opacity-70 pointer-events-none"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                          </svg>
+                          {canUpdateStock && (
+                            <svg
+                              className="absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-teal-500 opacity-70 pointer-events-none"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                          )}
                         </div>
-                      </td>
+                       </td>
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                         {item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : '-'}
-                      </td>
+                       </td>
                     </tr>
                   ))
                 )}

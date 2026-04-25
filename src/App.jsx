@@ -28,8 +28,6 @@ import ReOrderStock from "./pages/stock/ReOrderStock";
 import Security from "./pages/Security";
 import UserModule from "./pages/security/UserModule";
 import GroupRights from "./pages/security/GroupRights";
-import Company from "./pages/security/Company";
-import Employee from "./pages/security/Employee";
 import UserToGroup from "./pages/security/UserToGroup";
 import AccessControl from "./pages/security/AccessControl";
 import Department from "./pages/setup/Department";

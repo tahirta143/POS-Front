@@ -93,14 +93,14 @@ const NAV_ITEMS = [
         to: "/stock/opening",
         label: "Opening Stock",
         icon: MdAddBox,
-        module: "Stock",
-        requiredAction: "create",
+        module: "Item",
+        requiredAction: "read",
       },
       {
         to: "/stock/reorder",
         label: "Reorder Stock",
         icon: MdRefresh,
-        module: "Stock",
+        module: "Reorder",
         requiredAction: "read",
       },
       {
@@ -121,15 +121,15 @@ const NAV_ITEMS = [
         to: "/stock/sales-return",
         label: "Sales Return",
         icon: MdRemoveCircle,
-        module: "Stock",
-        requiredAction: "create",
+        module: "Sale Return",
+        requiredAction: "read",
       },
       {
         to: "/stock/purchase-return",
         label: "Purchase Return",
         icon: MdRemoveCircle,
-        module: "Stock",
-        requiredAction: "create",
+        module: "Purchase Return",
+        requiredAction: "read",
       },
     ],
   },
@@ -166,7 +166,7 @@ const NAV_ITEMS = [
         label: "Customer Payment",
         icon: MdMonetizationOn,
         module: "Customer Payment",
-        requiredAction: "create",
+        requiredAction: "read",
       },
       {
         to: "/finance/amount-receivable",
@@ -346,8 +346,7 @@ const NAV_ITEMS = [
   },
 ];
 
-// Updated filterNavItems function
-// Updated filterNavItems function - More flexible matching
+//filterNavItems function
 function filterNavItems(items, permissions, isAdmin) {
   if (isAdmin) return items;
 
