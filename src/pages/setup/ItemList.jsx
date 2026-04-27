@@ -10,8 +10,8 @@ import {
   ActionButton,
   TableState,
 } from "../../components/layout/PageShell.jsx";
-import axiosInstance from "../../services/axiosInstance";
-import { usePermissions } from "../../hooks/usePermissions";
+import axiosInstance from "../../services/axiosInstance.js";
+import { usePermissions } from "../../hooks/usePermissions.js";
 import { MdLock } from "react-icons/md";
 
 function createEmptyForm() {

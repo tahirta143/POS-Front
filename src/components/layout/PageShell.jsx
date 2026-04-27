@@ -1,7 +1,17 @@
+import { motion } from "framer-motion";
+
 // PageShell — wraps page content in a centred, max-width section.
 export function PageShell({ children }) {
   return (
-    <section className="page-shell w-full space-y-6 pb-20">{children}</section>
+    <motion.section 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="page-shell w-full space-y-6 pb-20"
+    >
+      {children}
+    </motion.section>
   );
 }
 

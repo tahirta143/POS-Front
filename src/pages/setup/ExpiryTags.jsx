@@ -8,8 +8,8 @@ import {
   SectionHeader,
   TableState,
   ActionButton,
-} from "../components/layout/PageShell.jsx";
-import axiosInstance from "../services/axiosInstance";
+} from "../../components/layout/PageShell.jsx";
+import axiosInstance from "../../services/axiosInstance";
 import {
   MdAdd,
   MdRemove,

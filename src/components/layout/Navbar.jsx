@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { logout } from "../../features/auth/authSlice";
 import axiosInstance from "../../services/axiosInstance";
+import { motion, AnimatePresence } from "framer-motion";
 
 const pageTitles = {
   "/dashboard": "Dashboard",
@@ -154,7 +155,7 @@ const Navbar = () => {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-teal-500/20 via-teal-500/40 to-teal-500/20 dark:via-teal-500/30" />
       
       {/* ── Left: Page Title ── */}
-      <div className="flex min-w-0 items-center gap-3 pl-12 md:pl-0">
+      <div className="flex min-w-0 items-center gap-3 pl-12 lg:pl-0">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-500 text-white ring-1 ring-teal-400 dark:bg-teal-600 dark:ring-teal-500 shadow-md">
           <div className="h-5 w-1.5 rounded-full bg-white" />
         </div>
@@ -186,8 +187,15 @@ const Navbar = () => {
             )}
           </button>
 
+          <AnimatePresence>
           {showNotif && (
-            <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-50 overflow-hidden ring-1 ring-black/5">
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-50 overflow-hidden ring-1 ring-black/5"
+            >
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm">Notifications</h3>
                 {unreadCount > 0 && (
@@ -207,8 +215,9 @@ const Navbar = () => {
                   ))
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
 
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 mx-1" />
@@ -235,8 +244,15 @@ const Navbar = () => {
             <MdExpandMore className={`text-gray-400 dark:text-slate-400 text-lg transition-transform ${showProfile ? "rotate-180" : ""}`} />
           </button>
 
+          <AnimatePresence>
           {showProfile && (
-            <div className="absolute right-0 mt-3 w-60 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-50 overflow-hidden ring-1 ring-black/5">
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-3 w-60 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-50 overflow-hidden ring-1 ring-black/5"
+            >
               {/* Header inside dropdown */}
               <div className="px-4 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
                 <div className="flex items-center gap-3">
@@ -272,8 +288,9 @@ const Navbar = () => {
                   <MdLogout className="text-lg" /> Logout
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

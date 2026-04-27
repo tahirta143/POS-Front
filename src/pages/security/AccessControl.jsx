@@ -153,8 +153,8 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   const canUpdateGroup = isAdmin || canUpdate(MODULE_NAME);
   const canDeleteGroup = isAdmin || canDelete(MODULE_NAME);
   const canAssignUsers = isAdmin || canUpdate(MODULE_NAME);
-  const hasGroupActions =
-    canAssignUsers || canUpdateGroup || canDeleteGroup;
+  const canAssignPermissions = isAdmin || canUpdate(MODULE_NAME); // For editing permissions
+  const hasGroupActions = canAssignUsers || canUpdateGroup || canDeleteGroup;
 
   function toggleExpand(setFn, id) {
     setFn((prev) => {
@@ -647,6 +647,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   function toggleModule(module) {
+    if (!canAssignPermissions) {
+      toast.error("You don't have permission to assign permissions.");
+      return;
+    }
+    
     const childFuncIds = module.functionalities
       .map((f) => f.funcId)
       .filter(Boolean);
@@ -688,6 +693,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   function toggleFunctionality(func, moduleId) {
+    if (!canAssignPermissions) {
+      toast.error("You don't have permission to assign permissions.");
+      return;
+    }
+    
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
       const moduleNameById = buildModuleNameMap();
@@ -718,6 +728,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   function removeModule(module) {
+    if (!canAssignPermissions) {
+      toast.error("You don't have permission to remove permissions.");
+      return;
+    }
+    
     const funcIds = module.functionalities.map((f) => f.funcId);
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
@@ -732,6 +747,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   function removeFunctionality(func) {
+    if (!canAssignPermissions) {
+      toast.error("You don't have permission to remove permissions.");
+      return;
+    }
+    
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
       next.delete(func.funcId);
@@ -813,7 +833,16 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }, [assignedTree, searchAssigned]);
 
   async function handleSave() {
-    if (!selectedGroup) return;
+    if (!selectedGroup) {
+      toast.error("Please select a group first.");
+      return;
+    }
+    
+    if (!canAssignPermissions) {
+      toast.error("You don't have permission to assign permissions.");
+      return;
+    }
+    
     setSaving(true);
     try {
       const byModule = {};
@@ -841,6 +870,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.success(`Permissions updated for "${selectedGroup.group_name}"`);
       onRefresh();
     } catch (err) {
+      console.error("Failed to save permissions:", err);
       toast.error("Failed to save permissions");
     } finally {
       setSaving(false);
@@ -1468,7 +1498,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                   }
                                   onClick={(e) => e.stopPropagation()}
                                   className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
-                                  disabled={module.isPlanned}
+                                  disabled={module.isPlanned || !canAssignPermissions}
                                 />
                                 {!module.isPlanned && modTotal > 0 ? (
                                   <button
@@ -1479,6 +1509,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                       )
                                     }
                                     className="shrink-0"
+                                    disabled={!canAssignPermissions}
                                   >
                                     <svg
                                       className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${isModExpanded ? "rotate-90" : ""}`}
@@ -1510,7 +1541,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )
                                   }
                                   className="flex-1 text-left min-w-0"
-                                  disabled={module.isPlanned}
+                                  disabled={module.isPlanned || !canAssignPermissions}
                                 >
                                   <span className="text-[11px] font-semibold text-slate-700 truncate block">
                                     {module.name}
@@ -1579,7 +1610,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                     : "hover:bg-slate-50"
                                                 }`}
                                                 onClick={() =>
-                                                  toggleFunctionality(
+                                                  canAssignPermissions && toggleFunctionality(
                                                     func,
                                                     module.moduleId,
                                                   )
@@ -1589,7 +1620,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                   type="checkbox"
                                                   checked={isChecked}
                                                   onChange={() =>
-                                                    toggleFunctionality(
+                                                    canAssignPermissions && toggleFunctionality(
                                                       func,
                                                       module.moduleId,
                                                     )
@@ -1598,6 +1629,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                     e.stopPropagation()
                                                   }
                                                   className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
+                                                  disabled={!canAssignPermissions}
                                                 />
                                                 <span
                                                   className={`text-[10px] flex-1 truncate ${isChecked ? "text-teal-700 font-medium" : "text-slate-500"}`}
@@ -1640,20 +1672,23 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         </div>
       </div>
 
-      {/* Assigned to Group Panel */}
+      {/* Assigned to Group Panel - UPDATED: Hide Save button and trashcans when user has only READ permission */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <span className="text-[12px] font-bold text-teal-700 uppercase tracking-wide">
             Assigned to Group
           </span>
-          <button
-            onClick={handleSave}
-            disabled={saving || !selectedGroup}
-            className="flex items-center gap-2 px-3 py-1 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition disabled:opacity-50"
-          >
-            <MdSave className="h-3 w-3" />
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+          {/* Save button - Only show if user has permission to assign permissions */}
+          {canAssignPermissions && (
+            <button
+              onClick={handleSave}
+              disabled={saving || !selectedGroup}
+              className="flex items-center gap-2 px-3 py-1 bg-teal-600 text-white rounded-lg text-[11px] font-bold hover:bg-teal-700 transition disabled:opacity-50"
+            >
+              <MdSave className="h-3 w-3" />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          )}
         </div>
 
         <div className="px-4 py-2 border-b border-slate-50">
@@ -1712,16 +1747,19 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                         <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />
                       )}
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        category.children.forEach((mod) => removeModule(mod));
-                      }}
-                      className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition"
-                      title="Remove all permissions in this category"
-                    >
-                      <MdDelete className="h-3.5 w-3.5" />
-                    </button>
+                    {/* Category-level trashcan - Only show if user has permission to assign permissions */}
+                    {canAssignPermissions && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          category.children.forEach((mod) => removeModule(mod));
+                        }}
+                        className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition"
+                        title="Remove all permissions in this category"
+                      >
+                        <MdDelete className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
 
                   <AnimatePresence initial={false}>
@@ -1768,16 +1806,19 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )}
                                   </button>
 
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeModule(module);
-                                    }}
-                                    className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100"
-                                    title={`Remove all ${module.name} permissions`}
-                                  >
-                                    <MdDelete className="h-3.5 w-3.5" />
-                                  </button>
+                                  {/* Module-level trashcan - Only show if user has permission to assign permissions */}
+                                  {canAssignPermissions && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeModule(module);
+                                      }}
+                                      className="shrink-0 ml-1 p-1 rounded-md text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100"
+                                      title={`Remove all ${module.name} permissions`}
+                                    >
+                                      <MdDelete className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
 
                                 <AnimatePresence initial={false}>
@@ -1808,15 +1849,18 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                               />
                                             )}
 
-                                            <button
-                                              onClick={() =>
-                                                removeFunctionality(func)
-                                              }
-                                              className="shrink-0 p-0.5 rounded text-rose-300 hover:text-rose-600 hover:bg-rose-100 transition opacity-0 group-hover/func:opacity-100"
-                                              title={`Remove "${func.name}"`}
-                                            >
-                                              <MdClose className="h-3 w-3" />
-                                            </button>
+                                            {/* Functionality-level trashcan - Only show if user has permission to assign permissions */}
+                                            {canAssignPermissions && (
+                                              <button
+                                                onClick={() =>
+                                                  removeFunctionality(func)
+                                                }
+                                                className="shrink-0 p-0.5 rounded text-rose-300 hover:text-rose-600 hover:bg-rose-100 transition opacity-0 group-hover/func:opacity-100"
+                                                title={`Remove "${func.name}"`}
+                                              >
+                                                <MdClose className="h-3 w-3" />
+                                              </button>
+                                            )}
                                           </div>
                                         ))}
                                       </div>

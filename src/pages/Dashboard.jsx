@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { PageShell } from "../components/layout/PageShell.jsx";
+import { Card, SectionCard } from "../components/ui/Card.jsx";
+import { StatusBadge } from "../components/ui/Badge.jsx";
+import { Spinner, StatCardSkeleton, TableSkeleton } from "../components/ui/Loaders.jsx";
 import axiosInstance from "../services/axiosInstance";
 import { usePermissions } from "../hooks/usePermissions"; // adjust path if needed
 import {
@@ -25,13 +28,6 @@ const formatDate = (d) =>
   }) : "—";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-12">
-      <div className="w-8 h-8 border-[3px] border-teal-200 border-t-teal-600 rounded-full animate-spin" />
-    </div>
-  );
-}
 
 function NoAccess({ label }) {
   return (
@@ -47,14 +43,7 @@ function NoAccess({ label }) {
 
 function StatCard({ label, value, change, icon, gradient, bg, text, isCurrency, loading }) {
   const IconComponent = icon;
-  if (loading)
-    return (
-      <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm animate-pulse">
-        <div className="h-3 bg-slate-200 rounded w-20 mb-3" />
-        <div className="h-7 bg-slate-200 rounded w-14 mb-2" />
-        <div className="h-3 bg-slate-200 rounded w-16" />
-      </div>
-    );
+  if (loading) return <StatCardSkeleton />;
   return (
     <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden">
       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`} />
@@ -80,35 +69,7 @@ function StatCard({ label, value, change, icon, gradient, bg, text, isCurrency, 
   );
 }
 
-function SectionCard({ title, subtitle, action, children, className = "" }) {
-  return (
-    <div className={`bg-white/95 dark:bg-slate-900/85 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${className}`}>
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-teal-500/50 dark:bg-teal-600">
-        <div>
-          <h3 className="text-[14px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
-          {subtitle && <p className="text-[11px] text-slate-400 dark:text-teal-100 mt-0.5">{subtitle}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
-function StatusBadge({ status }) {
-  const map = {
-    Completed: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
-    Pending:   "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-    Rejected:  "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400",
-    Paid:      "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
-    Partial:   "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-  };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${map[status] ?? "bg-slate-50 text-slate-500"}`}>
-      {status}
-    </span>
-  );
-}
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -453,7 +414,7 @@ export default function Dashboard() {
                     </button>
                   }
                 >
-                  {loading ? <Spinner /> : recentBookings.length === 0 ? (
+                  {loading ? <TableSkeleton cols={4} rows={3} /> : recentBookings.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-sm">No recent bookings</div>
                   ) : (
                     <div className="overflow-x-auto -mx-1">
@@ -504,7 +465,7 @@ export default function Dashboard() {
                     </button>
                   }
                 >
-                  {loading ? <Spinner /> : recentSales.length === 0 ? (
+                  {loading ? <TableSkeleton cols={4} rows={3} /> : recentSales.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-sm">No recent sales</div>
                   ) : (
                     <div className="overflow-x-auto -mx-1">

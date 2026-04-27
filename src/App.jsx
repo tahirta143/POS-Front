@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { AnimatePresence } from "framer-motion";
 import { refreshPermissions } from "./features/auth/authSlice";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import ItemList from "./pages/items/ItemList";
+import ItemList from "./pages/setup/ItemList";
 import SupplierList from "./pages/setup/SupplierList";
 import CustomerList from "./pages/customers/CustomerList";
 import SubCategory from "./pages/setup/SubCategory";
@@ -22,10 +23,9 @@ import Bookings from "./pages/customers/Bookings";
 import Sales from "./pages/Sales";
 import OpeningStock from "./pages/stock/OpeningStock";
 import PurchasePage from "./pages/Purchase";
-import ExpiryTagsPage from "./pages/ExpiryTags";
+import ExpiryTagsPage from "./pages/setup/ExpiryTags";
 import ReOrderStock from "./pages/stock/ReOrderStock";
 
-import Security from "./pages/Security";
 import UserModule from "./pages/security/UserModule";
 import GroupRights from "./pages/security/GroupRights";
 import UserToGroup from "./pages/security/UserToGroup";
@@ -49,6 +49,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const location = useLocation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -76,8 +77,9 @@ const App = () => {
   }, [isAuthenticated]);
 
   return (
-    <Routes>
-      {/* Public Routes */}
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
       <Route
         path="/login"
         element={
@@ -359,14 +361,6 @@ const App = () => {
 
         {/* Security Routes */}
         <Route
-          path="/security"
-          element={
-            <ProtectedRoute module="Security" action="read">
-              <Security />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/security/user-module"
           element={
             <ProtectedRoute module="Security" action="read">
@@ -408,6 +402,7 @@ const App = () => {
         }
       />
     </Routes>
+    </AnimatePresence>
   );
 };
 

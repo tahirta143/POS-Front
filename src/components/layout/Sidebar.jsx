@@ -278,7 +278,7 @@ const NAV_ITEMS = [
             label: "Item Category",
             icon: MdCategory,
             module: "Item Category",
-            requiredAction: "read", // This will match "Read Category" because it contains "read"
+            requiredAction: "read",
           },
           {
             to: "/setup/item-subcategory",
@@ -317,7 +317,6 @@ const NAV_ITEMS = [
           },
         ],
       },
-      // ... rest
     ],
   },
 
@@ -328,13 +327,6 @@ const NAV_ITEMS = [
     icon: MdSecurity,
     module: "Security",
     children: [
-      {
-        to: "/security",
-        label: "Overview",
-        icon: MdDashboard,
-        module: "Security",
-        requiredAction: "read",
-      },
       {
         to: "/security/access-control",
         label: "Access Control",
@@ -358,9 +350,11 @@ function filterNavItems(items, permissions, isAdmin) {
       const hasModule = modules.some((m) => {
         const moduleName = (m.module_name || m.slug || "").toLowerCase().trim();
         const requiredModule = item.module.toLowerCase().trim();
-        return moduleName === requiredModule || 
-               moduleName.includes(requiredModule) ||
-               requiredModule.includes(moduleName);
+        return (
+          moduleName === requiredModule ||
+          moduleName.includes(requiredModule) ||
+          requiredModule.includes(moduleName)
+        );
       });
       if (!hasModule) return false;
     }
@@ -370,7 +364,7 @@ function filterNavItems(items, permissions, isAdmin) {
       const hasAction = functionalities.some((func) => {
         const funcName = (func.name || "").toLowerCase();
         const requiredAction = item.requiredAction.toLowerCase();
-        
+
         // Simply check if the functionality name contains the required action
         // "Read Category" contains "read" → true ✅
         // "Create Sale" contains "create" → true ✅
@@ -384,7 +378,11 @@ function filterNavItems(items, permissions, isAdmin) {
 
   return items.reduce((acc, item) => {
     if (item.children) {
-      const visibleChildren = filterNavItems(item.children, permissions, isAdmin);
+      const visibleChildren = filterNavItems(
+        item.children,
+        permissions,
+        isAdmin,
+      );
       if (visibleChildren.length > 0) {
         acc.push({ ...item, children: visibleChildren });
       }
@@ -722,20 +720,20 @@ const Sidebar = () => {
       {/* Hamburger (mobile) */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
         aria-label="Open menu"
       >
         <MdMenu className="text-xl" />
       </button>
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex h-full">
+      <div className="hidden lg:flex h-full">
         <SidebarContent onNavigate={() => {}} />
       </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
             ref={overlayRef}
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
