@@ -415,12 +415,12 @@ function NestedDropdown({ item, openId, setOpenId }) {
         onClick={() => setOpenId(isOpen ? null : item.id)}
         style={
           isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
             : undefined
         }
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
           isActive
-            ? "bg-teal-500 text-white font-medium shadow-sm"
+            ? "bg-primary-500 text-white font-medium shadow-sm"
             : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
         }`}
       >
@@ -428,7 +428,7 @@ function NestedDropdown({ item, openId, setOpenId }) {
           <span
             className={`flex items-center justify-center w-6 h-6 rounded-md text-xs transition-colors ${
               isActive
-                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                ? "bg-primary-400 dark:bg-primary-600 text-white"
                 : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             }`}
           >
@@ -442,20 +442,20 @@ function NestedDropdown({ item, openId, setOpenId }) {
       </button>
 
       {isOpen && (
-        <div className="ml-3 mt-0.5 mb-1 border-l-2 border-teal-100 pl-2 space-y-0.5">
+        <div className="ml-3 mt-0.5 mb-1 border-l-2 border-primary-100 pl-2 space-y-0.5">
           {item.children.map((child) => (
             <NavLink
               key={child.to}
               to={child.to}
               style={({ isActive }) =>
                 isActive
-                  ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+                  ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
                   : undefined
               }
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
                   isActive
-                    ? "bg-teal-500 text-white font-medium shadow-sm"
+                    ? "bg-primary-500 text-white font-medium shadow-sm"
                     : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
                 }`
               }
@@ -495,13 +495,13 @@ function NestedChildren({ children, onNavigate }) {
         onClick={onNavigate}
         style={({ isActive }) =>
           isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
             : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150 ${
             isActive
-              ? "bg-teal-500 text-white font-medium shadow-sm"
+              ? "bg-primary-500 text-white font-medium shadow-sm"
               : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-800 dark:hover:text-slate-100"
           }`
         }
@@ -526,13 +526,13 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
         onClick={onNavigate}
         style={({ isActive }) =>
           isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
             : undefined
         }
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
             isActive
-              ? "bg-teal-500 text-white shadow-sm"
+              ? "bg-primary-500 text-white shadow-sm"
               : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-900 dark:hover:text-slate-100"
           }`
         }
@@ -542,7 +542,7 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
             <span
               className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
                 isActive
-                  ? "bg-teal-400 dark:bg-teal-600 text-white"
+                  ? "bg-primary-400 dark:bg-primary-600 text-white"
                   : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
               }`}
             >
@@ -561,12 +561,12 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
         onClick={() => setOpenId(isOpen ? null : item.id)}
         style={
           isActive
-            ? { backgroundColor: "#14b8a6", color: "#ffffff" }
+            ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
             : undefined
         }
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-150 ${
           isActive
-            ? "bg-teal-500 text-white shadow-sm"
+            ? "bg-primary-500 text-white shadow-sm"
             : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:text-gray-900 dark:hover:text-slate-100"
         }`}
       >
@@ -574,7 +574,7 @@ function SidebarItem({ item, openId, setOpenId, onNavigate }) {
           <span
             className={`flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 transition-colors ${
               isActive
-                ? "bg-teal-400 dark:bg-teal-600 text-white"
+                ? "bg-primary-400 dark:bg-primary-600 text-white"
                 : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             }`}
           >
@@ -623,12 +623,12 @@ function SidebarContent({ onNavigate }) {
 
   return (
     <div className="relative w-64 bg-white/92 dark:bg-slate-900/96 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none backdrop-blur transition-colors duration-300">
-      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/70 to-transparent dark:via-teal-800/40" />
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary-200/70 to-transparent dark:via-primary-800/40" />
 
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 dark:border-slate-800 shrink-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm transition-colors duration-300">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/30 shrink-0">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 shrink-0">
             <MdStorefront className="text-white text-xl" />
           </div>
           <div className="truncate">
@@ -667,8 +667,8 @@ function SidebarContent({ onNavigate }) {
               to="/profile"
               className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex-1 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center shrink-0">
-                <MdPerson className="text-teal-600 dark:text-teal-400 text-sm" />
+              <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shrink-0">
+                <MdPerson className="text-primary-600 dark:text-primary-400 text-sm" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 truncate">

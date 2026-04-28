@@ -15,28 +15,18 @@ import { MdAdd, MdRemove, MdReceipt, MdPerson, MdSearch, MdLock } from "react-ic
 import { usePermissions } from "../hooks/usePermissions";
 
 const sectionStyles = {
-  indigo: {
-    accent: "bg-indigo-500",
-    header: "border-indigo-100 bg-indigo-50/80",
-  },
-  emerald: {
-    accent: "bg-emerald-500",
-    header: "border-emerald-100 bg-emerald-50/80",
-  },
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
 };
 
-function SectionCard({ color, title, children }) {
-  const style = sectionStyles[color] ?? sectionStyles.teal;
+function SectionCard({ title, children }) {
+  const style = sectionStyles.teal;
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 p-2.5 shadow-sm ring-1 ring-white/70 dark:ring-slate-800/70 transition-all duration-300 hover:shadow-md">
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-colors">
       <div
-        className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}
       >
-        <span
-          className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
-        />
-        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-tight">
           {title}
         </h3>
       </div>
@@ -276,11 +266,6 @@ export default function Sales() {
       return;
     }
 
-    if (!mobileNumber || !customerName) {
-      toast.error("Customer Mobile & Name are required.");
-      return;
-    }
-
     const validItems = invoiceItems.filter(
       (r) => r.itemId && Number(r.quantity) > 0,
     );
@@ -441,7 +426,7 @@ export default function Sales() {
 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <SectionCard color="teal" title="Customer Identification">
+                    <SectionCard title="Customer Identification">
                       <div className="flex flex-wrap gap-4 items-end">
                         <Field
                           label="Mobile / Search"
@@ -503,7 +488,7 @@ export default function Sales() {
                         </Field>
                       </div>
                     </SectionCard>
-                    <SectionCard color="indigo" title="Internal Reference">
+                    <SectionCard title="Internal Reference">
                       <div className="flex gap-4">
                         <Field label="Receipt Number" className="flex-1">
                           <input
@@ -545,7 +530,7 @@ export default function Sales() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-sm transition-all duration-200 hover:border-teal-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-teal-900/50 dark:hover:bg-slate-900/70 sm:grid-cols-[180px_1fr_100px_80px_100px_50px]"
+                            className="grid grid-cols-2 gap-2 transition-all duration-200 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px]"
                           >
                             <div className="col-span-2 sm:col-span-1">
                               <select
@@ -638,7 +623,7 @@ export default function Sales() {
                           className="group inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                         >
                           <MdAdd className="h-4 w-4 group-hover:rotate-90 transition duration-300" />{" "}
-                          Add Product Line
+                          Add Line
                         </button>
                       </div>
                     </div>
@@ -676,11 +661,7 @@ export default function Sales() {
                         </div>
                       </div>
                     </SectionCard>
-                    <SectionCard
-                      color="emerald"
-                      title="Settlement Details"
-                      className="lg:col-span-2"
-                    >
+                    <SectionCard title="Settlement Details">
                       <div className="flex flex-wrap gap-6 items-end py-1">
                         <Field
                           label="Payment Received"
@@ -691,7 +672,7 @@ export default function Sales() {
                             value={givenAmount}
                             onChange={(e) => setGivenAmount(e.target.value)}
                             placeholder="0.00"
-                            className="h-10 w-full rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-lg font-black text-emerald-700 dark:text-emerald-400 outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition"
+                            className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 text-sm font-black text-emerald-700 dark:text-emerald-400 outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition"
                           />
                         </Field>
                         <div className="flex-1 min-w-[200px]">

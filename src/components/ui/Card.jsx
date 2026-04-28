@@ -11,7 +11,7 @@ export function Card({ children, className = "", noPadding = false, animate = fa
 
   return (
     <Component 
-      className={`bg-white/95 dark:bg-slate-900/85 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300 ${className}`}
+      className={`bg-white/95 dark:bg-slate-900/85 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300 ${className}`}
       {...animationProps}
     >
       <div className={noPadding ? "" : "p-5"}>
@@ -21,9 +21,9 @@ export function Card({ children, className = "", noPadding = false, animate = fa
   );
 }
 
-export function SectionCard({ title, subtitle, action, children, className = "", headerColor = "teal" }) {
+export function SectionCard({ title, subtitle, action, children, className = "", headerColor = "primary" }) {
   const headerThemes = {
-    teal: "border-teal-100 dark:border-teal-500/50 dark:bg-teal-600 bg-teal-50/50",
+    primary: "border-primary-100 dark:border-primary-500/50 dark:bg-primary-600 bg-primary-50/50",
     emerald: "border-emerald-100 dark:border-emerald-500/50 dark:bg-emerald-600 bg-emerald-50/50",
     violet: "border-violet-100 dark:border-violet-500/50 dark:bg-violet-600 bg-violet-50/50",
     sky: "border-sky-100 dark:border-sky-500/50 dark:bg-sky-600 bg-sky-50/50",
@@ -36,8 +36,8 @@ export function SectionCard({ title, subtitle, action, children, className = "",
     <Card className={`flex flex-col h-full hover:-translate-y-0.5 hover:shadow-md ${className}`} noPadding>
       <div className={`flex items-center justify-between px-5 py-4 border-b ${headerThemes[headerColor] || headerThemes.default}`}>
         <div>
-          <h3 className="text-[14px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
-          {subtitle && <p className="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5">{subtitle}</p>}
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">{title}</h3>
+          {subtitle && <p className="text-xs text-slate-500 dark:text-slate-300 mt-0.5">{subtitle}</p>}
         </div>
         {action && <div>{action}</div>}
       </div>

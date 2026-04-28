@@ -9,7 +9,7 @@ export function Spinner({ size = "md", className = "" }) {
   
   return (
     <div className={`flex items-center justify-center py-6 ${className}`}>
-      <div className={`${sizes[size] || sizes.md} border-teal-200 border-t-teal-600 rounded-full animate-spin`} />
+      <div className={`${sizes[size] || sizes.md} border-primary-200 border-t-primary-600 rounded-full animate-spin`} />
     </div>
   );
 }

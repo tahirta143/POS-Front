@@ -46,11 +46,10 @@ function Tab({ active, onClick, icon, label, count }) {
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all ${
-        active
-          ? "bg-teal-600 text-white shadow-md shadow-teal-100"
-          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-      }`}
+      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all ${active
+        ? "bg-teal-600 text-white shadow-md shadow-teal-100"
+        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+        }`}
     >
       {icon}
       {label}
@@ -68,18 +67,18 @@ export default function SalesReturnPage() {
   const [activeTab, setActiveTab] = useState("sale"); // "sale" | "booking"
 
   // ── Data ────────────────────────────────────────────────────────────────────
-  const [saleInvoices, setSaleInvoices]       = useState([]);
+  const [saleInvoices, setSaleInvoices] = useState([]);
   const [bookingInvoices, setBookingInvoices] = useState([]);
-  const [recentReturns, setRecentReturns]     = useState([]);
+  const [recentReturns, setRecentReturns] = useState([]);
 
   // ── Form state ──────────────────────────────────────────────────────────────
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [returnItems, setReturnItems]         = useState([]);
-  const [discount, setDiscount]               = useState(0);
-  const [submitting, setSubmitting]           = useState(false);
-  const [loadingReturns, setLoadingReturns]   = useState(false);
-  const [editId, setEditId]                   = useState(null);
-  const [isFormOpen, setIsFormOpen]           = useState(false);
+  const [returnItems, setReturnItems] = useState([]);
+  const [discount, setDiscount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingReturns, setLoadingReturns] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     fetchSaleInvoices();
@@ -99,7 +98,7 @@ export default function SalesReturnPage() {
   async function fetchBookingInvoices() {
     try {
       const res = await axiosInstance.get("/bookings").catch(() => ({ data: [] }));
-      
+
       // Handle different response formats
       let data = [];
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -109,10 +108,10 @@ export default function SalesReturnPage() {
       } else if (res.data?.data && !Array.isArray(res.data.data)) {
         data = [];
       }
-      
+
       // Show bookings that are either Completed OR have Paid payment status OR have paid amount > 0
-      setBookingInvoices(data.filter(b => 
-        b.booking_status === "Completed" || 
+      setBookingInvoices(data.filter(b =>
+        b.booking_status === "Completed" ||
         b.payment_status === "Paid" ||
         (b.paid && parseFloat(b.paid) > 0)
       ));
@@ -137,10 +136,10 @@ export default function SalesReturnPage() {
   // ── Invoice selection ────────────────────────────────────────────────────────
   function handleInvoiceChange(e) {
     const list = activeTab === "sale" ? saleInvoices : bookingInvoices;
-    const inv  = list.find(i => String(i.id) === String(e.target.value));
+    const inv = list.find(i => String(i.id) === String(e.target.value));
     setSelectedInvoice(inv || null);
     setDiscount(0);
-    
+
     if (inv?.items?.length) {
       setReturnItems(
         inv.items.map((item, idx) => {
@@ -150,24 +149,24 @@ export default function SalesReturnPage() {
             uniqueId: `${item.item_id || item.id}_${idx}_${Date.now()}`,
             returnQty: 0,
           };
-          
+
           // For booking items, calculate total if not present
           if (activeTab === "booking" && !item.total && item.price && item.qty) {
             normalizedItem.total = Number(item.price) * Number(item.qty);
           }
-          
+
           // Ensure qty field exists and is numeric
           if (normalizedItem.qty === undefined && item.qty) {
             normalizedItem.qty = Number(item.qty);
           } else if (normalizedItem.qty !== undefined) {
             normalizedItem.qty = Number(normalizedItem.qty);
           }
-          
+
           // Ensure price field exists
           if (!normalizedItem.price && item.price) {
             normalizedItem.price = Number(item.price);
           }
-          
+
           return normalizedItem;
         })
       );
@@ -180,9 +179,9 @@ export default function SalesReturnPage() {
     setReturnItems(prev =>
       prev.map(item => {
         if (item.uniqueId !== uniqueId) return item;
-        const parsed  = qty === "" ? 0 : Number(qty);
-        const safe    = isNaN(parsed) ? 0 : parsed;
-        const maxQty  = Number(item.qty || 0);
+        const parsed = qty === "" ? 0 : Number(qty);
+        const safe = isNaN(parsed) ? 0 : parsed;
+        const maxQty = Number(item.qty || 0);
         return { ...item, returnQty: Math.min(Math.max(0, safe), maxQty) };
       })
     );
@@ -191,9 +190,9 @@ export default function SalesReturnPage() {
   // ── Computed totals ──────────────────────────────────────────────────────────
   const grossReturnValue = useMemo(() => {
     return returnItems.reduce((sum, item) => {
-      const soldQty   = Number(item.qty || 0);
+      const soldQty = Number(item.qty || 0);
       let rate = 0;
-      
+
       if (activeTab === "booking") {
         // For bookings, use price directly
         rate = Number(item.price || 0);
@@ -202,12 +201,12 @@ export default function SalesReturnPage() {
         const lineTotal = Number(item.total || 0);
         rate = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
       }
-      
+
       return sum + Number(item.returnQty || 0) * rate;
     }, 0);
   }, [returnItems, activeTab]);
 
-  const discountAmt   = Math.min(parseFloat(discount) || 0, grossReturnValue);
+  const discountAmt = Math.min(parseFloat(discount) || 0, grossReturnValue);
   const netReturnValue = Math.max(0, grossReturnValue - discountAmt);
 
   // Total paid on the original invoice (from backend)
@@ -227,7 +226,7 @@ export default function SalesReturnPage() {
     try {
       const normalizedItems = itemsToReturn.map(item => {
         let unitPrice;
-        
+
         if (activeTab === "booking") {
           // For bookings, use price directly
           unitPrice = Number(item.price || 0);
@@ -237,24 +236,24 @@ export default function SalesReturnPage() {
           const lineTotal = Number(item.total || 0);
           unitPrice = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
         }
-        
+
         return {
           item_id: item.item_id || item.id,
-          qty:     Number(item.returnQty),
-          price:   unitPrice,
-          total:   Number(item.returnQty) * unitPrice,
+          qty: Number(item.returnQty),
+          price: unitPrice,
+          total: Number(item.returnQty) * unitPrice,
         };
       });
 
       const payload = {
         saleInvoiceId: selectedInvoice.id,
-        customerId:    selectedInvoice.customer_id,
-        returnDate:    new Date().toISOString().split("T")[0],
-        items:         normalizedItems,
-        discount:      discountAmt,
-        totalAmount:   netReturnValue,
-        reason:        "Sales return",
-        sourceType:    activeTab, // "sale" or "booking"
+        customerId: selectedInvoice.customer_id,
+        returnDate: new Date().toISOString().split("T")[0],
+        items: normalizedItems,
+        discount: discountAmt,
+        totalAmount: netReturnValue,
+        reason: "Sales return",
+        sourceType: activeTab, // "sale" or "booking"
       };
 
       if (editId) {
@@ -277,7 +276,7 @@ export default function SalesReturnPage() {
 
   // ── Edit / Delete ────────────────────────────────────────────────────────────
   function handleEdit(record) {
-    const list    = activeTab === "sale" ? saleInvoices : bookingInvoices;
+    const list = activeTab === "sale" ? saleInvoices : bookingInvoices;
     const invoice = list.find(inv => String(inv.id) === String(record.sale_invoice_id));
     if (!invoice) { toast.error("Original invoice data unavailable."); return; }
 
@@ -292,15 +291,15 @@ export default function SalesReturnPage() {
       (invoice.items || []).map((item, idx) => {
         const normalizedItem = {
           ...item,
-          uniqueId:  `${item.item_id || item.id}_${idx}_${Date.now()}_edit`,
+          uniqueId: `${item.item_id || item.id}_${idx}_${Date.now()}_edit`,
           returnQty: returnQtyMap.get(String(item.item_id || item.id)) || 0,
         };
-        
+
         // Normalize for bookings
         if (activeTab === "booking" && !item.total && item.price && item.qty) {
           normalizedItem.total = Number(item.price) * Number(item.qty);
         }
-        
+
         return normalizedItem;
       })
     );
@@ -346,15 +345,14 @@ export default function SalesReturnPage() {
               setIsFormOpen(opening);
               if (opening) resetForm();
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition shadow-sm ${
-              isFormOpen
-                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition shadow-sm ${isFormOpen
+              ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+              }`}
           >
             {isFormOpen
               ? <><MdRemove className="h-5 w-5" /> Close Form</>
-              : <><MdAdd    className="h-5 w-5" /> New Return</>
+              : <><MdAdd className="h-5 w-5" /> New Return</>
             }
           </button>
         </div>
@@ -457,7 +455,7 @@ export default function SalesReturnPage() {
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Invoice Ref</p>
                             <p className="text-[12px] font-bold text-slate-700">
-                              {activeTab === "sale" 
+                              {activeTab === "sale"
                                 ? (selectedInvoice.receipt_no || `#${selectedInvoice.id}`)
                                 : `BKG-${selectedInvoice.id}`
                               }
@@ -494,7 +492,7 @@ export default function SalesReturnPage() {
                               {returnItems.map(item => {
                                 const soldQty = Number(item.qty || 0);
                                 let rate = 0;
-                                
+
                                 if (activeTab === "booking") {
                                   // For bookings, use price directly
                                   rate = Number(item.price || 0);
@@ -503,7 +501,7 @@ export default function SalesReturnPage() {
                                   const lineTotal = Number(item.total || 0);
                                   rate = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
                                 }
-                                
+
                                 const credit = rate * Number(item.returnQty || 0);
                                 return (
                                   <tr key={item.uniqueId} className="hover:bg-slate-50/50">
@@ -659,7 +657,7 @@ export default function SalesReturnPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton label="Edit"   tone="teal" onClick={() => handleEdit(record)} />
+                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(record)} />
                           <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(record.id)} />
                         </div>
                       </td>

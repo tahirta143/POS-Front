@@ -152,15 +152,15 @@ const Navbar = () => {
 
   return (
     <header className="relative flex h-16 items-center justify-between border-b border-gray-100/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 shadow-sm backdrop-blur-md sm:px-5 md:px-6 transition-colors duration-300 z-40">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-teal-500/20 via-teal-500/40 to-teal-500/20 dark:via-teal-500/30" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary-500/20 via-primary-500/40 to-primary-500/20 dark:via-primary-500/30" />
       
       {/* ── Left: Page Title ── */}
       <div className="flex min-w-0 items-center gap-3 pl-12 lg:pl-0">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-500 text-white ring-1 ring-teal-400 dark:bg-teal-600 dark:ring-teal-500 shadow-md">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary-500 text-white ring-1 ring-primary-400 dark:bg-primary-600 dark:ring-primary-500 shadow-md">
           <div className="h-5 w-1.5 rounded-full bg-white" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-600 dark:text-teal-400">
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary-600 dark:text-primary-400">
             Workspace
           </p>
           <h2 className="truncate text-[15px] font-extrabold tracking-tight text-gray-900 dark:text-slate-100 sm:text-[16px]">
@@ -176,7 +176,7 @@ const Navbar = () => {
           <button
             onClick={() => { setShowNotif(!showNotif); setShowProfile(false); }}
             className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
-              showNotif ? "bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+              showNotif ? "bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
             }`}
           >
             <MdNotifications className="text-xl" />
@@ -199,7 +199,7 @@ const Navbar = () => {
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm">Notifications</h3>
                 {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-[11px] text-teal-600 dark:text-teal-400 font-bold hover:underline flex items-center gap-1">
+                  <button onClick={markAllAsRead} className="text-[11px] text-primary-600 dark:text-primary-400 font-bold hover:underline flex items-center gap-1">
                     <MdDoneAll /> Mark all read
                   </button>
                 )}
@@ -209,7 +209,7 @@ const Navbar = () => {
                   <div className="flex flex-col items-center justify-center py-10 text-gray-400"><p className="text-xs">No notifications yet</p></div>
                 ) : (
                   notifications.map((n) => (
-                    <div key={n.id} onClick={() => markAsRead(n.id)} className={`px-4 py-3 border-b border-gray-50 dark:border-slate-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 ${(!n.is_read && !n.read) ? "bg-teal-50/30 dark:bg-teal-900/10" : ""}`}>
+                    <div key={n.id} onClick={() => markAsRead(n.id)} className={`px-4 py-3 border-b border-gray-50 dark:border-slate-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 ${(!n.is_read && !n.read) ? "bg-primary-50/30 dark:bg-primary-900/10" : ""}`}>
                       <p className={`text-[13px] ${(!n.is_read && !n.read) ? "font-bold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>{n.title || n.message}</p>
                     </div>
                   ))
@@ -227,10 +227,10 @@ const Navbar = () => {
           <button
             onClick={() => { setShowProfile(!showProfile); setShowNotif(false); }}
             className={`flex items-center gap-2.5 pl-1 pr-2.5 py-1 rounded-xl transition-all ${
-              showProfile ? "bg-teal-50 dark:bg-teal-900/30 ring-1 ring-teal-200 dark:ring-teal-800" : "hover:bg-gray-100 dark:hover:bg-slate-800"
+              showProfile ? "bg-primary-50 dark:bg-primary-900/30 ring-1 ring-primary-200 dark:ring-primary-800" : "hover:bg-gray-100 dark:hover:bg-slate-800"
             }`}
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-md">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center shadow-md">
               <span className="text-white text-xs font-bold">{initials}</span>
             </div>
             <div className="text-left hidden md:block">
@@ -256,14 +256,14 @@ const Navbar = () => {
               {/* Header inside dropdown */}
               <div className="px-4 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-inner">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center shadow-inner">
                     <span className="text-white text-sm font-bold">{initials}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-[14px] font-bold text-gray-900 dark:text-white">
                       {user?.name || "Admin User"}
                     </p>
-                    <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-tighter">
+                    <p className="text-[11px] font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-tighter">
                       {user?.role || "Administrator"}
                     </p>
                   </div>
@@ -274,7 +274,7 @@ const Navbar = () => {
               <div className="p-2 space-y-1">
                 <button
                   onClick={() => { navigate("/profile"); setShowProfile(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-slate-600 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-all"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-slate-600 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-slate-700/50 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
                 >
                   <MdPerson className="text-lg" /> My Profile
                 </button>

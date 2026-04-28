@@ -57,8 +57,8 @@ export default function CustomerLedger() {
     const q = searchQuery.toLowerCase();
     return customers.filter(
       (c) =>
-        c.customer_name?.toLowerCase().includes(q) ||
-        c.mobile_number?.includes(q),
+        String(c.customer_name || "").toLowerCase().includes(q) ||
+        String(c.mobile_number || "").includes(q)
     );
   }, [searchQuery, customers, selectedCustomer]);
 
@@ -123,11 +123,14 @@ export default function CustomerLedger() {
     (closingBalance / CREDIT_LIMIT) * 100,
   );
 
-  // Safe date formatter — handles both strings and Date objects from backend
-  function fmtDate(val) {
+  // Safe date/time formatter
+  function fmtDateTime(val) {
     if (!val) return "—";
     try {
-      return new Date(val).toLocaleDateString();
+      return new Date(val).toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
     } catch {
       return String(val);
     }
@@ -141,7 +144,7 @@ export default function CustomerLedger() {
     >
       <div className="space-y-5 max-w-6xl mx-auto">
         {/* Customer Selector */}
-        <Card className="p-5 border-l-[6px] border-l-teal-500">
+        <Card className="p-5 border-l-[6px] border-l-teal-500 !overflow-visible">
           <SectionHeader
             title="Customer Selection"
             description="Search and select a customer to view their statement."
@@ -158,10 +161,11 @@ export default function CustomerLedger() {
                     if (selectedCustomer) setSelectedCustomer(null);
                   }}
                   placeholder="Search by name or mobile number..."
-                  className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pl-9 pr-3 text-[12px] outline-none focus:border-teal-400 transition"
+                  className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pr-3 text-[12px] outline-none focus:border-teal-400 transition"
+                  style={{ paddingLeft: "2.25rem" }}
                 />
                 <svg
-                  className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none"
+                  className="absolute left-3 top-2 h-4 w-4 text-slate-400 pointer-events-none"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -193,27 +197,33 @@ export default function CustomerLedger() {
             </div>
 
             {/* Dropdown */}
-            {showDropdown && (
+            {searchQuery.trim() && !selectedCustomer && (showDropdown || filteredCustomers.length === 0) && (
               <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 shadow-lg max-h-48 overflow-y-auto transition-colors">
-                {filteredCustomers.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => handleCustomerSelect(c)}
-                    className="w-full px-3 py-2 text-left text-[12px] hover:bg-teal-50 dark:hover:bg-teal-900/30 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 last:border-0 transition"
-                  >
-                    <div>
-                      <span className="font-semibold text-slate-800 dark:text-slate-100">
-                        {c.customer_name}
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleCustomerSelect(c)}
+                      className="w-full px-3 py-2 text-left text-[12px] hover:bg-teal-50 dark:hover:bg-teal-900/30 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 last:border-0 transition"
+                    >
+                      <div>
+                        <span className="font-semibold text-slate-800 dark:text-slate-100">
+                          {c.customer_name}
+                        </span>
+                        <span className="ml-2 text-slate-400 text-[11px]">
+                          {c.mobile_number}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        PKR {parseFloat(c.previous_balance || 0).toFixed(2)}
                       </span>
-                      <span className="ml-2 text-slate-400 text-[11px]">
-                        {c.mobile_number}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      PKR {parseFloat(c.previous_balance || 0).toFixed(2)}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-3 text-center text-[11px] text-slate-400 italic">
+                    No results for "{searchQuery}"
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -329,7 +339,9 @@ export default function CustomerLedger() {
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
                     <th className="px-5 py-3">Date</th>
                     <th className="px-5 py-3">Reference</th>
+                    <th className="px-5 py-3">Description</th>
                     <th className="px-5 py-3 text-right">Credit (−)</th>
+                    <th className="px-5 py-3 text-right">Debit (+)</th>
                     <th className="px-5 py-3 text-right">Balance</th>
                   </tr>
                 </thead>
@@ -358,7 +370,7 @@ export default function CustomerLedger() {
                         className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors text-sm"
                       >
                         <td className="px-5 py-3 text-[11px] font-mono text-slate-500 whitespace-nowrap">
-                          {fmtDate(txn.date || txn.dateTime)}
+                          {fmtDateTime(txn.rawDate || txn.date || txn.dateTime)}
                         </td>
                         <td className="px-5 py-3">
                           <span

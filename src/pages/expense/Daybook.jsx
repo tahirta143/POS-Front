@@ -601,7 +601,7 @@ export default function Daybook() {
                   value={obInput}
                   onChange={(e) => setObInput(e.target.value)}
                   placeholder="0.00"
-                  className="h-10 w-full rounded-lg border-2 border-slate-200 bg-slate-50 px-3 text-lg font-black text-teal-700 outline-none focus:border-teal-400 focus:bg-white transition"
+                  className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-black text-primary-700 outline-none focus:border-primary-400 focus:bg-white transition"
                   autoFocus
                 />
               </div>

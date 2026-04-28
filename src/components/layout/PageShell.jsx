@@ -18,9 +18,9 @@ export function PageShell({ children }) {
 export function Card({ children, className = "" }) {
   return (
     <div
-      className={`app-card group relative overflow-hidden rounded-3xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)] ${className}`}
+      className={`app-card group relative overflow-hidden rounded-xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)] ${className}`}
     >
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/70 to-transparent dark:via-teal-700/50" />
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary-200/70 to-transparent dark:via-primary-700/50" />
       {children}
     </div>
   );
@@ -28,16 +28,16 @@ export function Card({ children, className = "" }) {
 
 export function SectionHeader({ icon, title, description, action }) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-teal-100 dark:border-teal-500/50 dark:bg-teal-600 px-5 py-4 rounded-t-3xl -mx-5 -mt-5 transition-colors">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-primary-100 dark:border-primary-500/50 dark:bg-primary-600 px-5 py-4 rounded-t-3xl -mx-5 -mt-5 transition-colors">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-white/20 text-teal-600 dark:text-white shadow-sm ring-1 ring-white/70 dark:ring-teal-500/30 transition-colors">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-100 dark:bg-white/20 text-primary-600 dark:text-white shadow-sm ring-1 ring-white/70 dark:ring-primary-500/30 transition-colors">
           {icon}
         </div>
         <div className="min-w-0">
           <h3 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-white uppercase transition-colors">
             {title}
           </h3>
-          <p className="max-w-2xl text-[12px] leading-5 text-slate-500 dark:text-teal-50 transition-colors">
+          <p className="max-w-2xl text-[12px] leading-5 text-slate-500 dark:text-primary-50 transition-colors">
             {description}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function Field({
 }) {
   return (
     <label className={`block space-y-1.5 ${className}`}>
-      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400 transition-colors">
+      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-primary-400 transition-colors">
         {label}
         {required && <span className="ml-1 text-rose-500">*</span>}
       </span>
@@ -102,7 +102,7 @@ export function Toggle({ enabled, onChange, label, description }) {
         type="button"
         onClick={() => onChange(!enabled)}
         className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+          enabled ? "bg-primary-600" : "bg-slate-300 dark:bg-slate-700"
         }`}
       >
         <span
@@ -151,7 +151,7 @@ export function StatusChip({
     rose: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300",
     amber:
       "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
-    teal: "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300",
+    teal: "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300",
     slate: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   };
   const derivedLabel =
@@ -174,7 +174,7 @@ export function StatusChip({
 
 export function ActionButton({ label, tone, onClick, disabled }) {
   const tones = {
-    teal: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/40 disabled:opacity-50",
+    teal: "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 disabled:opacity-50",
     rose: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 disabled:opacity-50",
     amber:
       "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50",

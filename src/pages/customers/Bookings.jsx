@@ -69,11 +69,12 @@ export default function Bookings() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Payment modal
+  // Booking Actions modal
   const [payBooking, setPayBooking] = useState(null);
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("Cash");
   const [payRemarks, setPayRemarks] = useState("");
+  const [payBookingStatus, setPayBookingStatus] = useState("Pending");
 
   // Form state
   const [mobileNumber, setMobileNumber] = useState("");
@@ -359,26 +360,44 @@ export default function Bookings() {
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
-    if (!canRecordPayment) {
-      toast.error("You don't have permission to record payments.");
+    if (!canRecordPayment && !canUpdateBooking) {
+      toast.error("You don't have permission to perform this action.");
       return;
     }
-    if (!payBooking || !payAmount || parseFloat(payAmount) <= 0) return;
+    if (!payBooking) return;
+
+    const hasPayment = parseFloat(payAmount) > 0;
+    const isStatusChange = payBookingStatus !== payBooking.booking_status;
+
+    // Nothing changed
+    if (!hasPayment && !isStatusChange) {
+      toast.info("No changes to save.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await axiosInstance.post(`/bookings/${payBooking.id}/payments`, {
-        amount: parseFloat(payAmount),
+      // Single atomic call — PATCH handles status + optional payment together
+      await axiosInstance.patch(`/bookings/${payBooking.id}/status`, {
+        booking_status: payBookingStatus,
+        amount: hasPayment ? parseFloat(payAmount) : undefined,
         paymentMethod: payMethod,
-        remarks: payRemarks,
+        remarks: payRemarks || undefined,
         paymentDate: new Date().toISOString().slice(0, 10),
       });
-      toast.success("Payment recorded successfully");
+
+      const messages = [];
+      if (isStatusChange) messages.push(`Status → ${payBookingStatus}`);
+      if (hasPayment) messages.push(`PKR ${parseFloat(payAmount).toLocaleString()} recorded`);
+      toast.success(messages.join(" · ") || "Updated successfully");
+
       setPayBooking(null);
       setPayAmount("");
       setPayRemarks("");
+      setPayBookingStatus("Pending");
       fetchBookings();
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to record payment");
+      toast.error(err?.response?.data?.message || "Failed to update booking");
     } finally {
       setSubmitting(false);
     }
@@ -697,9 +716,10 @@ export default function Bookings() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition"
+                          className="group inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                         >
-                          <MdAdd className="h-4 w-4" /> Add Line
+                          <MdAdd className="h-4 w-4 group-hover:rotate-90 transition duration-300" />{" "}
+                          Add Line
                         </button>
                       </div>
                     </div>
@@ -749,7 +769,7 @@ export default function Bookings() {
                             <select
                               value={paymentMethod}
                               onChange={(e) => setPaymentMethod(e.target.value)}
-                              className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 text-[12px] font-bold outline-none focus:border-teal-500 transition"
+                              className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-[11px] font-bold outline-none focus:border-primary-500 transition"
                             >
                               <option value="Cash">Cash</option>
                               <option value="Online">Online</option>
@@ -766,7 +786,7 @@ export default function Bookings() {
                               value={givenAmount}
                               onChange={(e) => setGivenAmount(e.target.value)}
                               placeholder="0.00"
-                              className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black focus:border-emerald-500 focus:bg-white transition outline-none"
+                              className="h-8 w-full rounded-lg border-2 border-slate-100 bg-slate-50 px-3 text-sm font-black focus:border-emerald-500 focus:bg-white transition outline-none"
                             />
                           </div>
                         </div>
@@ -932,11 +952,17 @@ export default function Bookings() {
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex justify-end gap-2">
-                            {Number(s.to_be_paid) > 0 && canRecordPayment && (
+                            {(canRecordPayment || canUpdateBooking) && (
                               <ActionButton
                                 label="Pay"
                                 tone="emerald"
-                                onClick={() => setPayBooking(s)}
+                                onClick={() => {
+                                  setPayBooking(s);
+                                  setPayBookingStatus(s.booking_status || "Pending");
+                                  setPayAmount("");
+                                  setPayRemarks("");
+                                  setPayMethod("Cash");
+                                }}
                               />
                             )}
                             {canUpdateBooking && (
@@ -964,86 +990,197 @@ export default function Bookings() {
           )}
         </Card>
 
-        {/* Payment Modal */}
+        {/* ── Booking Actions Modal ──────────────────────────────────────── */}
         <AnimatePresence>
-          {payBooking && canRecordPayment && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          {payBooking && (canRecordPayment || canUpdateBooking) && (
+            <div
+              className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+              onClick={(e) => e.target === e.currentTarget && setPayBooking(null)}
+            >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+                initial={{ opacity: 0, y: 32, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 24, scale: 0.97 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
               >
-                <div className="bg-teal-600 p-4 text-white">
-                  <h3 className="text-lg font-bold">Record Payment</h3>
-                  <p className="text-xs text-teal-100">
-                    Booking #BK-{String(payBooking.id).padStart(4, "0")} —{" "}
-                    {payBooking.customer_name}
-                  </p>
-                </div>
-                <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-                  <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 flex justify-between text-sm font-bold">
-                    <span className="text-slate-500">Remaining Due:</span>
-                    <span className="text-rose-600 font-mono">
-                      PKR {Number(payBooking.to_be_paid).toLocaleString()}
-                    </span>
-                  </div>
-                  <Field label="Payment Amount" required>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={payAmount}
-                      onChange={(e) => setPayAmount(e.target.value)}
-                      max={payBooking.to_be_paid}
-                      className="h-10 w-full rounded-xl border-2 border-slate-100 bg-white px-4 text-lg font-black focus:border-emerald-500 outline-none transition"
-                      placeholder="0.00"
-                      autoFocus
-                    />
-                  </Field>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Method">
-                      <select
-                        value={payMethod}
-                        onChange={(e) => setPayMethod(e.target.value)}
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-bold outline-none focus:border-teal-400 transition"
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="Online">Online</option>
-                        <option value="Card">Card</option>
-                      </select>
-                    </Field>
-                    <Field label="Date">
-                      <input
-                        type="date"
-                        value={new Date().toISOString().slice(0, 10)}
-                        disabled
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none"
-                      />
-                    </Field>
-                  </div>
-                  <Field label="Remarks">
-                    <textarea
-                      value={payRemarks}
-                      onChange={(e) => setPayRemarks(e.target.value)}
-                      rows={2}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] outline-none focus:border-teal-400 transition"
-                      placeholder="Optional notes..."
-                    />
-                  </Field>
-                  <div className="flex gap-3 pt-2">
+                {/* Modal Header */}
+                <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-5 text-white">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-200 mb-1">
+                        Booking Actions
+                      </p>
+                      <h3 className="text-xl font-extrabold tracking-tight">
+                        #BK-{String(payBooking.id).padStart(4, "0")}
+                      </h3>
+                      <p className="text-sm text-primary-100 mt-0.5 font-medium">
+                        {payBooking.customer_name}
+                        {payBooking.mobile_number && (
+                          <span className="ml-2 opacity-75">· {payBooking.mobile_number}</span>
+                        )}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setPayBooking(null)}
-                      className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
+                      className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white hover:bg-white/30 transition"
+                      aria-label="Close"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Summary Strip */}
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Payable",  value: `PKR ${Number(payBooking.payable || 0).toLocaleString()}`,    color: "text-white" },
+                      { label: "Paid",     value: `PKR ${Number(payBooking.paid || 0).toLocaleString()}`,       color: "text-emerald-200" },
+                      { label: "Due",      value: `PKR ${Number(payBooking.to_be_paid || 0).toLocaleString()}`, color: Number(payBooking.to_be_paid) > 0 ? "text-rose-200" : "text-emerald-200" },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-xl bg-white/10 px-3 py-2 text-center">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-primary-200 mb-0.5">{s.label}</p>
+                        <p className={`font-mono text-[13px] font-black ${s.color}`}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={handleRecordPayment} className="p-6 space-y-5">
+
+                  {/* ── Section 1: Booking Status ── */}
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
+                      Booking Status
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: "Pending",   label: "Pending",   emoji: "🕐", active: "border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                        { value: "Completed", label: "Completed", emoji: "✅", active: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                        { value: "Rejected",  label: "Rejected",  emoji: "❌", active: "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 shadow-sm",     idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setPayBookingStatus(opt.value)}
+                          className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 transition-all duration-150 font-semibold text-[12px] ${
+                            payBookingStatus === opt.value ? opt.active : opt.idle + " hover:border-slate-300 dark:hover:border-slate-600"
+                          }`}
+                        >
+                          <span className="text-xl">{opt.emoji}</span>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Section 2: Payment ── */}
+                  {canRecordPayment && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                          Record Payment
+                        </p>
+                        {Number(payBooking.to_be_paid) <= 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓ Fully Paid
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Amount */}
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 pointer-events-none">PKR</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={payAmount}
+                            onChange={(e) => setPayAmount(e.target.value)}
+                            className="h-9 w-full rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-12 pr-4 text-sm font-black text-slate-800 dark:text-white placeholder:text-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition"
+                            placeholder="0.00"
+                          />
+                          {Number(payBooking.to_be_paid) > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setPayAmount(String(payBooking.to_be_paid))}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-primary-50 dark:bg-primary-900/30 px-2 py-1 text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-100 transition"
+                            >
+                              Full Due
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Method + Remarks */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Method</label>
+                            <select
+                              value={payMethod}
+                              onChange={(e) => setPayMethod(e.target.value)}
+                              className="h-9 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-[12px] font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 transition"
+                            >
+                              <option value="Cash">💵 Cash</option>
+                              <option value="Online">🏦 Online Transfer</option>
+                              <option value="Card">💳 Card</option>
+                              <option value="COD">📦 COD</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Remarks</label>
+                            <input
+                              type="text"
+                              value={payRemarks}
+                              onChange={(e) => setPayRemarks(e.target.value)}
+                              className="h-9 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-[12px] text-slate-700 dark:text-slate-200 placeholder:text-slate-300 outline-none focus:border-primary-400 transition"
+                              placeholder="Optional note..."
+                            />
+                          </div>
+                        </div>
+
+                        {/* Live due preview */}
+                        {parseFloat(payAmount) > 0 && (
+                          <div className={`flex items-center justify-between rounded-xl border-2 px-4 py-2.5 transition-all ${
+                            parseFloat(payAmount) >= Number(payBooking.to_be_paid)
+                              ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20"
+                              : "border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+                          }`}>
+                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Remaining after payment</span>
+                            <span className={`font-mono font-black text-sm ${
+                              parseFloat(payAmount) >= Number(payBooking.to_be_paid)
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-amber-600 dark:text-amber-400"
+                            }`}>
+                              PKR {Math.max(0, Number(payBooking.to_be_paid) - parseFloat(payAmount || 0)).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Footer Buttons ── */}
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setPayBooking(null)}
+                      className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={submitting || !payAmount}
-                      className="flex-[2] rounded-xl bg-teal-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
+                      disabled={submitting}
+                      className="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary-600/20 hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {submitting ? "Recording..." : "Record Payment"}
+                      {submitting ? (
+                        <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving...</>
+                      ) : (
+                        <><MdPayment className="h-4 w-4" /> Save Changes</>
+                      )}
                     </button>
                   </div>
                 </form>

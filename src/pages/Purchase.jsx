@@ -23,17 +23,15 @@ const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
 };
 
-function SectionCard({ color, title, children }) {
-  const style = sectionStyles[color] ?? sectionStyles.teal;
+function SectionCard({ title, children }) {
+  const style = sectionStyles.teal;
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 p-2.5 shadow-sm ring-1 ring-white/70 dark:ring-slate-800/70 transition-all duration-300 hover:shadow-md">
+    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-colors">
       <div
-        className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${style.header} dark:bg-teal-600 dark:border-teal-500/50 transition-colors`}
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}
       >
-        <span
-          className={`h-3 w-1 rounded-full ${style.accent} dark:bg-white`}
-        />
-        <h3 className="text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-tight">
+        <span className={`h-3 w-1 rounded-full ${style.accent}`} />
+        <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-tight">
           {title}
         </h3>
       </div>
@@ -325,11 +323,10 @@ export default function PurchasePage() {
                 }
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-              isFormOpen
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
                 ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-            }`}
+              }`}
           >
             {isFormOpen ? (
               <>
@@ -412,7 +409,7 @@ export default function PurchasePage() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-sm transition-all duration-200 hover:border-teal-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-teal-900/50 dark:hover:bg-slate-900/70 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px]"
+                            className="grid grid-cols-2 gap-2 transition-all duration-200 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px]"
                           >
                             <select
                               value={row.category_id}
@@ -506,9 +503,10 @@ export default function PurchasePage() {
                         <button
                           type="button"
                           onClick={addRow}
-                          className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
+                          className="group inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-[12px] font-bold text-teal-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                         >
-                          <MdAdd className="h-4 w-4" /> Add Item Line
+                          <MdAdd className="h-4 w-4 group-hover:rotate-90 transition duration-300" />{" "}
+                          Add Line
                         </button>
                       </div>
                     </div>
@@ -559,27 +557,25 @@ export default function PurchasePage() {
                             value={givenAmount}
                             onChange={(e) => setGivenAmount(e.target.value)}
                             placeholder="0.00"
-                            className="h-10 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-lg font-black text-emerald-700 outline-none transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-emerald-400"
+                            className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-black text-emerald-700 outline-none transition focus:border-emerald-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-emerald-400"
                           />
                         </div>
                         {payable > 0 && (
                           <div
-                            className={`p-3 rounded-xl border-2 flex items-center justify-between ${
-                              toBePaid <= 0
+                            className={`p-3 rounded-xl border-2 flex items-center justify-between ${toBePaid <= 0
                                 ? "bg-emerald-50 border-emerald-100"
                                 : Number(givenAmount) > 0
                                   ? "bg-amber-50 border-amber-100"
                                   : "bg-rose-50 border-rose-100"
-                            }`}
+                              }`}
                           >
                             <span
-                              className={`text-[11px] font-black uppercase tracking-widest ${
-                                toBePaid <= 0
+                              className={`text-[11px] font-black uppercase tracking-widest ${toBePaid <= 0
                                   ? "text-emerald-700"
                                   : Number(givenAmount) > 0
                                     ? "text-amber-700"
                                     : "text-rose-700"
-                              }`}
+                                }`}
                             >
                               {toBePaid <= 0
                                 ? "FULLY PAID"
@@ -588,13 +584,12 @@ export default function PurchasePage() {
                                   : "UNPAID"}
                             </span>
                             <span
-                              className={`font-mono font-black text-lg ${
-                                toBePaid <= 0
+                              className={`font-mono font-black text-lg ${toBePaid <= 0
                                   ? "text-emerald-600"
                                   : Number(givenAmount) > 0
                                     ? "text-amber-600"
                                     : "text-rose-600"
-                              }`}
+                                }`}
                             >
                               PKR {toBePaid.toLocaleString()}
                             </span>

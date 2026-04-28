@@ -5,7 +5,7 @@ export function Badge({ children, tone = "slate", className = "" }) {
     emerald: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
     amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
     rose: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-    teal: "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800",
+    primary: "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 border-primary-200 dark:border-primary-800",
     slate: "bg-slate-50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
   };
 
@@ -25,7 +25,7 @@ export function StatusBadge({ status, className = "" }) {
     Rejected: "rose",
     Paid: "emerald",
     Partial: "amber",
-    Active: "teal",
+    Active: "primary",
     Inactive: "rose"
   };
   
