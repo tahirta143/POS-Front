@@ -20,6 +20,9 @@ import {
   MdPayment,
   MdSearch,
   MdLock,
+  MdAccessTime,      
+  MdCheckCircle,     
+  MdCancel,          
 } from "react-icons/md";
 import { usePermissions } from "../../hooks/usePermissions";
 
@@ -1057,9 +1060,9 @@ export default function Bookings() {
                     </p>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { value: "Pending",   label: "Pending",   emoji: "🕐", active: "border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
-                        { value: "Completed", label: "Completed", emoji: "✅", active: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
-                        { value: "Rejected",  label: "Rejected",  emoji: "❌", active: "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 shadow-sm",     idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                        { value: "Pending",   label: "Pending",   Icon: MdAccessTime, active: "border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                        { value: "Completed", label: "Completed", Icon: MdCheckCircle, active: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-sm", idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
+                        { value: "Rejected",  label: "Rejected",  Icon: MdCancel, active: "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 shadow-sm",     idle: "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400" },
                       ].map((opt) => (
                         <button
                           key={opt.value}
@@ -1069,7 +1072,7 @@ export default function Bookings() {
                             payBookingStatus === opt.value ? opt.active : opt.idle + " hover:border-slate-300 dark:hover:border-slate-600"
                           }`}
                         >
-                          <span className="text-xl">{opt.emoji}</span>
+                          <opt.Icon size={20} />
                           {opt.label}
                         </button>
                       ))}
@@ -1123,10 +1126,10 @@ export default function Bookings() {
                               onChange={(e) => setPayMethod(e.target.value)}
                               className="h-9 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-[12px] font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 transition"
                             >
-                              <option value="Cash">💵 Cash</option>
-                              <option value="Online">🏦 Online Transfer</option>
-                              <option value="Card">💳 Card</option>
-                              <option value="COD">📦 COD</option>
+                              <option value="Cash">Cash</option>
+                              <option value="Online">Online Transfer</option>
+                              <option value="Card">Card</option>
+                              <option value="COD">COD</option>
                             </select>
                           </div>
                           <div>
