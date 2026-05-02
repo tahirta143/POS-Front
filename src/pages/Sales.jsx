@@ -11,7 +11,14 @@ import {
   StatusChip,
 } from "../components/layout/PageShell.jsx";
 import axiosInstance from "../services/axiosInstance";
-import { MdAdd, MdRemove, MdReceipt, MdPerson, MdSearch, MdLock } from "react-icons/md";
+import {
+  MdAdd,
+  MdRemove,
+  MdReceipt,
+  MdPerson,
+  MdSearch,
+  MdLock,
+} from "react-icons/md";
 import { usePermissions } from "../hooks/usePermissions";
 
 const sectionStyles = {
@@ -56,7 +63,8 @@ const generateReceiptNumber = () => {
 };
 
 export default function Sales() {
-  const { canCreate, canRead, canUpdate, canDelete, isAdmin } = usePermissions();
+  const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
+    usePermissions();
   const MODULE_NAME = "Sale";
 
   const [customers, setCustomers] = useState([]);
@@ -214,7 +222,7 @@ export default function Sales() {
       toast.error("You don't have permission to edit sales invoices.");
       return;
     }
-    
+
     setEditId(rec.id);
     setMobileNumber(rec.mobile || "");
     setCustomerName(rec.customer_name || "");
@@ -246,7 +254,7 @@ export default function Sales() {
       toast.error("You don't have permission to delete sales invoices.");
       return;
     }
-    
+
     if (!window.confirm("Delete this sale record?")) return;
     try {
       await axiosInstance.delete(`/sale-invoices/${id}`);
@@ -260,7 +268,7 @@ export default function Sales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!canCreateSale && !canUpdateSale) {
       toast.error("You don't have permission to save sales invoices.");
       return;
@@ -337,12 +345,16 @@ export default function Sales() {
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <MdLock className="text-5xl text-red-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              Access Denied
+            </h2>
             <p className="text-slate-500 mb-4">
               You don't have permission to view Sales Invoices.
             </p>
             <div className="bg-slate-50 rounded-lg p-3 text-left">
-              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">Required Permission:</p>
+              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                Required Permission:
+              </p>
               <p className="text-[12px] font-mono text-slate-700">Read Sale</p>
             </div>
           </div>
@@ -530,7 +542,7 @@ export default function Sales() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 transition-all duration-200 sm:grid-cols-[140px_1fr_90px_90px_80px_100px_40px]"
+                            className="grid grid-cols-2 gap-2 transition-all duration-200 sm:grid-cols-[180px_1fr_100px_80px_100px_50px]"
                           >
                             <div className="col-span-2 sm:col-span-1">
                               <select

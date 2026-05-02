@@ -13,7 +13,7 @@ import {
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
-import { MdLock } from "react-icons/md";
+import { MdLock, MdRefresh } from "react-icons/md";
 
 export default function SubCategory() {
   const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
@@ -400,9 +400,9 @@ export default function SubCategory() {
                 <button
                   type="button"
                   onClick={fetchSubcategories}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Refresh
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

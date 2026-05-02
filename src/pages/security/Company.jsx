@@ -20,6 +20,7 @@ import {
   MdPhone,
   MdLanguage,
   MdLocationOn,
+  MdRefresh,
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
@@ -483,9 +484,9 @@ export default function CompanyPage() {
                 <button
                   type="button"
                   onClick={fetchCompanies}
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Refresh Registry
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

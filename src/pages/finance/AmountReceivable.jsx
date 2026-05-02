@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Card, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
+import { MdRefresh, MdSearch } from 'react-icons/md';
 import axiosInstance from '../../services/axiosInstance';
 
 function MoneyIcon({ className }) {
@@ -178,7 +179,7 @@ export default function AmountReceivablePage() {
             description="Grouped outstanding balances from unpaid transactions."
             icon={<MoneyIcon className="h-5 w-5" />}
             action={
-              <div className="flex items-center gap-4 p-2">
+              <div className="flex flex-wrap items-center gap-4 p-2">
                 {/* Tabs */}
                 <div className="flex bg-slate-100 p-1 rounded-lg">
                   {[
@@ -197,15 +198,19 @@ export default function AmountReceivablePage() {
                 </div>
 
                 <div className="relative">
-                  <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or mobile..."
-                    className="h-8 w-52 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] outline-none focus:border-teal-400 transition" />
-                  <svg className="absolute left-2.5 top-2 h-4 w-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none z-10" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search name or mobile..."
+                    className="h-8 w-64 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
+                    style={{ paddingLeft: "2rem" }}
+                  />
                 </div>
                 <button type="button" onClick={fetchReceivables} disabled={loading}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition disabled:opacity-50">
-                  {loading ? '...' : 'Refresh'}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

@@ -17,6 +17,7 @@ import {
   MdApartment,
   MdBusiness,
   MdArrowBack,
+  MdRefresh,
 } from "react-icons/md";
 
 const sectionStyles = {
@@ -440,9 +441,9 @@ export default function EmployeePage() {
                 <button
                   type="button"
                   onClick={fetchEmployees}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Refresh Directory
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

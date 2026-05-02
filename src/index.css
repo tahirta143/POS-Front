@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /* Enable manual dark mode toggling via the .dark class for Tailwind v4 */
@@ -18,7 +18,7 @@
 }
 
 @theme {
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: "Inter", sans-serif;
   --color-primary-50: #f0fdfa;
   --color-primary-100: #ccfbf1;
   --color-primary-200: #99f6e4;
@@ -51,7 +51,8 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 .app-shell .page-shell {
@@ -81,7 +82,11 @@ code {
   @apply text-slate-900 dark:text-slate-200;
 }
 
-.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.app-shell
+  .app-card
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ),
 .app-shell .app-card select,
 .app-shell .app-card textarea {
   border-radius: 0.375rem;
@@ -89,10 +94,17 @@ code {
   font-size: 0.75rem;
   line-height: 1rem;
   @apply text-slate-900 dark:text-slate-50;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 }
 
-.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.app-shell
+  .app-card
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ),
 .app-shell .app-card select {
   height: 2rem;
   padding-left: 0.5rem;
@@ -105,7 +117,9 @@ code {
   padding: 0.375rem 0.5rem;
 }
 
-.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+.app-shell
+  .app-card
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 .app-shell .app-card select:focus,
 .app-shell .app-card textarea:focus {
   border-color: var(--color-primary-500);
@@ -114,13 +128,21 @@ code {
 }
 
 .app-shell .app-card button:not(:disabled) {
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
   border-radius: 0.375rem;
 }
 
 /* ── Hard override: keep ALL inputs/selects compact inside cards ── */
 /* This neutralises hardcoded h-10 / h-12 Tailwind utilities */
-.app-shell .app-card input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.app-shell
+  .app-card
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ),
 .app-shell .app-card select {
   height: 2rem !important;
   min-height: 2rem !important;
@@ -187,61 +209,63 @@ code {
   background-color: rgb(15 23 42);
 }
 
-.dark #root :where(
-  [class*="bg-slate-50"],
-  [class*="bg-slate-100"],
-  [class*="bg-gray-50"],
-  [class*="bg-gray-100"],
-  [class*="bg-teal-50"],
-  [class*="bg-emerald-50"],
-  [class*="bg-cyan-50"],
-  [class*="bg-amber-50"],
-  [class*="bg-rose-50"]
-):not([class*="dark:bg-"]) {
+.dark
+  #root
+  :where(
+    [class*="bg-slate-50"],
+    [class*="bg-slate-100"],
+    [class*="bg-gray-50"],
+    [class*="bg-gray-100"],
+    [class*="bg-teal-50"],
+    [class*="bg-emerald-50"],
+    [class*="bg-cyan-50"],
+    [class*="bg-amber-50"],
+    [class*="bg-rose-50"]
+  ):not([class*="dark:bg-"]) {
   background-color: rgba(30, 41, 59, 0.82);
 }
 
-.dark #root :where(
-  .border-slate-50,
-  .border-slate-100,
-  .border-slate-200,
-  .border-slate-300,
-  .border-gray-100,
-  .border-gray-200,
-  .border-gray-300,
-  .border-teal-100,
-  .border-emerald-100,
-  .border-cyan-100,
-  .border-amber-100,
-  .border-rose-100
-):not([class*="dark:border-"]) {
+.dark
+  #root
+  :where(
+    .border-slate-50,
+    .border-slate-100,
+    .border-slate-200,
+    .border-slate-300,
+    .border-gray-100,
+    .border-gray-200,
+    .border-gray-300,
+    .border-teal-100,
+    .border-emerald-100,
+    .border-cyan-100,
+    .border-amber-100,
+    .border-rose-100
+  ):not([class*="dark:border-"]) {
   border-color: rgb(51 65 85);
 }
 
-.dark #root :where(
-  .text-slate-900,
-  .text-slate-800,
-  .text-slate-700,
-  .text-gray-900,
-  .text-gray-800,
-  .text-gray-700
-):not([class*="dark:text-"]) {
+.dark
+  #root
+  :where(
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700
+  ):not([class*="dark:text-"]) {
   color: rgb(241 245 249);
 }
 
-.dark #root :where(
-  .text-slate-600,
-  .text-slate-500,
-  .text-gray-600,
-  .text-gray-500
-):not([class*="dark:text-"]) {
+.dark
+  #root
+  :where(.text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500):not(
+    [class*="dark:text-"]
+  ) {
   color: rgb(203 213 225);
 }
 
-.dark #root :where(
-  .text-slate-400,
-  .text-gray-400
-):not([class*="dark:text-"]) {
+.dark #root :where(.text-slate-400, .text-gray-400):not([class*="dark:text-"]) {
   color: rgb(148 163 184);
 }
 
@@ -251,24 +275,29 @@ code {
   color: rgb(226 232 240);
 }
 
-.dark #root :where(input, select, textarea):not([class*="dark:bg-"])::placeholder {
+.dark
+  #root
+  :where(input, select, textarea):not([class*="dark:bg-"])::placeholder {
   color: rgb(148 163 184);
 }
 
-.dark #root :where(
-  [class*="disabled:bg-slate-50"],
-  [class*="disabled:bg-slate-100"]
-):not([class*="dark:disabled:bg-"]):disabled {
+.dark
+  #root
+  :where([class*="disabled:bg-slate-50"], [class*="disabled:bg-slate-100"]):not(
+    [class*="dark:disabled:bg-"]
+  ):disabled {
   background-color: rgba(30, 41, 59, 0.6);
 }
 
-.dark #root :where(
-  [class*="hover:bg-slate-50"],
-  [class*="hover:bg-slate-100"],
-  [class*="hover:bg-gray-50"],
-  [class*="hover:bg-gray-100"],
-  [class*="hover:bg-teal-50"]
-):not([class*="dark:hover:bg-"]):hover {
+.dark
+  #root
+  :where(
+    [class*="hover:bg-slate-50"],
+    [class*="hover:bg-slate-100"],
+    [class*="hover:bg-gray-50"],
+    [class*="hover:bg-gray-100"],
+    [class*="hover:bg-teal-50"]
+  ):not([class*="dark:hover:bg-"]):hover {
   background-color: rgba(51, 65, 85, 0.8);
 }
 

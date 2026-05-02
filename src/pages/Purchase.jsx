@@ -323,10 +323,11 @@ export default function PurchasePage() {
                 }
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${isFormOpen
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              isFormOpen
                 ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-              }`}
+            }`}
           >
             {isFormOpen ? (
               <>
@@ -562,20 +563,22 @@ export default function PurchasePage() {
                         </div>
                         {payable > 0 && (
                           <div
-                            className={`p-3 rounded-xl border-2 flex items-center justify-between ${toBePaid <= 0
+                            className={`p-3 rounded-xl border-2 flex items-center justify-between ${
+                              toBePaid <= 0
                                 ? "bg-emerald-50 border-emerald-100"
                                 : Number(givenAmount) > 0
                                   ? "bg-amber-50 border-amber-100"
                                   : "bg-rose-50 border-rose-100"
-                              }`}
+                            }`}
                           >
                             <span
-                              className={`text-[11px] font-black uppercase tracking-widest ${toBePaid <= 0
+                              className={`text-[11px] font-black uppercase tracking-widest ${
+                                toBePaid <= 0
                                   ? "text-emerald-700"
                                   : Number(givenAmount) > 0
                                     ? "text-amber-700"
                                     : "text-rose-700"
-                                }`}
+                              }`}
                             >
                               {toBePaid <= 0
                                 ? "FULLY PAID"
@@ -584,12 +587,13 @@ export default function PurchasePage() {
                                   : "UNPAID"}
                             </span>
                             <span
-                              className={`font-mono font-black text-lg ${toBePaid <= 0
+                              className={`font-mono font-black text-lg ${
+                                toBePaid <= 0
                                   ? "text-emerald-600"
                                   : Number(givenAmount) > 0
                                     ? "text-amber-600"
                                     : "text-rose-600"
-                                }`}
+                              }`}
                             >
                               PKR {toBePaid.toLocaleString()}
                             </span>

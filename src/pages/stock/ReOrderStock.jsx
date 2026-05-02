@@ -7,6 +7,7 @@ import {
   TableState,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { MdRefresh, MdSearch } from "react-icons/md";
 
 function ReorderIcon({ className }) {
   return (
@@ -571,12 +572,9 @@ export default function ReOrderStock() {
             <button
               type="button"
               onClick={fetchData}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              <RefreshIcon
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
-              Refresh
+              <MdRefresh className="inline mr-1 h-4 w-4" /> Refresh
             </button>
           </div>
         </div>
@@ -618,48 +616,51 @@ export default function ReOrderStock() {
             title="Reorder List"
             description="Search, update order quantities, and manage statuses."
             icon={<ReorderIcon className="h-6 w-6" />}
+            action={
+              <div className="flex flex-wrap items-center gap-4 p-2">
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                  {STATUS_TABS.map((t) => {
+                    const active = statusTab === t.id;
+                    let count = 0;
+                    if (t.id === "all") count = counts.all;
+                    else if (t.id === "pending") count = stats?.pending ?? 0;
+                    else if (t.id === "ordered") count = stats?.ordered ?? 0;
+                    else if (t.id === "received") count = stats?.received ?? 0;
+
+                    const label =
+                      t.id === "all" ? t.label : `${t.label} ${count}`;
+
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setStatusTab(t.id)}
+                        className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition ${
+                          active
+                            ? "bg-white text-teal-600 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="relative">
+                  <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none z-10" />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search item, category or barcode..."
+                    className="h-8 w-64 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
+                    style={{ paddingLeft: "2rem" }}
+                  />
+                </div>
+              </div>
+            }
           />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative w-full sm:max-w-[420px]">
-              <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by item name or category..."
-                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pl-8 pr-3 text-[12px] outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {STATUS_TABS.map((t) => {
-                const active = statusTab === t.id;
-                let count = 0;
-                if (t.id === "all") count = counts.all;
-                else if (t.id === "pending") count = stats?.pending ?? 0;
-                else if (t.id === "ordered") count = stats?.ordered ?? 0;
-                else if (t.id === "received") count = stats?.received ?? 0;
-
-                const label = t.id === "all" ? t.label : `${t.label} ${count}`;
-
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setStatusTab(t.id)}
-                    className={`h-8 rounded-md px-3 text-[12px] font-semibold transition ${
-                      active
-                        ? "bg-teal-600 text-white shadow-sm shadow-teal-200"
-                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
             <table className="w-full divide-y divide-slate-100 dark:divide-slate-800 text-left table-fixed">

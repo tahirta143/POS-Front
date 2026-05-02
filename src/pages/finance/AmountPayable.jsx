@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Card, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
+import { MdRefresh, MdSearch } from 'react-icons/md';
 import axiosInstance from '../../services/axiosInstance';
 
 function MoneyIcon({ className }) {
@@ -111,20 +112,24 @@ export default function AmountPayablePage() {
             description="Grouped outstanding dues from unpaid purchase orders."
             icon={<MoneyIcon className="h-5 w-5" />}
             action={
-              <div className="flex items-center gap-2 p-4">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name or mobile..."
-                  className="h-8 w-52 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
-                />
+              <div className="flex items-center gap-4 p-2">
+                <div className="relative">
+                  <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none z-10" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search supplier or mobile..."
+                    className="h-8 w-64 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
+                    style={{ paddingLeft: "2rem" }}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={fetchPayables}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Refresh
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

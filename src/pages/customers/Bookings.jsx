@@ -863,7 +863,7 @@ export default function Bookings() {
                 <button
                   type="button"
                   onClick={fetchBookings}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <MdRefresh className="inline mr-1" /> Refresh
                 </button>

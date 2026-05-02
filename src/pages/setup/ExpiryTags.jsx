@@ -468,9 +468,9 @@ export default function ExpiryTagsPage() {
                 <button
                   type="button"
                   onClick={fetchExpiryTags}
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  <MdRefresh className="inline mr-1" /> Refresh Data
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }

@@ -93,14 +93,27 @@ function getModuleIcon(moduleName) {
   if (name.includes("ledger")) return <MdReceipt className="h-3.5 w-3.5" />;
   if (name === "supplier" || name === "manufacturer")
     return <MdLocalShipping className="h-3.5 w-3.5" />;
-  if (name === "group" || name === "user" || name === "staff" || name === "group user")
+  if (
+    name === "group" ||
+    name === "user" ||
+    name === "staff" ||
+    name === "group user"
+  )
     return <MdPeople className="h-3.5 w-3.5" />;
   if (name === "module") return <MdViewModule className="h-3.5 w-3.5" />;
-  if (name.includes("permission") || name === "add right" || name === "security")
+  if (
+    name.includes("permission") ||
+    name === "add right" ||
+    name === "security"
+  )
     return <MdSecurity className="h-3.5 w-3.5" />;
   if (name === "sale" || name === "sale return")
     return <MdReceipt className="h-3.5 w-3.5" />;
-  if (name === "purchase" || name === "purchase return" || name === "goods receipt")
+  if (
+    name === "purchase" ||
+    name === "purchase return" ||
+    name === "goods receipt"
+  )
     return <MdLocalShipping className="h-3.5 w-3.5" />;
   if (name === "booking" || name === "reorder")
     return <MdFolder className="h-3.5 w-3.5" />;
@@ -342,8 +355,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       "Expense & DayBook": {
         id: "cat-billing2",
         icon: getCategoryIcon("expense"),
-        description:
-          "Expense tracking, vouchers, and daily financial records",
+        description: "Expense tracking, vouchers, and daily financial records",
         modules: [
           "Expense Head",
           "Expense Voucher",
@@ -577,7 +589,10 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
     {
       triggerModule: "sub category",
       triggerAction: "create",
-      deps: [{ mod: "item category", action: "read" },{ mod: "sub category", action: "read" }],
+      deps: [
+        { mod: "item category", action: "read" },
+        { mod: "sub category", action: "read" },
+      ],
     },
     {
       triggerModule: "supplier ledger",
@@ -651,7 +666,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("You don't have permission to assign permissions.");
       return;
     }
-    
+
     const childFuncIds = module.functionalities
       .map((f) => f.funcId)
       .filter(Boolean);
@@ -697,7 +712,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("You don't have permission to assign permissions.");
       return;
     }
-    
+
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
       const moduleNameById = buildModuleNameMap();
@@ -732,7 +747,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("You don't have permission to remove permissions.");
       return;
     }
-    
+
     const funcIds = module.functionalities.map((f) => f.funcId);
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
@@ -751,7 +766,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("You don't have permission to remove permissions.");
       return;
     }
-    
+
     setAssignedRightIds((prev) => {
       const next = new Set(prev);
       next.delete(func.funcId);
@@ -837,12 +852,12 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("Please select a group first.");
       return;
     }
-    
+
     if (!canAssignPermissions) {
       toast.error("You don't have permission to assign permissions.");
       return;
     }
-    
+
     setSaving(true);
     try {
       const byModule = {};
@@ -1498,7 +1513,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                   }
                                   onClick={(e) => e.stopPropagation()}
                                   className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
-                                  disabled={module.isPlanned || !canAssignPermissions}
+                                  disabled={
+                                    module.isPlanned || !canAssignPermissions
+                                  }
                                 />
                                 {!module.isPlanned && modTotal > 0 ? (
                                   <button
@@ -1541,7 +1558,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )
                                   }
                                   className="flex-1 text-left min-w-0"
-                                  disabled={module.isPlanned || !canAssignPermissions}
+                                  disabled={
+                                    module.isPlanned || !canAssignPermissions
+                                  }
                                 >
                                   <span className="text-[11px] font-semibold text-slate-700 truncate block">
                                     {module.name}
@@ -1610,7 +1629,8 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                     : "hover:bg-slate-50"
                                                 }`}
                                                 onClick={() =>
-                                                  canAssignPermissions && toggleFunctionality(
+                                                  canAssignPermissions &&
+                                                  toggleFunctionality(
                                                     func,
                                                     module.moduleId,
                                                   )
@@ -1620,7 +1640,8 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                   type="checkbox"
                                                   checked={isChecked}
                                                   onChange={() =>
-                                                    canAssignPermissions && toggleFunctionality(
+                                                    canAssignPermissions &&
+                                                    toggleFunctionality(
                                                       func,
                                                       module.moduleId,
                                                     )
@@ -1629,7 +1650,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                                     e.stopPropagation()
                                                   }
                                                   className="rounded accent-teal-600 cursor-pointer h-3 w-3 shrink-0"
-                                                  disabled={!canAssignPermissions}
+                                                  disabled={
+                                                    !canAssignPermissions
+                                                  }
                                                 />
                                                 <span
                                                   className={`text-[10px] flex-1 truncate ${isChecked ? "text-teal-700 font-medium" : "text-slate-500"}`}
@@ -3032,7 +3055,11 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                    style={{ overflow: m.funcs.some(f => f.id === openFuncMenu) ? "visible" : "hidden" }}
+                    style={{
+                      overflow: m.funcs.some((f) => f.id === openFuncMenu)
+                        ? "visible"
+                        : "hidden",
+                    }}
                     className=""
                   >
                     <div className="p-4 space-y-1 border-t border-slate-100">
@@ -3048,7 +3075,8 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
 
                         // Open upward for last 2 items to prevent clipping at bottom
                         const totalFuncs = m.funcs.length;
-                        const openUpward = totalFuncs > 2 && fIdx >= totalFuncs - 2;
+                        const openUpward =
+                          totalFuncs > 2 && fIdx >= totalFuncs - 2;
 
                         let displayName = f.name;
                         const modulePrefix = m.module_name.toUpperCase();
@@ -3099,9 +3127,17 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                             <AnimatePresence>
                               {isMenuOpen && (
                                 <motion.div
-                                  initial={{ opacity: 0, scale: 0.92, y: openUpward ? 4 : -4 }}
+                                  initial={{
+                                    opacity: 0,
+                                    scale: 0.92,
+                                    y: openUpward ? 4 : -4,
+                                  }}
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                                  exit={{ opacity: 0, scale: 0.92, y: openUpward ? 4 : -4 }}
+                                  exit={{
+                                    opacity: 0,
+                                    scale: 0.92,
+                                    y: openUpward ? 4 : -4,
+                                  }}
                                   transition={{ duration: 0.12 }}
                                   className={`absolute right-0 z-20 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden min-w-[140px] ${openUpward ? "bottom-full mb-1" : "top-full mt-1"}`}
                                   onClick={(e) => e.stopPropagation()}

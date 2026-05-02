@@ -418,7 +418,13 @@ export default function CustomerPaymentPage() {
                   <button onClick={() => setHistoryTab('sales')} className={`px-4 py-1.5 text-[11px] font-bold rounded-md transition ${historyTab === 'sales' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500'}`}>Sales Payments</button>
                   <button onClick={() => setHistoryTab('bookings')} className={`px-4 py-1.5 text-[11px] font-bold rounded-md transition ${historyTab === 'bookings' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500'}`}>Booking Payments</button>
                 </div>
-                <button type="button" onClick={fetchPageData} className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition">Refresh</button>
+                <button
+                  type="button"
+                  onClick={fetchPageData}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <MdRefresh className="inline mr-1" /> Refresh
+                </button>
               </div>
             }
           />

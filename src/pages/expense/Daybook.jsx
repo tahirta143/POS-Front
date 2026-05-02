@@ -302,12 +302,9 @@ export default function Daybook() {
               <button
                 onClick={fetchDaybookData}
                 disabled={loading}
-                className="flex items-center gap-2 h-9 px-4 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 disabled:opacity-50 transition"
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                <MdRefresh
-                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                />
-                {loading ? "Loading..." : "Refresh"}
+                <MdRefresh className="inline mr-1" /> Refresh
               </button>
               {canUpdateOpeningBalance && (
                 <button
@@ -408,13 +405,14 @@ export default function Daybook() {
             action={
               <div className="p-4">
                 <div className="relative">
-                  <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5" />
+                  <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none z-10" />
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search reference, description or type..."
                     className="h-8 w-64 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12px] outline-none focus:border-teal-400 focus:bg-white transition"
+                    style={{ paddingLeft: "2rem" }}
                   />
                 </div>
               </div>
@@ -431,7 +429,6 @@ export default function Daybook() {
                   <th className="px-4 py-3">Description</th>
                   <th className="px-4 py-3 text-right">Cash In</th>
                   <th className="px-4 py-3 text-right">Cash Out</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 bg-white">
@@ -488,56 +485,6 @@ export default function Daybook() {
                         {txn.cashOut > 0
                           ? `PKR ${txn.cashOut.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                           : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          {canUpdateOpeningBalance && (
-                            <button
-                              onClick={() =>
-                                toast.info("Edit functionality coming soon")
-                              }
-                              className="p-1 text-teal-600 hover:bg-teal-50 rounded transition"
-                              title="Edit Transaction"
-                            >
-                              <svg
-                                className="h-3.5 w-3.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                          {isAdmin && (
-                            <button
-                              onClick={() =>
-                                toast.info("Delete functionality coming soon")
-                              }
-                              className="p-1 text-rose-600 hover:bg-rose-50 rounded transition"
-                              title="Delete Transaction"
-                            >
-                              <svg
-                                className="h-3.5 w-3.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   ))

@@ -449,7 +449,10 @@ function NestedDropdown({ item, openId, setOpenId }) {
               to={child.to}
               style={({ isActive }) =>
                 isActive
-                  ? { backgroundColor: "var(--color-primary-500)", color: "#ffffff" }
+                  ? {
+                      backgroundColor: "var(--color-primary-500)",
+                      color: "#ffffff",
+                    }
                   : undefined
               }
               className={({ isActive }) =>
@@ -614,12 +617,6 @@ function SidebarContent({ onNavigate }) {
     }
     return null;
   });
-
-  // Debug logging (remove in production)
-  useEffect(() => {
-    console.log("Permissions:", permissions);
-    console.log("Filtered Nav Items:", filteredNavItems);
-  }, [permissions, filteredNavItems]);
 
   return (
     <div className="relative w-64 bg-white/92 dark:bg-slate-900/96 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none backdrop-blur transition-colors duration-300">

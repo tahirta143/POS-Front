@@ -52,7 +52,7 @@ export default function UserToGroup() {
 
   const selectedGroup = useMemo(
     () => groups.find((g) => String(g.id) === String(selectedGroupId)),
-    [groups, selectedGroupId]
+    [groups, selectedGroupId],
   );
 
   function handleGroupChange(id) {
@@ -69,7 +69,7 @@ export default function UserToGroup() {
   function toggleUser(userId) {
     const id = String(userId);
     setSelectedUserIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
@@ -100,7 +100,7 @@ export default function UserToGroup() {
       fetchPageData();
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || "Failed to update group members."
+        err?.response?.data?.message || "Failed to update group members.",
       );
     } finally {
       setSubmitting(false);
@@ -119,7 +119,7 @@ export default function UserToGroup() {
       // Update local checkbox state if the group being edited is the one we just removed from
       if (String(groupId) === String(selectedGroupId)) {
         setSelectedUserIds((prev) =>
-          prev.filter((id) => String(id) !== String(userId))
+          prev.filter((id) => String(id) !== String(userId)),
         );
       }
     } catch (err) {
@@ -136,13 +136,13 @@ export default function UserToGroup() {
         userId: u.id,
         userName: u.name || u.username || u.email || `User #${u.id}`,
         email: u.email,
-      }))
+      })),
     );
   }, [groups]);
 
   const currentMemberIds = useMemo(
     () => new Set((selectedGroup?.users || []).map((u) => String(u.id))),
-    [selectedGroup]
+    [selectedGroup],
   );
 
   return (
@@ -179,7 +179,10 @@ export default function UserToGroup() {
           </Field>
 
           {selectedGroupId && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
               <div className="flex items-center justify-between mb-2">
                 <label className="text-[11px] font-bold uppercase text-slate-600">
                   Select Members ({selectedUserIds.length} of {users.length})
@@ -189,7 +192,9 @@ export default function UserToGroup() {
                   onClick={toggleAll}
                   className="text-[11px] font-semibold text-teal-600"
                 >
-                  {selectedUserIds.length === users.length ? "Deselect All" : "Select All"}
+                  {selectedUserIds.length === users.length
+                    ? "Deselect All"
+                    : "Select All"}
                 </button>
               </div>
 
@@ -201,8 +206,11 @@ export default function UserToGroup() {
                   return (
                     <label
                       key={user.id}
-                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer border-b last:border-0 ${checked ? "bg-teal-50/60" : "bg-white hover:bg-slate-50/60"
-                        }`}
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer border-b last:border-0 ${
+                        checked
+                          ? "bg-teal-50/60"
+                          : "bg-white hover:bg-slate-50/60"
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -214,7 +222,9 @@ export default function UserToGroup() {
                         <p className="text-[12px] font-semibold text-slate-800">
                           {user.name || user.username}
                         </p>
-                        <p className="text-[10px] text-slate-400">{user.email}</p>
+                        <p className="text-[10px] text-slate-400">
+                          {user.email}
+                        </p>
                       </div>
                       {wasIn && (
                         <span className="text-[9px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full">
@@ -258,18 +268,25 @@ export default function UserToGroup() {
             </thead>
             <tbody className="divide-y divide-slate-50 text-[12px]">
               {allAssignments.map((a) => (
-                <tr key={`${a.groupId}-${a.userId}`} className="hover:bg-teal-50/20">
+                <tr
+                  key={`${a.groupId}-${a.userId}`}
+                  className="hover:bg-teal-50/20"
+                >
                   <td className="px-5 py-3">
                     <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold">
                       {a.groupName}
                     </span>
                   </td>
-                  <td className="px-5 py-3 font-semibold text-slate-700">{a.userName}</td>
+                  <td className="px-5 py-3 font-semibold text-slate-700">
+                    {a.userName}
+                  </td>
                   <td className="px-5 py-3 text-right">
                     <ActionButton
                       label="Delete"
                       tone="rose"
-                      onClick={() => removeUser(a.groupId, a.userId, a.userName)}
+                      onClick={() =>
+                        removeUser(a.groupId, a.userId, a.userName)
+                      }
                     />
                   </td>
                 </tr>

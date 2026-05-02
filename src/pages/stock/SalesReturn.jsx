@@ -31,9 +31,13 @@ function SectionCard({ title, children }) {
   const style = sectionStyles.teal;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
-      <div className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}>
+      <div
+        className={`mb-2 flex items-center gap-2 rounded-md border px-2 py-1 ${style.header}`}
+      >
         <span className={`h-3 w-1 rounded-full ${style.accent}`} />
-        <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-tight">{title}</h3>
+        <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-tight">
+          {title}
+        </h3>
       </div>
       {children}
     </div>
@@ -46,15 +50,18 @@ function Tab({ active, onClick, icon, label, count }) {
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all ${active
-        ? "bg-teal-600 text-white shadow-md shadow-teal-100"
-        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-        }`}
+      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all ${
+        active
+          ? "bg-teal-600 text-white shadow-md shadow-teal-100"
+          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+      }`}
     >
       {icon}
       {label}
       {count > 0 && (
-        <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${active ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${active ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}
+        >
           {count}
         </span>
       )}
@@ -89,7 +96,9 @@ export default function SalesReturnPage() {
   async function fetchSaleInvoices() {
     try {
       const res = await axiosInstance.get("/sale-invoices");
-      setSaleInvoices(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      setSaleInvoices(
+        Array.isArray(res.data) ? res.data : res.data?.data || [],
+      );
     } catch {
       toast.error("Failed to load sale invoices.");
     }
@@ -97,7 +106,9 @@ export default function SalesReturnPage() {
 
   async function fetchBookingInvoices() {
     try {
-      const res = await axiosInstance.get("/bookings").catch(() => ({ data: [] }));
+      const res = await axiosInstance
+        .get("/bookings")
+        .catch(() => ({ data: [] }));
 
       // Handle different response formats
       let data = [];
@@ -110,11 +121,14 @@ export default function SalesReturnPage() {
       }
 
       // Show bookings that are either Completed OR have Paid payment status OR have paid amount > 0
-      setBookingInvoices(data.filter(b =>
-        b.booking_status === "Completed" ||
-        b.payment_status === "Paid" ||
-        (b.paid && parseFloat(b.paid) > 0)
-      ));
+      setBookingInvoices(
+        data.filter(
+          (b) =>
+            b.booking_status === "Completed" ||
+            b.payment_status === "Paid" ||
+            (b.paid && parseFloat(b.paid) > 0),
+        ),
+      );
     } catch (error) {
       console.error("Error fetching bookings:", error);
       setBookingInvoices([]);
@@ -125,7 +139,9 @@ export default function SalesReturnPage() {
     setLoadingReturns(true);
     try {
       const res = await axiosInstance.get("/sale-returns");
-      setRecentReturns(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      setRecentReturns(
+        Array.isArray(res.data) ? res.data : res.data?.data || [],
+      );
     } catch {
       setRecentReturns([]);
     } finally {
@@ -136,7 +152,7 @@ export default function SalesReturnPage() {
   // ── Invoice selection ────────────────────────────────────────────────────────
   function handleInvoiceChange(e) {
     const list = activeTab === "sale" ? saleInvoices : bookingInvoices;
-    const inv = list.find(i => String(i.id) === String(e.target.value));
+    const inv = list.find((i) => String(i.id) === String(e.target.value));
     setSelectedInvoice(inv || null);
     setDiscount(0);
 
@@ -151,7 +167,12 @@ export default function SalesReturnPage() {
           };
 
           // For booking items, calculate total if not present
-          if (activeTab === "booking" && !item.total && item.price && item.qty) {
+          if (
+            activeTab === "booking" &&
+            !item.total &&
+            item.price &&
+            item.qty
+          ) {
             normalizedItem.total = Number(item.price) * Number(item.qty);
           }
 
@@ -168,7 +189,7 @@ export default function SalesReturnPage() {
           }
 
           return normalizedItem;
-        })
+        }),
       );
     } else {
       setReturnItems([]);
@@ -176,14 +197,14 @@ export default function SalesReturnPage() {
   }
 
   function handleQtyChange(uniqueId, qty) {
-    setReturnItems(prev =>
-      prev.map(item => {
+    setReturnItems((prev) =>
+      prev.map((item) => {
         if (item.uniqueId !== uniqueId) return item;
         const parsed = qty === "" ? 0 : Number(qty);
         const safe = isNaN(parsed) ? 0 : parsed;
         const maxQty = Number(item.qty || 0);
         return { ...item, returnQty: Math.min(Math.max(0, safe), maxQty) };
-      })
+      }),
     );
   }
 
@@ -199,7 +220,10 @@ export default function SalesReturnPage() {
       } else {
         // For sales, calculate from total/qty
         const lineTotal = Number(item.total || 0);
-        rate = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
+        rate =
+          soldQty > 0
+            ? lineTotal / soldQty
+            : Number(item.sale_price || item.price || 0);
       }
 
       return sum + Number(item.returnQty || 0) * rate;
@@ -218,13 +242,19 @@ export default function SalesReturnPage() {
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleSubmit(e) {
     e.preventDefault();
-    const itemsToReturn = returnItems.filter(i => i.returnQty > 0);
-    if (!selectedInvoice) { toast.error("Please select an invoice."); return; }
-    if (itemsToReturn.length === 0) { toast.error("Add at least one item to return."); return; }
+    const itemsToReturn = returnItems.filter((i) => i.returnQty > 0);
+    if (!selectedInvoice) {
+      toast.error("Please select an invoice.");
+      return;
+    }
+    if (itemsToReturn.length === 0) {
+      toast.error("Add at least one item to return.");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const normalizedItems = itemsToReturn.map(item => {
+      const normalizedItems = itemsToReturn.map((item) => {
         let unitPrice;
 
         if (activeTab === "booking") {
@@ -234,7 +264,10 @@ export default function SalesReturnPage() {
           // For sales, calculate from total/qty
           const soldQty = Number(item.qty || 0);
           const lineTotal = Number(item.total || 0);
-          unitPrice = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
+          unitPrice =
+            soldQty > 0
+              ? lineTotal / soldQty
+              : Number(item.sale_price || item.price || 0);
         }
 
         return {
@@ -277,11 +310,19 @@ export default function SalesReturnPage() {
   // ── Edit / Delete ────────────────────────────────────────────────────────────
   function handleEdit(record) {
     const list = activeTab === "sale" ? saleInvoices : bookingInvoices;
-    const invoice = list.find(inv => String(inv.id) === String(record.sale_invoice_id));
-    if (!invoice) { toast.error("Original invoice data unavailable."); return; }
+    const invoice = list.find(
+      (inv) => String(inv.id) === String(record.sale_invoice_id),
+    );
+    if (!invoice) {
+      toast.error("Original invoice data unavailable.");
+      return;
+    }
 
     const returnQtyMap = new Map(
-      (record.items || []).map(item => [String(item.item_id), Number(item.qty || 0)])
+      (record.items || []).map((item) => [
+        String(item.item_id),
+        Number(item.qty || 0),
+      ]),
     );
 
     setEditId(record.id);
@@ -301,14 +342,15 @@ export default function SalesReturnPage() {
         }
 
         return normalizedItem;
-      })
+      }),
     );
     setIsFormOpen(true);
     document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function handleDelete(returnId) {
-    if (!window.confirm("Delete this sales return? Stock will be restored.")) return;
+    if (!window.confirm("Delete this sales return? Stock will be restored."))
+      return;
     try {
       await axiosInstance.delete(`/sale-returns/${returnId}`);
       toast.success("Return deleted.");
@@ -331,29 +373,41 @@ export default function SalesReturnPage() {
   return (
     <PageShell>
       <div className="space-y-4">
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Sales Return (Credit Note)</h1>
-            <p className="text-sm text-slate-500">Process merchandise returns and adjust customer accounts.</p>
+            <h1 className="text-xl font-bold text-slate-900">
+              Sales Return (Credit Note)
+            </h1>
+            <p className="text-sm text-slate-500">
+              Process merchandise returns and adjust customer accounts.
+            </p>
           </div>
           <button
             onClick={() => {
-              if (isFormOpen && editId) { resetForm(); return; }
+              if (isFormOpen && editId) {
+                resetForm();
+                return;
+              }
               const opening = !isFormOpen;
               setIsFormOpen(opening);
               if (opening) resetForm();
             }}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition shadow-sm ${isFormOpen
-              ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-              }`}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition shadow-sm ${
+              isFormOpen
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
+            }`}
           >
-            {isFormOpen
-              ? <><MdRemove className="h-5 w-5" /> Close Form</>
-              : <><MdAdd className="h-5 w-5" /> New Return</>
-            }
+            {isFormOpen ? (
+              <>
+                <MdRemove className="h-5 w-5" /> Close Form
+              </>
+            ) : (
+              <>
+                <MdAdd className="h-5 w-5" /> New Return
+              </>
+            )}
           </button>
         </div>
 
@@ -378,14 +432,20 @@ export default function SalesReturnPage() {
                 <div className="mt-4 flex gap-2">
                   <Tab
                     active={activeTab === "sale"}
-                    onClick={() => { setActiveTab("sale"); resetForm(); }}
+                    onClick={() => {
+                      setActiveTab("sale");
+                      resetForm();
+                    }}
                     icon={<MdShoppingBag className="h-4 w-4" />}
                     label="Sale Invoices"
                     count={saleInvoices.length}
                   />
                   <Tab
                     active={activeTab === "booking"}
-                    onClick={() => { setActiveTab("booking"); resetForm(); }}
+                    onClick={() => {
+                      setActiveTab("booking");
+                      resetForm();
+                    }}
                     icon={<MdBookOnline className="h-4 w-4" />}
                     label="Booking Invoices"
                     count={bookingInvoices.length}
@@ -394,9 +454,19 @@ export default function SalesReturnPage() {
 
                 <div className="mt-4 space-y-4">
                   {/* Invoice selector */}
-                  <SectionCard title={activeTab === "sale" ? "Sale Invoice Reference" : "Booking Invoice Reference"}>
+                  <SectionCard
+                    title={
+                      activeTab === "sale"
+                        ? "Sale Invoice Reference"
+                        : "Booking Invoice Reference"
+                    }
+                  >
                     <div className="mt-1 grid gap-4 lg:grid-cols-3">
-                      <Field label="Select Invoice" required className="lg:col-span-2">
+                      <Field
+                        label="Select Invoice"
+                        required
+                        className="lg:col-span-2"
+                      >
                         <div className="relative">
                           <select
                             onChange={handleInvoiceChange}
@@ -404,14 +474,15 @@ export default function SalesReturnPage() {
                             className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-[12px] font-semibold text-slate-700 focus:border-teal-400 focus:ring-4 focus:ring-teal-50 outline-none transition"
                           >
                             <option value="">
-                              {activeTab === "sale" ? "Search receipt / invoice ID..." : "Search booking ID..."}
+                              {activeTab === "sale"
+                                ? "Search receipt / invoice ID..."
+                                : "Search booking ID..."}
                             </option>
-                            {invoiceList.map(inv => (
+                            {invoiceList.map((inv) => (
                               <option key={inv.id} value={inv.id}>
                                 {activeTab === "sale"
                                   ? `${inv.receipt_no || `INV-${inv.id}`} — ${inv.customer_name || "Customer"}`
-                                  : `BKG-${inv.id} — ${inv.customer_name || inv.client_name || "Customer"}`
-                                }
+                                  : `BKG-${inv.id} — ${inv.customer_name || inv.client_name || "Customer"}`}
                               </option>
                             ))}
                           </select>
@@ -422,9 +493,14 @@ export default function SalesReturnPage() {
                       {/* Credit amount badge */}
                       {selectedInvoice && (
                         <div className="flex flex-col justify-center rounded-xl bg-teal-50 border border-teal-100 px-4 py-2">
-                          <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">Net Credit</p>
+                          <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">
+                            Net Credit
+                          </p>
                           <p className="text-lg font-black text-teal-700 font-mono">
-                            PKR {netReturnValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            PKR{" "}
+                            {netReturnValue.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
                           </p>
                         </div>
                       )}
@@ -433,8 +509,11 @@ export default function SalesReturnPage() {
 
                   {/* Invoice info cards */}
                   {selectedInvoice && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
                       {/* Customer + Invoice ref + Paid amount */}
                       <div className="grid gap-3 sm:grid-cols-3">
                         <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
@@ -442,9 +521,12 @@ export default function SalesReturnPage() {
                             <MdPerson className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Customer</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                              Customer
+                            </p>
                             <p className="text-[12px] font-bold text-slate-700 truncate">
-                              {selectedInvoice.customer_name || "Walking Customer"}
+                              {selectedInvoice.customer_name ||
+                                "Walking Customer"}
                             </p>
                           </div>
                         </div>
@@ -453,12 +535,14 @@ export default function SalesReturnPage() {
                             <MdReceipt className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Invoice Ref</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                              Invoice Ref
+                            </p>
                             <p className="text-[12px] font-bold text-slate-700">
                               {activeTab === "sale"
-                                ? (selectedInvoice.receipt_no || `#${selectedInvoice.id}`)
-                                : `BKG-${selectedInvoice.id}`
-                              }
+                                ? selectedInvoice.receipt_no ||
+                                  `#${selectedInvoice.id}`
+                                : `BKG-${selectedInvoice.id}`}
                             </p>
                           </div>
                         </div>
@@ -467,9 +551,14 @@ export default function SalesReturnPage() {
                             <MdPriceCheck className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Total Paid</p>
+                            <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
+                              Total Paid
+                            </p>
                             <p className="text-[12px] font-black text-emerald-700 font-mono">
-                              PKR {totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              PKR{" "}
+                              {totalPaid.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
                             </p>
                           </div>
                         </div>
@@ -482,14 +571,20 @@ export default function SalesReturnPage() {
                             <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                               <tr>
                                 <th className="px-4 py-3">Item</th>
-                                <th className="px-4 py-3 text-right">Sold Qty</th>
-                                <th className="px-4 py-3 text-right">Unit Rate</th>
-                                <th className="px-4 py-3 text-center">Return Qty</th>
+                                <th className="px-4 py-3 text-right">
+                                  Sold Qty
+                                </th>
+                                <th className="px-4 py-3 text-right">
+                                  Unit Rate
+                                </th>
+                                <th className="px-4 py-3 text-center">
+                                  Return Qty
+                                </th>
                                 <th className="px-4 py-3 text-right">Credit</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 bg-white">
-                              {returnItems.map(item => {
+                              {returnItems.map((item) => {
                                 const soldQty = Number(item.qty || 0);
                                 let rate = 0;
 
@@ -499,30 +594,57 @@ export default function SalesReturnPage() {
                                 } else {
                                   // For sales, calculate from total/qty
                                   const lineTotal = Number(item.total || 0);
-                                  rate = soldQty > 0 ? lineTotal / soldQty : Number(item.sale_price || item.price || 0);
+                                  rate =
+                                    soldQty > 0
+                                      ? lineTotal / soldQty
+                                      : Number(
+                                          item.sale_price || item.price || 0,
+                                        );
                                 }
 
-                                const credit = rate * Number(item.returnQty || 0);
+                                const credit =
+                                  rate * Number(item.returnQty || 0);
                                 return (
-                                  <tr key={item.uniqueId} className="hover:bg-slate-50/50">
-                                    <td className="px-4 py-3 font-semibold text-slate-700">{item.item_name}</td>
-                                    <td className="px-4 py-3 text-right text-slate-500">{soldQty}</td>
+                                  <tr
+                                    key={item.uniqueId}
+                                    className="hover:bg-slate-50/50"
+                                  >
+                                    <td className="px-4 py-3 font-semibold text-slate-700">
+                                      {item.item_name}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-slate-500">
+                                      {soldQty}
+                                    </td>
                                     <td className="px-4 py-3 text-right font-mono text-slate-600">
-                                      PKR {rate.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                      PKR{" "}
+                                      {rate.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                      })}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                       <input
                                         type="number"
                                         min="0"
                                         max={soldQty}
-                                        value={item.returnQty === 0 ? "" : item.returnQty}
+                                        value={
+                                          item.returnQty === 0
+                                            ? ""
+                                            : item.returnQty
+                                        }
                                         placeholder="0"
-                                        onChange={e => handleQtyChange(item.uniqueId, e.target.value)}
+                                        onChange={(e) =>
+                                          handleQtyChange(
+                                            item.uniqueId,
+                                            e.target.value,
+                                          )
+                                        }
                                         className="h-8 w-20 rounded-lg border border-slate-200 bg-white px-2 text-center font-bold text-teal-700 focus:border-teal-400 outline-none"
                                       />
                                     </td>
                                     <td className="px-4 py-3 text-right font-black text-teal-700 font-mono">
-                                      {credit > 0 ? `PKR ${credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
+                                      {credit > 0
+                                        ? `PKR ${credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                        : "—"}
                                     </td>
                                   </tr>
                                 );
@@ -538,11 +660,16 @@ export default function SalesReturnPage() {
                           <div className="flex justify-between items-center text-slate-500">
                             <span>Gross Return Value</span>
                             <span className="font-bold text-slate-700 font-mono">
-                              PKR {grossReturnValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              PKR{" "}
+                              {grossReturnValue.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-slate-500 flex-1">Discount on Return</span>
+                            <span className="text-slate-500 flex-1">
+                              Discount on Return
+                            </span>
                             <div className="relative">
                               <input
                                 type="number"
@@ -550,16 +677,23 @@ export default function SalesReturnPage() {
                                 min="0"
                                 max={grossReturnValue}
                                 value={discount}
-                                onChange={e => setDiscount(e.target.value)}
+                                onChange={(e) => setDiscount(e.target.value)}
                                 className="h-8 w-36 rounded-lg border border-slate-300 bg-white px-3 text-right text-[12px] font-bold outline-none focus:border-teal-400"
                               />
-                              <span className="absolute right-2.5 top-1.5 text-[9px] font-bold text-slate-400 uppercase">PKR</span>
+                              <span className="absolute right-2.5 top-1.5 text-[9px] font-bold text-slate-400 uppercase">
+                                PKR
+                              </span>
                             </div>
                           </div>
                           <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                            <span className="font-bold text-slate-700">Net Credit to Customer</span>
+                            <span className="font-bold text-slate-700">
+                              Net Credit to Customer
+                            </span>
                             <span className="text-xl font-black text-teal-600 font-mono">
-                              PKR {netReturnValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              PKR{" "}
+                              {netReturnValue.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
                             </span>
                           </div>
                         </div>
@@ -568,7 +702,10 @@ export default function SalesReturnPage() {
                       <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
                         <button
                           type="button"
-                          onClick={() => { resetForm(); setIsFormOpen(false); }}
+                          onClick={() => {
+                            resetForm();
+                            setIsFormOpen(false);
+                          }}
                           className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
                         >
                           Discard
@@ -579,7 +716,11 @@ export default function SalesReturnPage() {
                           onClick={handleSubmit}
                           className="inline-flex min-w-[200px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
                         >
-                          {submitting ? "Recording..." : editId ? "Update Credit Note" : "Authorize Return"}
+                          {submitting
+                            ? "Recording..."
+                            : editId
+                              ? "Update Credit Note"
+                              : "Authorize Return"}
                         </button>
                       </div>
                     </motion.div>
@@ -598,8 +739,11 @@ export default function SalesReturnPage() {
             icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
               <div className="p-4">
-                <button type="button" onClick={fetchRecentReturns}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition">
+                <button
+                  type="button"
+                  onClick={fetchRecentReturns}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
                   <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
@@ -623,7 +767,7 @@ export default function SalesReturnPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
-                  {recentReturns.map(record => (
+                  {recentReturns.map((record) => (
                     <motion.tr
                       key={record.id}
                       initial={{ opacity: 0 }}
@@ -639,26 +783,39 @@ export default function SalesReturnPage() {
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="text-[12px] font-semibold text-slate-600">
-                            {record.invoice_ref || record.receipt_no || `#${record.sale_invoice_id}`}
+                            {record.invoice_ref ||
+                              record.receipt_no ||
+                              `#${record.sale_invoice_id}`}
                           </span>
                           <span className="text-[10px] text-slate-400">
-                            {record.return_date ? new Date(record.return_date).toLocaleDateString() : "—"}
+                            {record.return_date
+                              ? new Date(
+                                  record.return_date,
+                                ).toLocaleDateString()
+                              : "—"}
                           </span>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right text-[12px] font-semibold text-amber-600 font-mono">
                         {parseFloat(record.discount || 0) > 0
                           ? `PKR ${Number(record.discount).toLocaleString()}`
-                          : "—"
-                        }
+                          : "—"}
                       </td>
                       <td className="px-5 py-4 text-right font-black text-teal-700 font-mono text-[13px]">
                         PKR {Number(record.total_amount || 0).toLocaleString()}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
-                          <ActionButton label="Edit" tone="teal" onClick={() => handleEdit(record)} />
-                          <ActionButton label="Delete" tone="rose" onClick={() => handleDelete(record.id)} />
+                          <ActionButton
+                            label="Edit"
+                            tone="teal"
+                            onClick={() => handleEdit(record)}
+                          />
+                          <ActionButton
+                            label="Delete"
+                            tone="rose"
+                            onClick={() => handleDelete(record.id)}
+                          />
                         </div>
                       </td>
                     </motion.tr>
@@ -668,7 +825,6 @@ export default function SalesReturnPage() {
             </div>
           )}
         </Card>
-
       </div>
     </PageShell>
   );
