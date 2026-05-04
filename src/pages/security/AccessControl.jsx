@@ -34,13 +34,13 @@ function TabButton({ active, onClick, children, icon: Icon }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-6 py-3 text-[14px] font-bold transition-all border-b-2 ${
+      className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 text-[12px] sm:text-[14px] font-bold transition-all border-b-2 ${
         active
           ? "text-teal-600 border-teal-600 bg-teal-50/30"
           : "text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50/50"
       }`}
     >
-      {Icon && <Icon className="h-4 w-4" />}
+      {Icon && <Icon className="h-3 w-3 sm:h-4 sm:w-4" />}
       {children}
     </button>
   );
@@ -908,14 +908,14 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   if (!canReadGroup) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MdLock className="text-5xl text-red-400" />
+        <div className="text-center max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-4xl sm:text-5xl text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">
             Access Denied
           </h2>
-          <p className="text-slate-500 mb-4">
+          <p className="text-slate-500 mb-4 text-sm sm:text-base">
             You don't have permission to manage Groups.
           </p>
           <div className="bg-slate-50 rounded-lg p-3 text-left">
@@ -930,9 +930,9 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
   }
 
   return (
-    <div className="flex gap-4 h-[calc(106vh-280px)]">
+    <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(106vh-280px)]">
       {/* Groups Sidebar */}
-      <div className="w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="w-full lg:w-64 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide">
             Groups
@@ -951,7 +951,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
             </button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-1 max-h-[300px] lg:max-h-none">
           {groups.map((g) => (
             <div
               key={g.id}
@@ -1119,7 +1119,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => {
               setGroupModal(null);
               setGroupNameInput("");
@@ -1233,7 +1233,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setGroupUsersModal(null)}
           >
             <motion.div
@@ -1373,11 +1373,11 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
 
       {/* Available Permissions */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="px-3 py-2.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50">
           <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
             Available Permissions
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <button
               onClick={() =>
                 expandAll(setExpandedAvailable, filteredAvailableTree)
@@ -1405,7 +1405,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-1 max-h-[400px] lg:max-h-none">
           {filteredAvailableTree.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
               <MdShield className="h-8 w-8 mb-2" />
@@ -1695,13 +1695,12 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
         </div>
       </div>
 
-      {/* Assigned to Group Panel - UPDATED: Hide Save button and trashcans when user has only READ permission */}
+      {/* Assigned to Group Panel */}
       <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50">
           <span className="text-[12px] font-bold text-teal-700 uppercase tracking-wide">
             Assigned to Group
           </span>
-          {/* Save button - Only show if user has permission to assign permissions */}
           {canAssignPermissions && (
             <button
               onClick={handleSave}
@@ -1727,7 +1726,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="flex-1 overflow-y-auto p-2 space-y-2 max-h-[400px] lg:max-h-none">
           {!selectedGroup ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300">
               <MdShield className="h-10 w-10 mb-2 opacity-40" />
@@ -1770,7 +1769,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                         <MdExpandMore className="text-teal-400 h-5 w-5 shrink-0" />
                       )}
                     </button>
-                    {/* Category-level trashcan - Only show if user has permission to assign permissions */}
                     {canAssignPermissions && (
                       <button
                         onClick={(e) => {
@@ -1829,7 +1827,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                     )}
                                   </button>
 
-                                  {/* Module-level trashcan - Only show if user has permission to assign permissions */}
                                   {canAssignPermissions && (
                                     <button
                                       onClick={(e) => {
@@ -1872,7 +1869,6 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                               />
                                             )}
 
-                                            {/* Functionality-level trashcan - Only show if user has permission to assign permissions */}
                                             {canAssignPermissions && (
                                               <button
                                                 onClick={() =>
@@ -2126,14 +2122,14 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   if (!canReadUser) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MdLock className="text-5xl text-red-400" />
+        <div className="text-center max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-4xl sm:text-5xl text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">
             Access Denied
           </h2>
-          <p className="text-slate-500 mb-4">
+          <p className="text-slate-500 mb-4 text-sm sm:text-base">
             You don't have permission to manage Users.
           </p>
           <div className="bg-slate-50 rounded-lg p-3 text-left">
@@ -2151,8 +2147,8 @@ function UsersTab({ groups, allUsers, onRefresh }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left card: Assign Users */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[600px]">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-start justify-between gap-3">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-auto lg:h-[600px]">
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
               <h3 className="text-[15px] font-black text-slate-800 uppercase tracking-tight">
                 Assign Users
@@ -2185,7 +2181,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
           </div>
 
           <div className="p-4 border-b border-slate-50 space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 value={selectedGroupId}
                 onChange={(e) => handleGroupChange(e.target.value)}
@@ -2221,7 +2217,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="flex-1 overflow-y-auto p-2 max-h-[400px] lg:max-h-none">
             {filtered.map((user) => {
               const uid = String(user.id);
               const checked = selectedUserIds.includes(uid);
@@ -2366,8 +2362,8 @@ function UsersTab({ groups, allUsers, onRefresh }) {
         </div>
 
         {/* Right card: Active Assignments */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[600px]">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-auto lg:h-[600px]">
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-[15px] font-black text-slate-800 uppercase tracking-tight">
               Active Assignments
             </h3>
@@ -2375,46 +2371,50 @@ function UsersTab({ groups, allUsers, onRefresh }) {
               Current group memberships across the system.
             </p>
           </div>
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white shadow-sm z-10">
-                <tr className="text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
-                  <th className="px-6 py-3">User</th>
-                  <th className="px-6 py-3">Group</th>
-                  <th className="px-6 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {allAssignments.map((a) => (
-                  <tr
-                    key={`${a.groupId}-${a.userId}`}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-3">
-                      <p className="text-[13px] font-bold text-slate-700">
-                        {a.username}
-                      </p>
-                      <p className="text-[10px] text-slate-400">{a.email}</p>
-                    </td>
-                    <td className="px-6 py-3">
-                      <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-black uppercase">
-                        {a.groupName}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      {canAssignToGroup && (
-                        <button
-                          onClick={() => removeAssignment(a.groupId, a.userId)}
-                          className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                        >
-                          <MdDelete className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
+          <div className="flex-1 overflow-x-auto">
+            <div className="min-w-[500px]">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-white shadow-sm z-10">
+                  <tr className="text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                    <th className="px-4 sm:px-6 py-3">User</th>
+                    <th className="px-4 sm:px-6 py-3">Group</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {allAssignments.map((a) => (
+                    <tr
+                      key={`${a.groupId}-${a.userId}`}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-4 sm:px-6 py-3">
+                        <p className="text-[13px] font-bold text-slate-700">
+                          {a.username}
+                        </p>
+                        <p className="text-[10px] text-slate-400">{a.email}</p>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3">
+                        <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-black uppercase">
+                          {a.groupName}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-right">
+                        {canAssignToGroup && (
+                          <button
+                            onClick={() =>
+                              removeAssignment(a.groupId, a.userId)
+                            }
+                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                          >
+                            <MdDelete className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -2426,7 +2426,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={closeUserModal}
           >
             <motion.div
@@ -2527,7 +2527,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                       Role
@@ -2866,14 +2866,14 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
   if (!canReadModule) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MdLock className="text-5xl text-red-400" />
+        <div className="text-center max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-4xl sm:text-5xl text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">
             Access Denied
           </h2>
-          <p className="text-slate-500 mb-4">
+          <p className="text-slate-500 mb-4 text-sm sm:text-base">
             You don't have permission to view Modules & Permissions.
           </p>
           <div className="bg-slate-50 rounded-lg p-3 text-left">
@@ -2889,7 +2889,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative max-w-sm w-full">
           <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
           <input
@@ -2900,7 +2900,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
             className="w-full h-11 pl-10 pr-4 text-[14px] rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-500 shadow-sm transition-all"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={expandAll}
             className="text-[11px] text-teal-600 hover:text-teal-700 font-bold hover:bg-teal-50 px-3 py-1.5 rounded-lg transition"
@@ -2955,7 +2955,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
               key={m.id}
               className="rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+              <div className="w-full px-4 sm:px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                 <button
                   onClick={() => toggleModule(m.id)}
                   className="flex items-center gap-3 flex-1 text-left min-w-0"
@@ -2966,7 +2966,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
                   </span>
                 </button>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                   <span className="text-[10px] bg-teal-100 text-teal-700 font-bold px-2 py-0.5 rounded-full mr-1">
                     {m.funcs.length} PERMS
                   </span>
@@ -3209,7 +3209,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={closeModuleModal}
           >
             <motion.div
@@ -3331,7 +3331,7 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={closeFuncModal}
           >
             <motion.div
@@ -3477,14 +3477,14 @@ function IPTrackingTab() {
   if (!canReadLogs) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MdLock className="text-5xl text-red-400" />
+        <div className="text-center max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MdLock className="text-4xl sm:text-5xl text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">
             Access Denied
           </h2>
-          <p className="text-slate-500 mb-4">
+          <p className="text-slate-500 mb-4 text-sm sm:text-base">
             You don't have permission to view Security Logs.
           </p>
           <div className="bg-slate-50 rounded-lg p-3 text-left">
@@ -3502,7 +3502,7 @@ function IPTrackingTab() {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-[16px] font-bold text-slate-800">
           Login History & IP Tracking
         </h3>
@@ -3514,56 +3514,58 @@ function IPTrackingTab() {
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50">
-            <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">User</th>
-              <th className="px-6 py-4">IP Address</th>
-              <th className="px-6 py-4">Timestamp</th>
-              <th className="px-6 py-4">Details</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {logs.length === 0 ? (
-              <tr>
-                <td
-                  colSpan="5"
-                  className="px-6 py-10 text-center text-slate-400"
-                >
-                  No logs found
-                </td>
+        <div className="min-w-[600px]">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50">
+              <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                <th className="px-4 sm:px-6 py-4">Status</th>
+                <th className="px-4 sm:px-6 py-4">User</th>
+                <th className="px-4 sm:px-6 py-4">IP Address</th>
+                <th className="px-4 sm:px-6 py-4">Timestamp</th>
+                <th className="px-4 sm:px-6 py-4">Details</th>
               </tr>
-            ) : (
-              logs.map((log) => (
-                <tr
-                  key={log.id}
-                  className="hover:bg-slate-50 transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${log.action === "LOGIN_SUCCESS" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}
-                    >
-                      {log.action === "LOGIN_SUCCESS" ? "SUCCESS" : "FAILED"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[13px] font-semibold text-slate-700">
-                    {log.username || "System"}
-                  </td>
-                  <td className="px-6 py-4 text-[13px] font-mono text-slate-500">
-                    {log.ip_address || "Unknown"}
-                  </td>
-                  <td className="px-6 py-4 text-[13px] text-slate-500">
-                    {new Date(log.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-[12px] text-slate-400 italic">
-                    {log.description || "—"}
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {logs.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-4 sm:px-6 py-10 text-center text-slate-400"
+                  >
+                    No logs found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                logs.map((log) => (
+                  <tr
+                    key={log.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-4 sm:px-6 py-4">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${log.action === "LOGIN_SUCCESS" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}
+                      >
+                        {log.action === "LOGIN_SUCCESS" ? "SUCCESS" : "FAILED"}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-[13px] font-semibold text-slate-700">
+                      {log.username || "System"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-[13px] font-mono text-slate-500">
+                      {log.ip_address || "Unknown"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-[13px] text-slate-500">
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-[12px] text-slate-400 italic">
+                      {log.description || "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -3621,33 +3623,6 @@ export default function AccessControl() {
   const showTrackingTab =
     canReadSecurityLogs || (hasSecurityAccess && hasSecurityFunctionality);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("=== Access Control Permission Debug ===");
-    console.log("isAdmin:", isAdmin);
-    console.log("hasSecurityAccess:", hasSecurityAccess);
-    console.log("hasSecurityFunctionality:", hasSecurityFunctionality);
-    console.log("canReadGroups:", canReadGroups);
-    console.log("canReadUsers:", canReadUsers);
-    console.log("canReadModules:", canReadModules);
-    console.log("canReadSecurityLogs:", canReadSecurityLogs);
-    console.log("showGroupsTab:", showGroupsTab);
-    console.log("showUsersTab:", showUsersTab);
-    console.log("showPermissionsTab:", showPermissionsTab);
-    console.log("showTrackingTab:", showTrackingTab);
-    console.log("Available Modules:", permissions?.modules);
-    console.log("Available Functionalities:", permissions?.functionalities);
-  }, [
-    isAdmin,
-    hasSecurityAccess,
-    hasSecurityFunctionality,
-    canReadGroups,
-    canReadUsers,
-    canReadModules,
-    canReadSecurityLogs,
-    permissions,
-  ]);
-
   useEffect(() => {
     fetchAll();
   }, []);
@@ -3692,16 +3667,16 @@ export default function AccessControl() {
     !showTrackingTab
   ) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-red-100">
-            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MdLock className="text-5xl text-red-400" />
+          <div className="text-center max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-red-100">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdLock className="text-4xl sm:text-5xl text-red-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">
               Access Denied
             </h2>
-            <p className="text-slate-500 mb-4">
+            <p className="text-slate-500 mb-4 text-sm sm:text-base">
               You don't have permission to access the Access Control page.
             </p>
             <div className="bg-slate-50 rounded-lg p-3 text-left">
@@ -3741,18 +3716,18 @@ export default function AccessControl() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <header className="space-y-1">
-        <h1 className="text-[28px] font-black text-slate-800 tracking-tight">
+        <h1 className="text-2xl sm:text-[28px] font-black text-slate-800 tracking-tight">
           Access Control
         </h1>
-        <p className="text-[14px] text-slate-500">
+        <p className="text-[13px] sm:text-[14px] text-slate-500">
           Manage groups, permissions, user assignments, and system-wide toggles.
         </p>
       </header>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="flex border-b border-slate-200 bg-slate-50/30">
+        <div className="flex flex-wrap border-b border-slate-200 bg-slate-50/30">
           {showGroupsTab && (
             <TabButton
               active={tab === "groups"}
@@ -3791,7 +3766,7 @@ export default function AccessControl() {
           )}
         </div>
 
-        <div className="p-6 min-h-[500px]">
+        <div className="p-4 sm:p-6 min-h-[500px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
