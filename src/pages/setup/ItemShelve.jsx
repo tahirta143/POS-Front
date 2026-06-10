@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, ActionButton, TableState } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { confirmAction } from '../../components/ui/ConfirmDialog.jsx'
 import { usePermissions } from '../../hooks/usePermissions'
 import { MdLock, MdRefresh } from 'react-icons/md'
 
@@ -102,7 +103,14 @@ export default function ItemShelvePage() {
       toast.error("You don't have permission to delete shelve locations.")
       return
     }
-    if (!window.confirm('Delete this shelve location?')) return
+    const confirmed = await confirmAction({
+      title: 'Delete shelve location',
+      message: 'This shelve location will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
 
     try {
       await axiosInstance.delete(`/shelve-locations/${id}`)

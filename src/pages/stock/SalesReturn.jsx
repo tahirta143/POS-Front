@@ -10,6 +10,7 @@ import {
   TableState,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 import {
   MdAdd,
   MdRemove,
@@ -349,7 +350,14 @@ export default function SalesReturnPage() {
   }
 
   async function handleDelete(returnId) {
-    if (!window.confirm("Delete this sales return? Stock will be restored."))
+    const confirmed = await confirmAction({
+      title: 'Delete sales return',
+      message: 'This sales return will be removed and stock will be restored.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed)
       return;
     try {
       await axiosInstance.delete(`/sale-returns/${returnId}`);

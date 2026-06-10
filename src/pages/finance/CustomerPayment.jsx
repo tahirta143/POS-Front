@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ActionButton, Card, Field, PageShell, SectionHeader, TableState } from '../../components/layout/PageShell.jsx';
 import axiosInstance from '../../services/axiosInstance';
+import { confirmAction } from '../../components/ui/ConfirmDialog.jsx';
 import { MdAdd, MdRemove, MdPayment, MdRefresh, MdAccountBalanceWallet, MdDescription } from 'react-icons/md';
 
 function createEmptyForm() {
@@ -176,7 +177,14 @@ export default function CustomerPaymentPage() {
 
   async function handleDelete(id, type = 'sale') {
     const msg = type === 'booking' ? 'Delete this booking payment?' : 'Delete this payment? Invoice status will be recalculated.';
-    if (!window.confirm(msg)) return;
+    const confirmed = await confirmAction({
+      title: 'Delete payment',
+      message: msg,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       if (type === 'booking') {
         await axiosInstance.delete(`/bookings/payments/${id}`);

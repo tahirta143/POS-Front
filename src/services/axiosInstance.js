@@ -28,17 +28,26 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const errorMsg = error.response?.data?.message || "Network Error";
+    const isLoginRequest = error.config?.url?.includes("/auth/login");
 
-    // 🔥 HANDLE TOKEN EXPIRED
+    // Avoid redirecting on wrong-password login attempts; let the auth slice show the message.
     if (status === 401) {
-      toast.error("Session expired. Please login again.");
+      if (isLoginRequest) {
+        return Promise.reject(error);
+      }
 
-      // logout from redux + clear storage
-      store.dispatch(logout());
+      const token = localStorage.getItem("token");
+      if (token) {
+        toast.error("Session expired. Please login again.");
 
-      // redirect to login
-      window.location.href = "/login";
-      return;
+        // logout from redux + clear storage
+        store.dispatch(logout());
+
+        // redirect to login
+        window.location.replace("/login");
+      }
+
+      return Promise.reject(error);
     }
 
     toast.error(errorMsg);

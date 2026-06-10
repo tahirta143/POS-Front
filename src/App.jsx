@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { AnimatePresence } from "framer-motion";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { refreshPermissions } from "./features/auth/authSlice";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -39,12 +41,17 @@ import AmountPayablePage from "./pages/finance/AmountPayable";
 import SupplierLedgerPage from "./pages/finance/SupplierLedger";
 import CustomerPaymentPage from "./pages/finance/CustomerPayment";
 import AmountReceivablePage from "./pages/finance/AmountReceivable";
+import SupplierAccountList from "./pages/finance/SupplierAccountList";
+import SupplierAccountDetail from "./pages/finance/SupplierAccountDetail";
+import CustomerAccountList from "./pages/finance/CustomerAccountList";
+import CustomerAccountDetail from "./pages/finance/CustomerAccountDetail";
 import SalesReturnPage from "./pages/stock/SalesReturn";
 import PurchaseReturnPage from "./pages/stock/PurchaseReturn";
 import GoodsReceiptNotePage from "./pages/stock/GoodsReceiptNote";
 import StockTransferPage from "./pages/stock/StockTransfer";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { ConfirmDialogProvider } from "./components/ui/ConfirmDialog";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -58,6 +65,8 @@ const App = () => {
   }, [isAuthenticated, dispatch]);
 
   useEffect(() => {
+    document.title = "POS System";
+
     const root = window.document.documentElement;
 
     if (!isAuthenticated) {
@@ -77,8 +86,11 @@ const App = () => {
   }, [isAuthenticated]);
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <>
+      <ConfirmDialogProvider />
+      <ToastContainer position="top-right" autoClose={3000} />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route
           path="/login"
@@ -221,6 +233,38 @@ const App = () => {
             element={
               <ProtectedRoute module="Customer Payment" action="read">
                 <AmountReceivablePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/supplier-account"
+            element={
+              <ProtectedRoute module="Supplier Ledger" action="read">
+                <SupplierAccountList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/supplier-account/:id"
+            element={
+              <ProtectedRoute module="Supplier Ledger" action="read">
+                <SupplierAccountDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/customer-account"
+            element={
+              <ProtectedRoute module="Customer Payment" action="read">
+                <CustomerAccountList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/customer-account/:id"
+            element={
+              <ProtectedRoute module="Customer Payment" action="read">
+                <CustomerAccountDetail />
               </ProtectedRoute>
             }
           />
@@ -401,8 +445,9 @@ const App = () => {
             <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
           }
         />
-      </Routes>
-    </AnimatePresence>
+        </Routes>
+      </AnimatePresence>
+    </>
   );
 };
 

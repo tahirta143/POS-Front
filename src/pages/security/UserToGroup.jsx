@@ -108,7 +108,14 @@ export default function UserToGroup() {
   }
 
   async function removeUser(groupId, userId, userName) {
-    if (!window.confirm(`Remove ${userName} from this group?`)) return;
+    const confirmed = await confirmAction({
+      title: 'Remove user from group',
+      message: `Remove ${userName} from this group?`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       // MATCHES BACKEND: router.delete("/:groupId/user/:userId", removeUserFromGroup);
       await axiosInstance.delete(`/group-users/${groupId}/user/${userId}`);

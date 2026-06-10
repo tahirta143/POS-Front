@@ -13,6 +13,7 @@ import {
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 import { MdLock, MdRefresh } from "react-icons/md";
 
 const sectionStyles = {
@@ -230,7 +231,14 @@ export default function SupplierPage() {
       toast.error("You don't have permission to delete suppliers.");
       return;
     }
-    if (!window.confirm("Delete this supplier?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete supplier',
+      message: 'This supplier will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
 
     try {
       await axiosInstance.delete(`/suppliers/${id}`);

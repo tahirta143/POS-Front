@@ -5,6 +5,7 @@ import { Card, Field, PageShell, SectionHeader, TableState, ActionButton } from 
 import axiosInstance from '../../services/axiosInstance'
 import { usePermissions } from '../../hooks/usePermissions'
 import { MdLock, MdRefresh } from 'react-icons/md'
+import { confirmAction } from '../../components/ui/ConfirmDialog.jsx'
 
 const sectionStyles = {
   teal: { accent: 'bg-teal-500', header: 'border-teal-100 bg-teal-50/80' },
@@ -133,7 +134,14 @@ export default function CustomerPage() {
       return
     }
 
-    if (!window.confirm('Delete this customer?')) return
+    const confirmed = await confirmAction({
+      title: 'Delete customer',
+      message: 'This customer will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
 
     try {
       await axiosInstance.delete(`/customers/${id}`)

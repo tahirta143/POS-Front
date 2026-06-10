@@ -124,7 +124,14 @@ export default function GroupRights() {
   }
 
   async function handleDelete(row) {
-    if (!window.confirm("Delete this rights assignment?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete rights assignment',
+      message: 'This rights assignment will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/add-rights/${row.id}`);
       toast.success("Group rights removed successfully.");

@@ -408,7 +408,14 @@ export default function ReOrderStock() {
       return;
     }
 
-    if (!window.confirm(`Save changes for ${row.item_name} as ${nStatus}?`)) {
+    const confirmed = await confirmAction({
+      title: 'Save reorder status',
+      message: `Save changes for ${row.item_name} as ${nStatus}?`,
+      confirmLabel: 'Save',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) {
       return;
     }
 
@@ -440,7 +447,14 @@ export default function ReOrderStock() {
 
   async function handleDelete(row) {
     if (!row.original_id) return;
-    if (!window.confirm(`Delete reorder for ${row.item_name}?`)) return;
+    const confirmed = await confirmAction({
+      title: 'Delete reorder',
+      message: `Delete reorder for ${row.item_name}?`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
 
     setSavingId(row.key);
     try {

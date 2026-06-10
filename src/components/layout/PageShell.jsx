@@ -1,16 +1,20 @@
 import { motion } from "framer-motion";
 
 // PageShell — wraps page content in a centred, max-width section.
-export function PageShell({ children }) {
+export function PageShell({ children, className = "", contentClassName = "" }) {
   return (
-    <motion.section 
+    <motion.section
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="page-shell w-full space-y-6 pb-20"
+      className={`page-shell w-full pb-14 sm:pb-16 lg:pb-20 ${className}`.trim()}
     >
-      {children}
+      <div
+        className={`mx-auto flex w-full max-w-7xl flex-col gap-5 sm:gap-6 lg:gap-7 ${contentClassName}`.trim()}
+      >
+        {children}
+      </div>
     </motion.section>
   );
 }
@@ -18,7 +22,7 @@ export function PageShell({ children }) {
 export function Card({ children, className = "" }) {
   return (
     <div
-      className={`app-card group relative overflow-hidden rounded-xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)] ${className}`}
+      className={`app-card group relative overflow-hidden rounded-xl border border-white/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] dark:shadow-none backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)] ${className}`}
     >
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary-200/70 to-transparent dark:via-primary-700/50" />
       {children}
@@ -28,21 +32,21 @@ export function Card({ children, className = "" }) {
 
 export function SectionHeader({ icon, title, description, action }) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-primary-100 dark:border-primary-500/50 dark:bg-primary-600 px-5 py-4 rounded-t-3xl -mx-5 -mt-5 transition-colors">
+    <div className="mb-4 flex flex-col gap-3 rounded-t-3xl border-b border-primary-100 px-4 py-3 transition-colors sm:-mx-5 sm:-mt-5 sm:mb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 dark:border-primary-500/50 dark:bg-primary-600">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-100 dark:bg-white/20 text-primary-600 dark:text-white shadow-sm ring-1 ring-white/70 dark:ring-primary-500/30 transition-colors">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 shadow-sm ring-1 ring-white/70 transition-colors dark:bg-white/20 dark:text-white dark:ring-primary-500/30 sm:h-11 sm:w-11">
           {icon}
         </div>
         <div className="min-w-0">
-          <h3 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-white uppercase transition-colors">
+          <h3 className="text-[14px] font-bold uppercase tracking-tight text-slate-900 transition-colors dark:text-white sm:text-[16px]">
             {title}
           </h3>
-          <p className="max-w-2xl text-[12px] leading-5 text-slate-500 dark:text-primary-50 transition-colors">
+          <p className="max-w-2xl text-[11px] leading-4 text-slate-500 transition-colors dark:text-primary-50 sm:text-[12px] sm:leading-5">
             {description}
           </p>
         </div>
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }
@@ -189,7 +193,7 @@ export function ActionButton({ label, tone, onClick, disabled }) {
       disabled={disabled}
       aria-label={label}
       title={label}
-      className={`${isIconOnly ? "inline-flex h-8 w-8 items-center justify-center rounded-lg p-0" : "rounded-xl px-3 py-2 text-xs font-semibold"} shadow-sm ring-1 ring-black/5 transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 ${tones[tone] || tones.teal}`}
+      className={`${isIconOnly ? "inline-flex h-8 w-8 items-center justify-center rounded-lg p-0" : "inline-flex min-h-9 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold"} shadow-sm ring-1 ring-black/5 transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 ${tones[tone] || tones.teal}`}
     >
       {label === "Edit" ? (
         <svg

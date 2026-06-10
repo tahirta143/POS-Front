@@ -11,6 +11,7 @@ import {
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance.js";
 import { MdBadge, MdRefresh } from "react-icons/md";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 
 const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
@@ -105,7 +106,14 @@ export default function Designation() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this designation?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete designation",
+      message: "This designation will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/designations/${id}`);
       toast.success("Designation deleted successfully.");

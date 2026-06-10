@@ -13,6 +13,7 @@ import {
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
 import { MdSecurity, MdLock, MdRefresh } from "react-icons/md";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 
 const sectionStyles = {
   emerald: {
@@ -225,7 +226,14 @@ export default function ExpenseVoucherPage() {
       return;
     }
     
-    if (!window.confirm("Delete this expense voucher?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete expense voucher",
+      message: "This voucher will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       await axiosInstance.delete(`/expense-vouchers/${id}`);

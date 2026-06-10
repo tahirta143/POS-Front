@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Field, PageShell, SectionHeader, Toggle, TableState, ActionButton, StatusChip } from '../../components/layout/PageShell.jsx'
 import axiosInstance from '../../services/axiosInstance'
+import { confirmAction } from '../../components/ui/ConfirmDialog.jsx'
 import { usePermissions } from '../../hooks/usePermissions'
 import { MdLock, MdRefresh } from 'react-icons/md'
 
@@ -100,7 +101,14 @@ export default function CategoryPage() {
       toast.error("You don't have permission to delete categories.")
       return
     }
-    if (!window.confirm('Delete this category?')) return
+    const confirmed = await confirmAction({
+      title: 'Delete category',
+      message: 'This category will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
 
     try {
       await axiosInstance.delete(`/categories/${id}`)

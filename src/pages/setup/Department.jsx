@@ -103,7 +103,14 @@ export default function Department() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this department?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete department',
+      message: 'This department will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
     try {
       await axiosInstance.delete(`/departments/${id}`);
       toast.success("Department deleted successfully.");

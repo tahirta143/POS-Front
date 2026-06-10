@@ -12,6 +12,7 @@ import {
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
 import { MdLock, MdRefresh } from "react-icons/md";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 
 function createEmptyForm() {
   return {
@@ -110,7 +111,14 @@ export default function ItemUnitPage() {
       toast.error("You don't have permission to delete item units.");
       return;
     }
-    if (!window.confirm("Delete this item unit?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete item unit",
+      message: "This item unit will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       await axiosInstance.delete(`/item-units/${id}`);

@@ -21,8 +21,7 @@ import {
   MdBusiness,
   MdPriceCheck,
 } from "react-icons/md";
-import { usePermissions } from "../../hooks/usePermissions";
-
+import { usePermissions } from "../../hooks/usePermissions";import { confirmAction } from '../../components/ui/ConfirmDialog.jsx'
 const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
 };
@@ -238,7 +237,14 @@ export default function PurchaseReturnPage() {
   }
 
   async function handleDelete(returnId) {
-    if (!window.confirm("Delete this purchase return?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete purchase return',
+      message: 'This purchase return will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/purchase-returns/${returnId}`);
       toast.success("Return deleted successfully.");

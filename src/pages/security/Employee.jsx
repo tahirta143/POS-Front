@@ -161,7 +161,14 @@ export default function EmployeePage() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this employee?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete employee',
+      message: 'This employee will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/employees/${id}`);
       setSuccess("Employee deleted successfully.");

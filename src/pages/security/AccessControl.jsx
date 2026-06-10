@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 import {
   MdSave,
   MdSearch,
@@ -253,12 +254,14 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
       toast.error("You don't have permission to delete groups.");
       return;
     }
-    if (
-      !window.confirm(
-        `Delete "${group.group_name}"? This may affect assigned users.`,
-      )
-    )
-      return;
+    const confirmed = await confirmAction({
+      title: "Delete group",
+      message: `Delete "${group.group_name}"? This may affect assigned users.`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/groups/${group.id}`);
       toast.success("Group deleted.");
@@ -2017,12 +2020,14 @@ function UsersTab({ groups, allUsers, onRefresh }) {
       toast.error("You don't have permission to delete users.");
       return;
     }
-    if (
-      !window.confirm(
-        `Delete "${user.username || user.name}"? This cannot be undone.`,
-      )
-    )
-      return;
+    const confirmed = await confirmAction({
+      title: "Delete user",
+      message: `Delete "${user.username || user.name}"? This cannot be undone.`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/auth/users/${user.id}`);
       toast.success("User deleted.");
@@ -2105,7 +2110,14 @@ function UsersTab({ groups, allUsers, onRefresh }) {
       toast.error("You don't have permission to remove users from groups.");
       return;
     }
-    if (!window.confirm("Remove this user from the group?")) return;
+    const confirmed = await confirmAction({
+      title: "Remove user from group",
+      message: "Remove this user from the group?",
+      confirmLabel: "Remove",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/group-users/${groupId}/user/${userId}`);
       toast.success("User removed");
@@ -2768,12 +2780,14 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
       return;
     }
     e.stopPropagation();
-    if (
-      !window.confirm(
-        `Delete module "${mod.module_name}"?\nAll its permissions will also be removed.`,
-      )
-    )
-      return;
+    const confirmed = await confirmAction({
+      title: "Delete module",
+      message: `Delete module "${mod.module_name}"? All its permissions will also be removed.`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/modules/${mod.id}`);
       toast.success("Module deleted successfully.");
@@ -2846,7 +2860,14 @@ function PermissionsTab({ modules, functionalities, onRefresh }) {
       toast.error("You don't have permission to delete permissions.");
       return;
     }
-    if (!window.confirm(`Delete permission "${func.name}"?`)) return;
+    const confirmed = await confirmAction({
+      title: "Delete permission",
+      message: `Delete permission "${func.name}"?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     setOpenFuncMenu(null);
     try {
       await axiosInstance.delete(`/functionalities/${func.id}`);

@@ -18,8 +18,11 @@ import {
   MdPerson,
   MdSearch,
   MdLock,
+  MdRefresh,
 } from "react-icons/md";
 import { usePermissions } from "../hooks/usePermissions";
+import SearchableSelect from "../components/ui/SearchableSelect";
+import { confirmAction } from "../components/ui/ConfirmDialog";
 
 const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
@@ -255,7 +258,14 @@ export default function Sales() {
       return;
     }
 
-    if (!window.confirm("Delete this sale record?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete sale",
+      message: "This sales record will be removed. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/sale-invoices/${id}`);
       toast.success("Sale record deleted successfully");
@@ -369,15 +379,15 @@ export default function Sales() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-        className="space-y-4"
+        className="mx-auto w-full max-w-7xl space-y-5"
       >
         {/* Header Section */}
-        <div className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 dark:ring-slate-800/80">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
               Sales Invoices
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
               Create new sale receipts and track payment history.
             </p>
           </div>
@@ -400,7 +410,7 @@ export default function Sales() {
                   }
                 }
               }}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              className={`mobile-action inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm sm:w-auto ${
                 isFormOpen
                   ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
@@ -429,21 +439,21 @@ export default function Sales() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto mb-6 max-w-6xl border-l-[6px] border-l-teal-500 p-6">
+              <Card className="border-l-[6px] border-l-teal-500 p-5 sm:p-6">
                 <SectionHeader
                   title={editId ? "Edit Invoice" : "New Sales Invoice"}
                   description="Register a new sale for record keeping and reporting."
                   icon={<MdReceipt className="h-6 w-6 text-teal-600" />}
                 />
 
-                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="mt-4 space-y-5">
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <SectionCard title="Customer Identification">
-                      <div className="flex flex-wrap gap-4 items-end">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
                         <Field
                           label="Mobile / Search"
                           required
-                          className="flex-1 min-w-[200px]"
+                          className="min-w-0 flex-1 sm:min-w-[200px]"
                         >
                           <div className="relative">
                             <input
@@ -466,7 +476,7 @@ export default function Sales() {
                             <MdSearch className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
                             {showCustomerDropdown &&
                               matchingCustomers.length > 0 && (
-                                <ul className="absolute left-0 top-full z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-xl ring-1 ring-slate-200/70 transition-colors">
+                                <ul className="absolute left-0 top-full z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-300 bg-white py-1 shadow-xl ring-1 ring-slate-200/70 transition-colors dark:border-slate-700 dark:bg-slate-900">
                                   {matchingCustomers.map((c) => (
                                     <li
                                       key={c.id}
@@ -488,7 +498,7 @@ export default function Sales() {
                         <Field
                           label="Customer Name"
                           required
-                          className="flex-1 min-w-[200px]"
+                          className="min-w-0 flex-1 sm:min-w-[200px]"
                         >
                           <input
                             type="text"
@@ -501,8 +511,8 @@ export default function Sales() {
                       </div>
                     </SectionCard>
                     <SectionCard title="Internal Reference">
-                      <div className="flex gap-4">
-                        <Field label="Receipt Number" className="flex-1">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                        <Field label="Receipt Number" className="min-w-0 flex-1">
                           <input
                             type="text"
                             value={receiptNo}
@@ -510,7 +520,7 @@ export default function Sales() {
                             className="h-8 w-full rounded-md border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-2.5 text-[12px] font-mono font-bold text-slate-500 dark:text-slate-400"
                           />
                         </Field>
-                        <Field label="Description / Note" className="flex-1">
+                        <Field label="Description / Note" className="min-w-0 flex-1">
                           <input
                             type="text"
                             value={description}
@@ -542,44 +552,36 @@ export default function Sales() {
                         return (
                           <div
                             key={row.id}
-                            className="grid grid-cols-2 gap-2 transition-all duration-200 sm:grid-cols-[180px_1fr_100px_80px_100px_50px]"
+                            className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-2 transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/40 sm:grid-cols-[180px_1fr_100px_80px_100px_50px] sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0"
                           >
                             <div className="col-span-2 sm:col-span-1">
-                              <select
+                              <SearchableSelect
+                                label=""
                                 value={row.categoryId}
-                                onChange={(e) =>
-                                  updateRow(
-                                    row.id,
-                                    "categoryId",
-                                    e.target.value,
-                                  )
+                                onChange={(value) =>
+                                  updateRow(row.id, "categoryId", value)
                                 }
-                                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] outline-none focus:border-indigo-400 transition-colors"
-                              >
-                                <option value="">Category</option>
-                                {categories.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {c.category_name}
-                                  </option>
-                                ))}
-                              </select>
+                                options={categories.map((c) => ({
+                                  value: c.id,
+                                  label: c.category_name,
+                                }))}
+                                placeholder="Category"
+                              />
                             </div>
                             <div className="col-span-2 sm:col-span-1">
-                              <select
+                              <SearchableSelect
+                                label=""
                                 value={row.itemId}
-                                onChange={(e) =>
-                                  updateRow(row.id, "itemId", e.target.value)
+                                onChange={(value) =>
+                                  updateRow(row.id, "itemId", value)
                                 }
                                 disabled={!row.categoryId}
-                                className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-[12px] outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800/50 focus:border-indigo-400 transition-colors"
-                              >
-                                <option value="">Select Item</option>
-                                {availableItems.map((i) => (
-                                  <option key={i.id} value={i.id}>
-                                    {i.item_name}
-                                  </option>
-                                ))}
-                              </select>
+                                options={availableItems.map((i) => ({
+                                  value: i.id,
+                                  label: i.item_name,
+                                }))}
+                                placeholder="Select Item"
+                              />
                             </div>
                             <input
                               type="number"
@@ -588,8 +590,8 @@ export default function Sales() {
                               onChange={(e) =>
                                 updateRow(row.id, "price", e.target.value)
                               }
-                              placeholder="0.00"
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-right text-[12px] font-medium"
+                              placeholder="Price"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-right text-[12px] font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:h-8"
                             />
                             <input
                               type="number"
@@ -598,12 +600,12 @@ export default function Sales() {
                               onChange={(e) =>
                                 updateRow(row.id, "quantity", e.target.value)
                               }
-                              className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 text-center text-[12px] font-bold"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-center text-[12px] font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:h-8"
                             />
                             <div className="rounded-xl bg-white/80 px-2 py-2 text-right text-[12px] font-black text-slate-800 ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:text-slate-200 dark:ring-slate-700/60">
                               PKR {Number(row.total || 0).toLocaleString()}
                             </div>
-                            <div className="flex justify-center">
+                            <div className="flex justify-end sm:justify-center">
                               <button
                                 type="button"
                                 onClick={() => removeRow(row.id)}
@@ -641,7 +643,7 @@ export default function Sales() {
                     </div>
                   </SectionCard>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 items-start">
                     <SectionCard title="Financial Summary">
                       <div className="space-y-3 py-1">
                         <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -650,7 +652,7 @@ export default function Sales() {
                             PKR {subTotal.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           <span className="text-slate-500 text-xs flex-1">
                             Discount Amount
                           </span>
@@ -660,7 +662,7 @@ export default function Sales() {
                             value={discount}
                             onChange={(e) => setDiscount(e.target.value)}
                             placeholder="0.00"
-                            className="h-8 w-32 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-right px-2 text-[12px] font-bold outline-none focus:border-teal-400"
+                            className="h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-right text-[12px] font-bold text-slate-800 outline-none focus:border-teal-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:h-8 sm:w-32"
                           />
                         </div>
                         <div className="pt-2 flex justify-between items-center transition-colors">
@@ -674,20 +676,20 @@ export default function Sales() {
                       </div>
                     </SectionCard>
                     <SectionCard title="Settlement Details">
-                      <div className="flex flex-wrap gap-6 items-end py-1">
+                      <div className="flex flex-col gap-4 py-1 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
                         <Field
                           label="Payment Received"
-                          className="flex-1 min-w-[150px]"
+                          className="min-w-0 flex-1 sm:min-w-[150px]"
                         >
                           <input
                             type="number"
                             value={givenAmount}
                             onChange={(e) => setGivenAmount(e.target.value)}
                             placeholder="0.00"
-                            className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 text-sm font-black text-emerald-700 dark:text-emerald-400 outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition"
+                            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-black text-emerald-700 outline-none transition focus:border-emerald-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-emerald-400 dark:focus:bg-slate-700 sm:h-8"
                           />
                         </Field>
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="min-w-0 flex-1 sm:min-w-[200px]">
                           {payable > 0 && givenAmount > 0 && (
                             <div
                               className={`p-3 rounded-xl border-2 flex items-center justify-between transition-colors ${Number(givenAmount) >= payable ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30"}`}
@@ -721,7 +723,7 @@ export default function Sales() {
                     </SectionCard>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                     <button
                       type="button"
                       onClick={() => {
@@ -735,7 +737,7 @@ export default function Sales() {
                     <button
                       type="submit"
                       disabled={submitting || payable <= 0}
-                      className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 text-sm font-black text-white shadow-lg shadow-teal-100 hover:bg-teal-700 transition disabled:opacity-50"
+                      className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-black text-white shadow-lg shadow-teal-100 transition hover:bg-teal-700 disabled:opacity-50 sm:min-w-[180px] sm:w-auto sm:px-8"
                     >
                       <MdReceipt className="h-5 w-5" />{" "}
                       {submitting
@@ -752,19 +754,19 @@ export default function Sales() {
         </AnimatePresence>
 
         {/* List Section */}
-        <Card className="mx-auto max-w-6xl p-0 overflow-hidden">
+        <Card className="overflow-hidden p-0">
           <SectionHeader
             title="Sales History Log"
             description="Chronological record of completed transactions and billing."
             icon={<MdReceipt className="h-6 w-6 text-teal-600" />}
             action={
-              <div className="pr-1">
+              <div className="flex justify-start sm:justify-end">
                 <button
                   type="button"
                   onClick={fetchSales}
                   className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
-                  Sync Records
+                  <MdRefresh className="inline mr-1" /> Refresh
                 </button>
               </div>
             }
@@ -775,16 +777,16 @@ export default function Sales() {
           ) : salesRecord.length === 0 ? (
             <TableState message="No sales records detected in history." />
           ) : (
-            <div className="custom-scrollbar overflow-x-auto w-full">
+            <div className="mobile-table custom-scrollbar w-full overflow-x-auto px-5 pb-5 sm:px-6 sm:pb-6">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
                 <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur dark:bg-slate-800/80">
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
-                    <th className="px-5 py-3">Receipt & Date</th>
-                    <th className="px-5 py-3">Customer Info</th>
-                    <th className="px-5 py-3 text-right">Payable</th>
-                    <th className="px-5 py-3 text-right">Received</th>
-                    <th className="px-5 py-3 text-center">Status</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="py-3 pl-5 pr-4 sm:pl-6">Receipt & Date</th>
+                    <th className="px-4 py-3">Customer Info</th>
+                    <th className="px-4 py-3 text-right">Payable</th>
+                    <th className="px-4 py-3 text-right">Received</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="py-3 pl-4 pr-5 text-right sm:pr-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
@@ -803,7 +805,7 @@ export default function Sales() {
                         animate={{ opacity: 1 }}
                         className={`group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10 ${editId === s.id ? "bg-teal-50/50 dark:bg-teal-900/20" : ""}`}
                       >
-                        <td className="px-5 py-4">
+                        <td className="py-4 pl-5 pr-4 sm:pl-6">
                           <div className="flex flex-col">
                             <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300">
                               {s.receipt_no}
@@ -813,7 +815,7 @@ export default function Sales() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-4 py-4">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-[12px]">
                               {s.customer_name || "Walk-in Customer"}
@@ -823,23 +825,23 @@ export default function Sales() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-4 py-4 text-right">
                           <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300">
                             PKR {Number(s.payable || 0).toLocaleString()}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-4 py-4 text-right">
                           <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
                             PKR {Number(s.paid || 0).toLocaleString()}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-center">
+                        <td className="px-4 py-4 text-center">
                           <StatusChip
                             label={statusPayload.label}
                             tone={statusPayload.tone}
                           />
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="py-4 pl-4 pr-5 sm:pr-6">
                           <div className="flex justify-end gap-2">
                             {canUpdateSale && (
                               <ActionButton

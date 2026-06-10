@@ -13,6 +13,10 @@ import {
 import axiosInstance from "../../services/axiosInstance.js";
 import { usePermissions } from "../../hooks/usePermissions.js";
 import { MdLock, MdRefresh } from "react-icons/md";
+import SearchableSelect from "../../components/ui/SearchableSelect.jsx";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
+
+const BASE_URL = import.meta.env.VITE_UPLOADS_URL || "http://localhost:5000";
 
 function createEmptyForm() {
   return {
@@ -34,6 +38,7 @@ function createEmptyForm() {
     is_enable: true,
     image_name: "",
     image_file: null,
+    existing_image_url: "",
   };
 }
 
@@ -69,7 +74,7 @@ export default function ItemPage() {
   const canReadItem = isAdmin || canRead(MODULE_NAME);
   const canUpdateItem = isAdmin || canUpdate(MODULE_NAME);
   const canDeleteItem = isAdmin || canDelete(MODULE_NAME);
-  
+
   // Check if user can perform write operations (create/update)
   const canWriteItem = canCreateItem || canUpdateItem;
 
@@ -120,8 +125,6 @@ export default function ItemPage() {
   }
 
   async function fetchLookups() {
-    // These APIs are only called when user has create/update permissions
-    // So 403 errors won't occur for read-only users
     const [catRes, typeRes, mfgRes, supRes, locRes, unitRes, subcatRes] =
       await Promise.all([
         safeFetch("/categories"),
@@ -192,7 +195,11 @@ export default function ItemPage() {
       formData.append("perUnit", parseInt(form.per_unit) || 1);
       formData.append("isEnable", form.is_enable ? 1 : 0);
 
-      if (form.image_file) formData.append("itemImage", form.image_file);
+      if (form.image_file) {
+        formData.append("itemImage", form.image_file);
+      } else if (editId && form.existing_image_url) {
+        formData.append("itemImageUrl", form.existing_image_url);
+      }
 
       if (editId) {
         if (!canUpdateItem) {
@@ -231,7 +238,14 @@ export default function ItemPage() {
       toast.error("You don't have permission to delete items.");
       return;
     }
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete item",
+      message: "This item will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/item-details/${id}`);
       toast.success("Item deleted successfully.");
@@ -246,7 +260,7 @@ export default function ItemPage() {
       toast.error("You don't have permission to edit items.");
       return;
     }
-    
+
     // Ensure lookup data is loaded before opening edit form
     if (shouldFetchLookups && categories.length === 0) {
       fetchLookups().then(() => {
@@ -277,8 +291,9 @@ export default function ItemPage() {
       reorder_level: item.reorder || item.reorder_level || "",
       is_enable:
         item.isEnable === 1 || item.is_enable === 1 || item.is_enable === true,
-      image_name: item.itemImage || "",
+      image_name: item.itemImage || item.item_image_url || "",
       image_file: null,
+      existing_image_url: item.item_image_url || item.itemImage || "",
     });
     setIsFormOpen(true);
     document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
@@ -331,14 +346,14 @@ export default function ItemPage() {
 
   return (
     <PageShell>
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-7xl space-y-5">
         {/* Top Action Bar */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
               Item Management
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
               Manage your inventory, pricing, and stock levels.
             </p>
           </div>
@@ -365,11 +380,10 @@ export default function ItemPage() {
                   }
                 }
               }}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
-                isFormOpen
+              className={`inline-flex items-center justify-center gap-2 self-start rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm sm:self-auto ${isFormOpen
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                   : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
-              }`}
+                }`}
             >
               {isFormOpen ? (
                 <>
@@ -420,7 +434,7 @@ export default function ItemPage() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto max-w-7xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+              <Card className="border-l-[6px] border-l-teal-500 p-5 sm:p-6">
                 <SectionHeader
                   title={
                     editId ? "Update Item Details" : "New Item Registration"
@@ -429,20 +443,9 @@ export default function ItemPage() {
                   icon={<ItemFormIcon className="h-5 w-5" />}
                 />
 
-                <form onSubmit={handleSubmit} className="space-y-1.5">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   <SectionCard color="lime" title="Basic information">
-                    <div className="grid gap-1.5 xl:grid-cols-[1fr_1fr_1.05fr]">
-                      <SelectField
-                        label="Item category"
-                        required
-                        value={form.category_id}
-                        onChange={(value) => updateField("category_id", value)}
-                        options={enabledCategories.map((c) => ({
-                          value: c.id,
-                          label: c.category_name,
-                        }))}
-                        placeholder="Select category"
-                      />
+                    <div className="grid gap-3 xl:grid-cols-[1fr_1fr_1.05fr]">
                       <SelectField
                         label="Item type"
                         required
@@ -453,6 +456,17 @@ export default function ItemPage() {
                           label: t.type_name,
                         }))}
                         placeholder="Select item type"
+                      />
+                      <SelectField
+                        label="Item category"
+                        required
+                        value={form.category_id}
+                        onChange={(value) => updateField("category_id", value)}
+                        options={enabledCategories.map((c) => ({
+                          value: c.id,
+                          label: c.category_name,
+                        }))}
+                        placeholder="Select category"
                       />
                       <SelectField
                         label="Sub-category"
@@ -485,8 +499,8 @@ export default function ItemPage() {
                   </SectionCard>
 
                   <SectionCard color="sky" title="Supplier & pricing">
-                    <div className="space-y-1.5">
-                      <div className="grid gap-1.5 xl:grid-cols-[1fr_1fr_148px]">
+                    <div className="space-y-3">
+                      <div className="grid gap-3 xl:grid-cols-[1fr_1fr_148px]">
                         <SelectField
                           label="Manufacturer"
                           value={form.manufacturer}
@@ -521,7 +535,7 @@ export default function ItemPage() {
                           />
                         </Field>
                       </div>
-                      <div className="grid gap-1.5 sm:grid-cols-3 xl:max-w-[29rem]">
+                      <div className="grid gap-3 sm:grid-cols-3 xl:max-w-[29rem]">
                         <CompactInput
                           label="Purchase price"
                           value={form.purchase_price}
@@ -548,8 +562,8 @@ export default function ItemPage() {
                   </SectionCard>
 
                   <SectionCard color="violet" title="Description & details">
-                    <div className="space-y-1.5">
-                      <div className="grid gap-1.5 xl:grid-cols-[1.15fr_1fr_148px]">
+                    <div className="space-y-3">
+                      <div className="grid gap-3 xl:grid-cols-[1.15fr_1fr_148px]">
                         <Field label="Description" className="xl:col-span-2">
                           <textarea
                             rows={2}
@@ -584,7 +598,7 @@ export default function ItemPage() {
                           placeholder="Select unit"
                         />
                       </div>
-                      <div className="grid gap-1.5 sm:grid-cols-2 xl:max-w-[19rem]">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:max-w-[19rem]">
                         <CompactInput
                           label="Per unit"
                           value={form.per_unit}
@@ -603,7 +617,7 @@ export default function ItemPage() {
                     </div>
                   </SectionCard>
 
-                  <div className="grid gap-1.5 xl:grid-cols-[minmax(0,1.1fr)_270px_205px]">
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1.1fr)_270px_205px]">
                     <SectionCard color="emerald" title="Product image">
                       <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 py-1.5 transition hover:border-teal-300 hover:bg-teal-50/40">
                         <input
@@ -636,7 +650,7 @@ export default function ItemPage() {
                     </SectionCard>
 
                     <SectionCard color="lime" title="Actions">
-                      <div className="flex h-full flex-col justify-start gap-1.5">
+                      <div className="flex h-full flex-col justify-start gap-2.5">
                         <button
                           type="submit"
                           disabled={submitting}
@@ -668,7 +682,7 @@ export default function ItemPage() {
         </AnimatePresence>
 
         {/* Item List Table */}
-        <Card className="mx-auto max-w-7xl p-0 overflow-hidden">
+        <Card className="overflow-hidden p-0">
           <SectionHeader
             title="Item Records"
             description={`${items.length} items currently in inventory`}
@@ -688,7 +702,7 @@ export default function ItemPage() {
               </svg>
             }
             action={
-              <div className="flex gap-2 p-4">
+              <div className="flex justify-start sm:justify-end">
                 <button
                   type="button"
                   onClick={fetchItems}
@@ -705,17 +719,19 @@ export default function ItemPage() {
           ) : items.length === 0 ? (
             <TableState message="No items found. Click 'Add New Item' to begin." />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto px-5 pb-5 sm:px-6 sm:pb-6">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50/50">
                   <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400">
-                    <th className="px-5 py-3 w-12">#</th>
-                    <th className="px-5 py-3">Item Details</th>
-                    <th className="px-5 py-3">Category</th>
-                    <th className="px-5 py-3">Price (Sale)</th>
-                    <th className="px-5 py-3">Stock</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="w-12 py-3 pr-4 pl-5 sm:pl-6">#</th>
+                    {/* ── NEW: Image column header ── */}
+                    <th className="w-16 px-4 py-3">Image</th>
+                    <th className="px-4 py-3">Item Details</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Price (Sale)</th>
+                    <th className="px-4 py-3">Stock</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="py-3 pl-4 pr-5 text-right sm:pr-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -726,10 +742,19 @@ export default function ItemPage() {
                       animate={{ opacity: 1 }}
                       className="group transition-colors hover:bg-teal-50/30 dark:hover:bg-teal-900/10"
                     >
-                      <td className="px-5 py-4 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                      <td className="py-4 pr-4 pl-5 text-[11px] font-mono text-slate-400 dark:text-slate-500 sm:pl-6">
                         {index + 1}
                       </td>
-                      <td className="px-5 py-4">
+
+                      {/* ── NEW: Image cell ── */}
+                      <td className="px-4 py-3">
+                        <ItemImage
+                          src={item.item_image_url}
+                          alt={item.item_name || item.itemName}
+                        />
+                      </td>
+
+                      <td className="px-4 py-4">
                         <div className="flex flex-col">
                           <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200">
                             {item.itemName || item.item_name}
@@ -739,50 +764,49 @@ export default function ItemPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-4">
                         <span className="rounded-md bg-slate-100 dark:bg-teal-900/20 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-teal-300">
                           {item.category_name || "Uncategorized"}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-[12px] font-bold text-teal-700 dark:text-teal-400">
+                      <td className="px-4 py-4 text-[12px] font-bold text-teal-700 dark:text-teal-400">
                         {parseFloat(
                           item.salePrice || item.sale_price || 0,
                         ).toLocaleString()}{" "}
                         PKR
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-4">
                         <span
-                          className={`text-[12px] font-semibold ${
-                            parseFloat(item.stock || item.opening_stock || 0) <=
-                            (item.reorder || item.reorder_level || 0)
+                          className={`text-[12px] font-semibold ${parseFloat(item.stock || item.opening_stock || 0) <=
+                              (item.reorder || item.reorder_level || 0)
                               ? "text-rose-600 dark:text-rose-400"
                               : "text-slate-700 dark:text-slate-300"
-                          }`}
+                            }`}
                         >
                           {item.stock || item.opening_stock || 0}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-4">
                         <StatusChip
                           label={
                             item.isEnable === 1 ||
-                            item.isEnable === true ||
-                            item.is_enable === 1 ||
-                            item.is_enable === true
+                              item.isEnable === true ||
+                              item.is_enable === 1 ||
+                              item.is_enable === true
                               ? "Active"
                               : "Inactive"
                           }
                           tone={
                             item.isEnable === 1 ||
-                            item.isEnable === true ||
-                            item.is_enable === 1 ||
-                            item.is_enable === true
+                              item.isEnable === true ||
+                              item.is_enable === 1 ||
+                              item.is_enable === true
                               ? "teal"
                               : "rose"
                           }
                         />
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="py-4 pl-4 pr-5 sm:pr-6">
                         <div className="flex justify-end gap-2">
                           {canUpdateItem && (
                             <ActionButton
@@ -809,6 +833,47 @@ export default function ItemPage() {
         </Card>
       </div>
     </PageShell>
+  );
+}
+
+// ── NEW: Item image with fallback placeholder ──────────────────────────────────
+
+function ItemImage({ src, alt }) {
+  const [errored, setErrored] = useState(false);
+
+  const fullSrc = src
+    ? src.startsWith("http")
+      ? src
+      : `${BASE_URL}${src}`
+    : null;
+
+  if (!fullSrc || errored) {
+    return (
+      <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700">
+        <svg
+          className="h-5 w-5 text-slate-400 dark:text-slate-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h18M3 6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 19.5H5.25A2.25 2.25 0 013 17.25V6.75z"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={fullSrc}
+      alt={alt || "Item image"}
+      onError={() => setErrored(true)}
+      className="h-10 w-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+    />
   );
 }
 
@@ -842,25 +907,14 @@ function SelectField({
   placeholder,
 }) {
   return (
-    <Field label={label} required={required}>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-full appearance-none rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 pr-7 text-[12px] text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-        >
-          <option value="">{placeholder}</option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-500">
-          <ChevronDownIcon className="h-3.5 w-3.5" />
-        </div>
-      </div>
-    </Field>
+    <SearchableSelect
+      label={label}
+      required={required}
+      value={value}
+      onChange={onChange}
+      options={options}
+      placeholder={placeholder}
+    />
   );
 }
 
@@ -898,9 +952,8 @@ function ItemStatusToggle({ enabled, onChange, label, description }) {
         type="button"
         aria-pressed={enabled}
         onClick={() => onChange(!enabled)}
-        className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-          enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
-        }`}
+        className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${enabled ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+          }`}
       >
         <span
           className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${enabled ? "translate-x-7" : "translate-x-1"}`}

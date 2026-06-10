@@ -164,7 +164,14 @@ export default function CompanyPage() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this company?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete company',
+      message: 'This company will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/companies/${id}`);
       setSuccess("Company deleted successfully.");

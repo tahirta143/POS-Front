@@ -14,6 +14,7 @@ import {
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
 import { MdLock, MdRefresh } from "react-icons/md";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 
 export default function SubCategory() {
   const { canCreate, canRead, canUpdate, canDelete, isAdmin } =
@@ -140,7 +141,14 @@ export default function SubCategory() {
       toast.error("You don't have permission to delete subcategories.");
       return;
     }
-    if (!window.confirm("Delete this subcategory?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete subcategory',
+      message: 'This subcategory will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
 
     try {
       await axiosInstance.delete(`/sub-categories/${id}`);

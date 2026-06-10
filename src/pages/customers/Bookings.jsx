@@ -11,6 +11,7 @@ import {
   StatusChip,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 import {
   MdAdd,
   MdRemove,
@@ -25,6 +26,7 @@ import {
   MdCancel,          
 } from "react-icons/md";
 import { usePermissions } from "../../hooks/usePermissions";
+import SearchableSelect from "../../components/ui/SearchableSelect";
 
 const sectionStyles = {
   teal: { accent: "bg-teal-500", header: "border-teal-100 bg-teal-50/80" },
@@ -174,7 +176,14 @@ export default function Bookings() {
       toast.error("You don't have permission to delete bookings.");
       return;
     }
-    if (!window.confirm("Delete this booking?")) return;
+    const confirmed = await confirmAction({
+      title: 'Delete booking',
+      message: 'This booking will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/bookings/${id}`);
       toast.success("Booking deleted successfully");
@@ -451,14 +460,14 @@ export default function Bookings() {
 
   return (
     <PageShell>
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-7xl space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">
+        <div className="mobile-stack flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
               Customer Bookings
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
               Record advance orders and booking deposits.
             </p>
           </div>
@@ -497,7 +506,7 @@ export default function Bookings() {
                   }
                 }
               }}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm ${
+              className={`mobile-action inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-300 shadow-sm sm:w-auto ${
                 isFormOpen
                   ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-teal-100"
@@ -526,14 +535,14 @@ export default function Bookings() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <Card className="mx-auto max-w-6xl border-l-[6px] border-l-teal-500 p-6 mb-6">
+              <Card className="border-l-[6px] border-l-teal-500 p-5 sm:p-6">
                 <SectionHeader
                   title={editId ? "Edit Booking" : "New Advance Booking"}
                   description="Register a new customer appointment or order."
                   icon={<MdEventAvailable className="h-6 w-6 text-teal-600" />}
                 />
 
-                <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+                <form onSubmit={handleSubmit} className="mt-3 space-y-5">
                   {/* Customer Info */}
                   <SectionCard title="Customer & Appointment">
                     <div className="flex flex-wrap gap-4 items-end py-1">
@@ -642,35 +651,35 @@ export default function Bookings() {
                             key={row.id}
                             className="grid grid-cols-2 gap-2 sm:grid-cols-[180px_1fr_100px_80px_120px_50px] items-center bg-slate-50/50 p-2 sm:p-0 sm:bg-transparent rounded-xl border border-slate-200 sm:border-0"
                           >
-                            <select
-                              value={row.category_id}
-                              onChange={(e) =>
-                                updateRow(row.id, "category_id", e.target.value)
-                              }
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none col-span-2 sm:col-span-1"
-                            >
-                              <option value="">Category</option>
-                              {categories.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.category_name}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              value={row.item_id}
-                              onChange={(e) =>
-                                updateRow(row.id, "item_id", e.target.value)
-                              }
-                              disabled={!row.category_id || items.length === 0}
-                              className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-[12px] outline-none disabled:bg-slate-50 col-span-2 sm:col-span-1"
-                            >
-                              <option value="">Select Item</option>
-                              {availableItems.map((i) => (
-                                <option key={i.id} value={i.id}>
-                                  {i.item_name}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="col-span-2 sm:col-span-1">
+                              <SearchableSelect
+                                label=""
+                                value={row.category_id}
+                                onChange={(value) =>
+                                  updateRow(row.id, "category_id", value)
+                                }
+                                options={categories.map((c) => ({
+                                  value: c.id,
+                                  label: c.category_name,
+                                }))}
+                                placeholder="Category"
+                              />
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <SearchableSelect
+                                label=""
+                                value={row.item_id}
+                                onChange={(value) =>
+                                  updateRow(row.id, "item_id", value)
+                                }
+                                disabled={!row.category_id || items.length === 0}
+                                options={availableItems.map((i) => ({
+                                  value: i.id,
+                                  label: i.item_name,
+                                }))}
+                                placeholder="Select Item"
+                              />
+                            </div>
                             <input
                               type="number"
                               step="0.01"
@@ -853,13 +862,13 @@ export default function Bookings() {
         </AnimatePresence>
 
         {/* Bookings Table */}
-        <Card className="mx-auto max-w-6xl p-0 overflow-hidden">
+        <Card className="overflow-hidden p-0">
           <SectionHeader
             title="Booking Registry"
             description="Log of customer appointments and orders."
             icon={<MdHistory className="h-6 w-6 text-teal-600" />}
             action={
-              <div className="p-4">
+              <div className="flex justify-start sm:justify-end">
                 <button
                   type="button"
                   onClick={fetchBookings}
@@ -875,19 +884,19 @@ export default function Bookings() {
           ) : bookingsRecord.length === 0 ? (
             <TableState message="No bookings found." />
           ) : (
-            <div className="overflow-x-auto w-full">
+            <div className="mobile-table w-full overflow-x-auto px-5 pb-5 sm:px-6 sm:pb-6">
               <table className="min-w-full divide-y divide-slate-100 text-left">
                 <thead className="bg-slate-50/50">
                   <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-5 py-3">Booking ID</th>
-                    <th className="px-5 py-3">Customer</th>
-                    <th className="px-5 py-3">Date & Time</th>
-                    <th className="px-5 py-3 text-right">Payable</th>
-                    <th className="px-5 py-3 text-right">Paid</th>
-                    <th className="px-5 py-3 text-right">Due</th>
-                    <th className="px-5 py-3 text-center">Payment</th>
-                    <th className="px-5 py-3 text-center">Status</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="py-3 pl-5 pr-4 sm:pl-6">Booking ID</th>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Date & Time</th>
+                    <th className="px-4 py-3 text-right">Payable</th>
+                    <th className="px-4 py-3 text-right">Paid</th>
+                    <th className="px-4 py-3 text-right">Due</th>
+                    <th className="px-4 py-3 text-center">Payment</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="py-3 pl-4 pr-5 text-right sm:pr-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 bg-white">
@@ -911,10 +920,10 @@ export default function Bookings() {
                         animate={{ opacity: 1 }}
                         className={`group transition-colors hover:bg-teal-50/20 ${editId === s.id ? "bg-teal-50/40" : ""}`}
                       >
-                        <td className="px-5 py-3.5 font-mono text-[11px] font-bold text-slate-400">
+                        <td className="py-3.5 pl-5 pr-4 font-mono text-[11px] font-bold text-slate-400 sm:pl-6">
                           #BK-{String(s.id).padStart(4, "0")}
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 py-3.5">
                           <p className="font-bold text-slate-800 text-[12px]">
                             {s.customer_name}
                           </p>
@@ -922,7 +931,7 @@ export default function Bookings() {
                             {s.mobile_number || "—"}
                           </p>
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 py-3.5">
                           <p className="text-[12px] font-semibold text-slate-600">
                             {s.booking_date
                               ? String(s.booking_date).slice(0, 10)
@@ -932,28 +941,28 @@ export default function Bookings() {
                             {s.booking_time || "—"}
                           </p>
                         </td>
-                        <td className="px-5 py-3.5 text-right font-bold text-slate-700 text-[12px]">
+                        <td className="px-4 py-3.5 text-right font-bold text-slate-700 text-[12px]">
                           PKR {Number(s.payable || 0).toLocaleString()}
                         </td>
-                        <td className="px-5 py-3.5 text-right font-bold text-emerald-600 text-[12px]">
+                        <td className="px-4 py-3.5 text-right font-bold text-emerald-600 text-[12px]">
                           PKR {Number(s.paid || 0).toLocaleString()}
                         </td>
-                        <td className="px-5 py-3.5 text-right font-bold text-rose-600 text-[12px]">
+                        <td className="px-4 py-3.5 text-right font-bold text-rose-600 text-[12px]">
                           PKR {Number(s.to_be_paid || 0).toLocaleString()}
                         </td>
-                        <td className="px-5 py-3.5 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <StatusChip
                             label={payStatus.label}
                             tone={payStatus.tone}
                           />
                         </td>
-                        <td className="px-5 py-3.5 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <StatusChip
                             label={bkStatus.label}
                             tone={bkStatus.tone}
                           />
                         </td>
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="py-3.5 pl-4 pr-5 text-right sm:pr-6">
                           <div className="flex justify-end gap-2">
                             {(canRecordPayment || canUpdateBooking) && (
                               <ActionButton

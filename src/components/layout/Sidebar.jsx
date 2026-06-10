@@ -58,7 +58,7 @@ const NAV_ITEMS = [
   // Items
   {
     to: "/items",
-    label: "Item Details",
+    label: "Item Define",
     icon: MdInventory,
     module: "Items",
     requiredAction: "read",
@@ -141,6 +141,13 @@ const NAV_ITEMS = [
     icon: MdAccountBalance,
     children: [
       {
+        to: "/finance/supplier-account",
+        label: "Supplier Account",
+        icon: MdFactory,
+        module: "Supplier Ledger",
+        requiredAction: "read",
+      },
+      {
         to: "/finance/supplier-payment",
         label: "Supplier Payment",
         icon: MdMonetizationOn,
@@ -159,6 +166,13 @@ const NAV_ITEMS = [
         label: "Supplier Ledger",
         icon: MdReceipt,
         module: "Supplier Ledger",
+        requiredAction: "read",
+      },
+      {
+        to: "/finance/customer-account",
+        label: "Customer Account",
+        icon: MdPeople,
+        module: "Customer Payment",
         requiredAction: "read",
       },
       {
@@ -364,10 +378,6 @@ function filterNavItems(items, permissions, isAdmin) {
       const hasAction = functionalities.some((func) => {
         const funcName = (func.name || "").toLowerCase();
         const requiredAction = item.requiredAction.toLowerCase();
-
-        // Simply check if the functionality name contains the required action
-        // "Read Category" contains "read" → true ✅
-        // "Create Sale" contains "create" → true ✅
         return funcName.includes(requiredAction);
       });
       if (!hasAction) return false;
@@ -619,11 +629,11 @@ function SidebarContent({ onNavigate }) {
   });
 
   return (
-    <div className="relative w-64 bg-white/92 dark:bg-slate-900/96 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col shadow-md dark:shadow-none backdrop-blur transition-colors duration-300">
+    <div className="relative z-30 flex h-screen max-h-screen w-[18rem] max-w-[calc(100vw-3.5rem)] flex-col overflow-hidden border-r border-gray-100 bg-white/92 shadow-md backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/96 dark:shadow-none lg:w-64">
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary-200/70 to-transparent dark:via-primary-800/40" />
 
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 dark:border-slate-800 shrink-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm transition-colors duration-300">
+      <div className="flex h-16 items-center justify-between border-b border-gray-100 bg-white/50 px-4 shrink-0 backdrop-blur-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/50 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 shrink-0">
             <MdStorefront className="text-white text-xl" />
@@ -638,7 +648,7 @@ function SidebarContent({ onNavigate }) {
       </div>
 
       {/* Nav */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5 sm:px-3">
         {filteredNavItems.length === 0 ? (
           <div className="text-center text-gray-400 text-sm py-8">
             No modules available
@@ -657,7 +667,7 @@ function SidebarContent({ onNavigate }) {
       </div>
 
       {/* User info + Logout */}
-      <div className="border-t border-gray-100 dark:border-slate-800 p-3 shrink-0 transition-colors duration-300">
+      <div className="mt-auto border-t border-gray-100 p-2.5 shrink-0 bg-white/90 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/95 sm:p-3">
         {user && (
           <div className="flex items-center gap-2">
             <NavLink
@@ -717,15 +727,17 @@ const Sidebar = () => {
       {/* Hamburger (mobile) */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        className="fixed left-3 top-3 z-50 flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 lg:hidden"
         aria-label="Open menu"
       >
         <MdMenu className="text-xl" />
       </button>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex h-full">
-        <SidebarContent onNavigate={() => {}} />
+      <div className="hidden h-screen shrink-0 lg:flex">
+        <div className="sticky top-0 h-screen self-start">
+          <SidebarContent onNavigate={() => {}} />
+        </div>
       </div>
 
       {/* Mobile overlay */}
@@ -740,7 +752,7 @@ const Sidebar = () => {
             <SidebarContent onNavigate={() => setMobileOpen(false)} />
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-3 right-[-44px] w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              className="absolute right-[-42px] top-3 flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
               aria-label="Close menu"
             >
               <MdClose className="text-xl" />

@@ -14,6 +14,7 @@ import {
 import axiosInstance from "../../services/axiosInstance";
 import { usePermissions } from "../../hooks/usePermissions";
 import { MdLock, MdRefresh } from "react-icons/md";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 
 const sectionStyles = {
   emerald: {
@@ -179,7 +180,14 @@ export default function Manufacturers() {
       toast.error("You don't have permission to delete manufacturers.")
       return
     }
-    if (!window.confirm("Delete this manufacturer?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete manufacturer",
+      message: "This manufacturer will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       await axiosInstance.delete(`/manufacturers/${id}`);

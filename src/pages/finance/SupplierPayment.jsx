@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ActionButton, Card, Field, PageShell, SectionHeader, StatusChip, TableState } from '../../components/layout/PageShell.jsx';
 import axiosInstance from '../../services/axiosInstance';
+import { confirmAction } from '../../components/ui/ConfirmDialog.jsx';
 import { MdAdd, MdRemove, MdPayment, MdRefresh, MdAccountBalanceWallet, MdDescription } from 'react-icons/md';
 
 function createEmptyForm() {
@@ -131,7 +132,14 @@ export default function SupplierPaymentPage() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Delete this payment? Purchase status will be recalculated.')) return;
+    const confirmed = await confirmAction({
+      title: 'Delete payment',
+      message: 'This payment will be removed and the purchase status will be recalculated.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/supplier-payments/${id}`);
       toast.success('Payment deleted.');

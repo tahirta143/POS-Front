@@ -282,11 +282,8 @@ export default function OpeningStockPage() {
     >
       <div className="mx-auto max-w-[1400px] space-y-6">
         {/* Header Ribbon identical to UI Screenshot */}
-        <div className="flex flex-col items-start justify-between gap-4 rounded-3xl border border-white/70 bg-white/70 px-5 py-5 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-900/60 dark:ring-slate-800/80">
+        <div className="flex flex-col items-start justify-between gap-4 px-5 py-5 backdrop-blur sm:flex-row sm:items-center">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-teal-600 dark:text-teal-400">
-              Inventory Control
-            </p>
             <h1 className="mt-1 text-2xl font-bold text-teal-600">
               Opening Stock
             </h1>

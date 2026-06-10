@@ -61,7 +61,14 @@ export default function UserModule() {
   }
 
   async function handleRevoke(id) {
-    if (!window.confirm("Revoke this access grant?")) return;
+    const confirmed = await confirmAction({
+      title: 'Revoke access grant',
+      message: 'This access grant will be removed from the system. This action cannot be undone.',
+      confirmLabel: 'Revoke',
+      cancelLabel: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/user-module-access/${id}`);
       toast.success("Access revoked.");

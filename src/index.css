@@ -8,6 +8,7 @@
   --tooltip-bg: #ffffff;
   --tooltip-border: #e2e8f0;
   --tooltip-text: #64748b;
+  --app-mobile-gutter: 0.875rem;
 }
 
 .dark {
@@ -50,6 +51,14 @@ body {
   @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 transition-colors duration-300;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+#root {
+  min-height: 100vh;
+}
+
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -61,6 +70,10 @@ code {
 
 .app-shell .page-shell > div {
   position: relative;
+}
+
+.app-shell .page-shell {
+  overflow-x: clip;
 }
 
 .app-shell .page-shell h1 {
@@ -135,6 +148,19 @@ code {
     opacity 0.15s ease;
   border-radius: 0.375rem;
 }
+
+.app-shell .page-shell .mobile-stack > * {
+  min-width: 0;
+}
+
+.app-shell .page-shell .mobile-table {
+  @apply overflow-x-auto rounded-2xl;
+}
+
+.app-shell .page-shell .mobile-table table {
+  min-width: 42rem;
+}
+
 
 /* ── Hard override: keep ALL inputs/selects compact inside cards ── */
 /* This neutralises hardcoded h-10 / h-12 Tailwind utilities */
@@ -327,4 +353,62 @@ code {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400 dark:bg-slate-600;
+}
+
+@media (max-width: 1023px) {
+  .app-shell .page-shell {
+    @apply space-y-4 pb-14;
+  }
+
+  .app-shell .page-shell h1 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .app-shell .page-shell h2 {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .app-shell .page-shell .app-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .app-shell .page-shell table thead th,
+  .app-shell .page-shell table tbody td {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-shell .page-shell .mobile-stack {
+    @apply flex-col items-stretch;
+  }
+
+  .app-shell .page-shell .mobile-action {
+    @apply w-full justify-center;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .app-shell .page-shell {
+    @apply space-y-3 pb-12;
+  }
+
+  .app-shell .page-shell .app-card {
+    padding: 0.875rem;
+    border-radius: 0.9rem;
+  }
+
+  .app-shell .page-shell .app-card button,
+  .app-shell .page-shell .app-card [role="button"] {
+    touch-action: manipulation;
+  }
+
+  .app-shell .page-shell .mobile-table table {
+    min-width: 36rem;
+  }
 }

@@ -10,6 +10,7 @@ import {
   ActionButton,
 } from "../../components/layout/PageShell.jsx";
 import axiosInstance from "../../services/axiosInstance";
+import { confirmAction } from "../../components/ui/ConfirmDialog.jsx";
 import {
   MdAdd,
   MdRemove,
@@ -181,7 +182,14 @@ export default function ExpiryTagsPage() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this expiry tag?")) return;
+    const confirmed = await confirmAction({
+      title: "Delete expiry tag",
+      message: "This expiry tag will be removed from the system. This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       await axiosInstance.delete(`/expiry-tags/${id}`);
       toast.success("Expiry tag deleted successfully.");

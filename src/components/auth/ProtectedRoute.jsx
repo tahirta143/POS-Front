@@ -7,8 +7,8 @@ import { MdSecurity, MdWarning, MdLock } from "react-icons/md";
 
 const ProtectedRoute = ({ 
   children, 
-  module,      // Module name (e.g., "Expense Voucher")
-  action,      // Action required (create, read, update, delete, print, transfer)
+  module,     
+  action,     
   fallback = "/dashboard",
   showAccessDenied = false
 }) => {
