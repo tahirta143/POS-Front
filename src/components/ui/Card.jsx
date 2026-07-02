@@ -18,7 +18,7 @@ export function Card({
 
   return (
     <Component
-      className={`bg-white/95 dark:bg-slate-900/85 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300 ${className}`}
+      className={`app-card bg-white/95 dark:bg-slate-900/85 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300 ${className}`}
       {...animationProps}
     >
       <div className={noPadding ? "" : "p-5"}>{children}</div>

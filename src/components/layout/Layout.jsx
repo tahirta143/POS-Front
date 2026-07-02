@@ -13,7 +13,7 @@ const Layout = () => {
           <div className="absolute bottom-[-10rem] right-[-8rem] h-80 w-80 rounded-full bg-slate-200/50 blur-3xl dark:bg-slate-800/20" />
         </div>
         <Navbar />
-        <main className="app-shell relative z-10 flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/80 px-3 py-3 transition-colors duration-300 custom-scrollbar sm:px-4 sm:py-4 lg:px-6 lg:py-6 dark:bg-slate-950/90">
+        <main className="app-shell relative flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/80 px-3 py-3 transition-colors duration-300 custom-scrollbar sm:px-4 sm:py-4 lg:px-6 lg:py-6 dark:bg-slate-950/90">
           <div className="mx-auto w-full">
             <Outlet />
           </div>

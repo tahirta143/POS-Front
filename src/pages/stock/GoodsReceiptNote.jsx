@@ -131,7 +131,7 @@ export default function GoodsReceiptNotePage() {
 
   return (
     <PageShell>
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-7xl space-y-5">
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div>
