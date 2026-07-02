@@ -57,7 +57,7 @@ const formatDate = (d) =>
 
 function NoAccess({ label }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 flex flex-col items-center justify-center gap-1 min-h-[90px]">
+    <div className="app-card bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 flex flex-col items-center justify-center gap-1 min-h-[90px]">
       <MdShield className="h-5 w-5 text-slate-300 dark:text-slate-600" />
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 dark:text-slate-600">
         {label}
@@ -81,7 +81,7 @@ function StatCard({
   const IconComponent = icon;
   if (loading) return <StatCardSkeleton />;
   return (
-    <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden">
+    <div className="app-card group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden">
       <div
         className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`}
       />

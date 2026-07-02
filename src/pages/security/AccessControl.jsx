@@ -1249,8 +1249,8 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-blue-100">
-                    <MdPeople className="h-4 w-4 text-blue-600" />
+                  <div className="p-1.5 rounded-lg bg-teal-100">
+                    <MdPeople className="h-4 w-4 text-teal-600" />
                   </div>
                   <div>
                     <p className="text-[13px] font-black text-slate-800">
@@ -1258,7 +1258,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                     </p>
                     <p className="text-[10px] text-slate-500">
                       Group:{" "}
-                      <span className="font-bold text-blue-600">
+                      <span className="font-bold text-teal-600">
                         {groupUsersModal?.group_name}
                       </span>
                     </p>
@@ -1307,7 +1307,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                         key={user.id}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border ${
                           checked
-                            ? "bg-blue-50 border-blue-100"
+                            ? "bg-teal-50 border-teal-100"
                             : "hover:bg-slate-50 border-transparent"
                         }`}
                       >
@@ -1321,7 +1321,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                                 : [...prev, uid],
                             )
                           }
-                          className="h-3.5 w-3.5 rounded accent-blue-600 shrink-0"
+                          className="h-3.5 w-3.5 rounded accent-teal-600 shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-bold text-slate-800 truncate">
@@ -1362,7 +1362,7 @@ function GroupsTab({ groups, modules, functionalities, allUsers, onRefresh }) {
                   <button
                     onClick={handleSaveGroupUsers}
                     disabled={savingGroupUsers}
-                    className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-[12px] font-bold hover:bg-blue-700 transition disabled:opacity-50 shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white rounded-lg text-[12px] font-bold hover:bg-teal-700 transition disabled:opacity-50 shadow-sm"
                   >
                     <MdSave className="h-3.5 w-3.5" />
                     {savingGroupUsers ? "Saving..." : "Save Users"}
@@ -1924,6 +1924,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
   const [userForm, setUserForm] = useState(emptyUserForm());
   const [userSubmitting, setUserSubmitting] = useState(false);
   const [expandedUserActions, setExpandedUserActions] = useState(null);
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
 
   // Permission checks
   const canCreateUser = isAdmin || canCreate(MODULE_NAME);
@@ -1939,7 +1940,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
       email: "",
       password: "",
       role: "user",
-      group_id: "",
+      group_ids: [],
       status: "active",
     };
   }
@@ -1951,6 +1952,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
     }
     setEditingUser(null);
     setUserForm(emptyUserForm());
+    setGroupDropdownOpen(false);
     setUserModal("add");
   }
 
@@ -1960,22 +1962,48 @@ function UsersTab({ groups, allUsers, onRefresh }) {
       return;
     }
     setEditingUser(user);
+    const assignedGroupIds = groups
+      .filter((g) =>
+        (g.users || []).some((u) => String(u.id) === String(user.id)),
+      )
+      .map((g) => String(g.id));
     setUserForm({
       username: user.username || user.name || "",
       email: user.email || "",
       password: "",
       role: user.role || "user",
-      group_id: user.group_id || "",
+      group_ids: assignedGroupIds,
       status: user.status || "active",
     });
     setUserModal("edit");
     setExpandedUserActions(null);
+    setGroupDropdownOpen(false);
   }
 
   function closeUserModal() {
     setUserModal(null);
     setEditingUser(null);
     setUserForm(emptyUserForm());
+    setGroupDropdownOpen(false);
+  }
+
+  function toggleUserGroup(groupId) {
+    const id = String(groupId);
+    setUserForm((prev) => ({
+      ...prev,
+      group_ids: prev.group_ids.includes(id)
+        ? prev.group_ids.filter((x) => x !== id)
+        : [...prev.group_ids, id],
+    }));
+  }
+
+  function getSelectedGroupLabel() {
+    if (userForm.group_ids.length === 0) return "No groups selected";
+    const names = groups
+      .filter((g) => userForm.group_ids.includes(String(g.id)))
+      .map((g) => g.group_name);
+    if (names.length <= 2) return names.join(", ");
+    return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
   }
 
   async function handleUserSubmit() {
@@ -1994,7 +2022,8 @@ function UsersTab({ groups, allUsers, onRefresh }) {
         username: userForm.username.trim(),
         email: userForm.email.trim(),
         role: userForm.role,
-        group_id: userForm.group_id,
+        group_id: userForm.group_ids[0] || "",
+        group_ids: userForm.group_ids.map(Number),
         status: userForm.status,
       };
       if (userForm.password) payload.password = userForm.password;
@@ -2506,7 +2535,7 @@ function UsersTab({ groups, allUsers, onRefresh }) {
 
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Email Address <span className="text-rose-400">*</span>
+                    Email Address (Optional)
                   </label>
                   <input
                     type="email"
@@ -2574,24 +2603,69 @@ function UsersTab({ groups, allUsers, onRefresh }) {
                   </div>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Security Group
+                    Security Groups
                   </label>
-                  <select
-                    value={userForm.group_id}
-                    onChange={(e) =>
-                      setUserForm((p) => ({ ...p, group_id: e.target.value }))
-                    }
-                    className={inputCls}
+                  <button
+                    type="button"
+                    onClick={() => setGroupDropdownOpen((open) => !open)}
+                    className={`${inputCls} flex items-center justify-between text-left`}
                   >
-                    <option value="">No Group</option>
-                    {groups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.group_name}
-                      </option>
-                    ))}
-                  </select>
+                    <span
+                      className={`truncate ${
+                        userForm.group_ids.length
+                          ? "text-slate-700"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {getSelectedGroupLabel()}
+                    </span>
+                    {groupDropdownOpen ? (
+                      <MdExpandLess className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <MdExpandMore className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+
+                  {groupDropdownOpen && (
+                    <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg max-h-44 overflow-y-auto py-1">
+                      {groups.length === 0 ? (
+                        <div className="px-3 py-2 text-[12px] text-slate-400">
+                          No groups available
+                        </div>
+                      ) : (
+                        groups.map((g) => {
+                          const checked = userForm.group_ids.includes(
+                            String(g.id),
+                          );
+                          return (
+                            <label
+                              key={g.id}
+                              className={`flex items-center gap-2 px-3 py-2 cursor-pointer text-[12px] transition ${
+                                checked
+                                  ? "bg-teal-50 text-teal-700"
+                                  : "text-slate-600 hover:bg-slate-50"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleUserGroup(g.id)}
+                                className="h-3.5 w-3.5 rounded border-slate-300 accent-teal-600"
+                              />
+                              <span className="flex-1 truncate font-semibold">
+                                {g.group_name}
+                              </span>
+                              {checked && (
+                                <MdCheck className="h-3.5 w-3.5 shrink-0" />
+                              )}
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

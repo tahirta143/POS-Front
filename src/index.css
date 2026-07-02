@@ -9,13 +9,44 @@
   --tooltip-border: #e2e8f0;
   --tooltip-text: #64748b;
   --app-mobile-gutter: 0.875rem;
+
+  /* Solid White theme overrides for light mode backgrounds */
+  --color-slate-50: #ffffff;
+  --color-gray-50: #ffffff;
+
+  /* Subtle off-white for elements needing slight contrast (like tables, code, etc.) */
+  --color-slate-100: #f8f9fa;
+  --color-gray-100: #f8f9fa;
+
+  /* Super clean, ultra-thin borders for premium aesthetic */
+  --color-slate-200: #eaeaea;
+  --color-slate-300: #dfdfdf;
+  --color-gray-200: #eaeaea;
+  --color-gray-300: #dfdfdf;
 }
 
 .dark {
-  --tooltip-bg: #0f172a;
-  --tooltip-border: #1e293b;
-  --tooltip-text: #94a3b8;
+  --tooltip-bg: #000000;
+  --tooltip-border: #141414;
+  --tooltip-text: #a1a1aa;
   color-scheme: dark;
+
+  /* Redefining Tailwind colors for a premium solid black theme */
+  --color-slate-950: #000000;
+  --color-slate-900: #000000;
+  --color-slate-800: #141414;
+  --color-slate-700: #222222;
+  --color-slate-600: #404040;
+
+  --color-gray-950: #000000;
+  --color-gray-900: #000000;
+  --color-gray-800: #141414;
+  --color-gray-700: #222222;
+
+  --color-zinc-950: #000000;
+  --color-zinc-900: #000000;
+  --color-zinc-800: #141414;
+  --color-zinc-700: #222222;
 }
 
 @theme {
@@ -68,7 +99,7 @@ code {
   @apply text-slate-900 dark:text-slate-50 transition-colors duration-300;
 }
 
-.app-shell .page-shell > div {
+.app-shell .page-shell>div {
   position: relative;
 }
 
@@ -95,11 +126,7 @@ code {
   @apply text-slate-900 dark:text-slate-200;
 }
 
-.app-shell
-  .app-card
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
-    [type="file"]
-  ),
+.app-shell .app-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 .app-shell .app-card select,
 .app-shell .app-card textarea {
   border-radius: 0.375rem;
@@ -113,11 +140,7 @@ code {
     background-color 0.15s ease;
 }
 
-.app-shell
-  .app-card
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
-    [type="file"]
-  ),
+.app-shell .app-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 .app-shell .app-card select {
   height: 2rem;
   padding-left: 0.5rem;
@@ -130,9 +153,7 @@ code {
   padding: 0.375rem 0.5rem;
 }
 
-.app-shell
-  .app-card
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.app-shell .app-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 .app-shell .app-card select:focus,
 .app-shell .app-card textarea:focus {
   border-color: var(--color-primary-500);
@@ -149,7 +170,7 @@ code {
   border-radius: 0.375rem;
 }
 
-.app-shell .page-shell .mobile-stack > * {
+.app-shell .page-shell .mobile-stack>* {
   min-width: 0;
 }
 
@@ -164,11 +185,7 @@ code {
 
 /* ── Hard override: keep ALL inputs/selects compact inside cards ── */
 /* This neutralises hardcoded h-10 / h-12 Tailwind utilities */
-.app-shell
-  .app-card
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
-    [type="file"]
-  ),
+.app-shell .app-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 .app-shell .app-card select {
   height: 2rem !important;
   min-height: 2rem !important;
@@ -177,6 +194,7 @@ code {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
+
 .app-shell .app-card textarea {
   font-size: 0.75rem !important;
   line-height: 1.25rem !important;
@@ -232,62 +250,46 @@ code {
 
 /* Dark-mode fallback for pages that still use light-only Tailwind utility classes. */
 .dark #root :where(.bg-white):not([class*="dark:bg-"]) {
-  background-color: rgb(15 23 42);
+  background-color: var(--color-slate-900);
 }
 
-.dark
-  #root
-  :where(
-    [class*="bg-slate-50"],
-    [class*="bg-slate-100"],
-    [class*="bg-gray-50"],
-    [class*="bg-gray-100"],
-    [class*="bg-teal-50"],
-    [class*="bg-emerald-50"],
-    [class*="bg-cyan-50"],
-    [class*="bg-amber-50"],
-    [class*="bg-rose-50"]
-  ):not([class*="dark:bg-"]) {
-  background-color: rgba(30, 41, 59, 0.82);
+.dark #root :where([class*="bg-slate-50"],
+  [class*="bg-slate-100"],
+  [class*="bg-gray-50"],
+  [class*="bg-gray-100"],
+  [class*="bg-teal-50"],
+  [class*="bg-emerald-50"],
+  [class*="bg-cyan-50"],
+  [class*="bg-amber-50"],
+  [class*="bg-rose-50"]):not([class*="dark:bg-"]) {
+  background-color: var(--color-slate-900);
 }
 
-.dark
-  #root
-  :where(
-    .border-slate-50,
-    .border-slate-100,
-    .border-slate-200,
-    .border-slate-300,
-    .border-gray-100,
-    .border-gray-200,
-    .border-gray-300,
-    .border-teal-100,
-    .border-emerald-100,
-    .border-cyan-100,
-    .border-amber-100,
-    .border-rose-100
-  ):not([class*="dark:border-"]) {
-  border-color: rgb(51 65 85);
+.dark #root :where(.border-slate-50,
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-300,
+  .border-gray-100,
+  .border-gray-200,
+  .border-gray-300,
+  .border-teal-100,
+  .border-emerald-100,
+  .border-cyan-100,
+  .border-amber-100,
+  .border-rose-100):not([class*="dark:border-"]) {
+  border-color: var(--color-slate-800);
 }
 
-.dark
-  #root
-  :where(
-    .text-slate-900,
-    .text-slate-800,
-    .text-slate-700,
-    .text-gray-900,
-    .text-gray-800,
-    .text-gray-700
-  ):not([class*="dark:text-"]) {
+.dark #root :where(.text-slate-900,
+  .text-slate-800,
+  .text-slate-700,
+  .text-gray-900,
+  .text-gray-800,
+  .text-gray-700):not([class*="dark:text-"]) {
   color: rgb(241 245 249);
 }
 
-.dark
-  #root
-  :where(.text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500):not(
-    [class*="dark:text-"]
-  ) {
+.dark #root :where(.text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500):not([class*="dark:text-"]) {
   color: rgb(203 213 225);
 }
 
@@ -296,47 +298,37 @@ code {
 }
 
 .dark #root :where(input, select, textarea):not([class*="dark:bg-"]) {
-  background-color: rgb(30 41 59);
-  border-color: rgb(51 65 85);
+  background-color: var(--color-slate-950);
+  border-color: var(--color-slate-800);
   color: rgb(226 232 240);
 }
 
-.dark
-  #root
-  :where(input, select, textarea):not([class*="dark:bg-"])::placeholder {
+.dark #root :where(input, select, textarea):not([class*="dark:bg-"])::placeholder {
   color: rgb(148 163 184);
 }
 
-.dark
-  #root
-  :where([class*="disabled:bg-slate-50"], [class*="disabled:bg-slate-100"]):not(
-    [class*="dark:disabled:bg-"]
-  ):disabled {
-  background-color: rgba(30, 41, 59, 0.6);
+.dark #root :where([class*="disabled:bg-slate-50"], [class*="disabled:bg-slate-100"]):not([class*="dark:disabled:bg-"]):disabled {
+  background-color: rgba(20, 20, 20, 0.6);
 }
 
-.dark
-  #root
-  :where(
-    [class*="hover:bg-slate-50"],
-    [class*="hover:bg-slate-100"],
-    [class*="hover:bg-gray-50"],
-    [class*="hover:bg-gray-100"],
-    [class*="hover:bg-teal-50"]
-  ):not([class*="dark:hover:bg-"]):hover {
-  background-color: rgba(51, 65, 85, 0.8);
+.dark #root :where([class*="hover:bg-slate-50"],
+  [class*="hover:bg-slate-100"],
+  [class*="hover:bg-gray-50"],
+  [class*="hover:bg-gray-100"],
+  [class*="hover:bg-teal-50"]):not([class*="dark:hover:bg-"]):hover {
+  background-color: rgba(30, 30, 30, 0.8);
 }
 
 .dark #root :where(table thead):not([class*="dark:bg-"]) {
-  background-color: rgba(15, 23, 42, 0.88);
+  background-color: rgba(0, 0, 0, 0.88);
 }
 
 .dark #root :where(table tbody):not([class*="dark:bg-"]) {
-  background-color: rgb(15 23 42);
+  background-color: var(--color-slate-900);
 }
 
 .dark #root :where(table tfoot):not([class*="dark:bg-"]) {
-  background-color: rgba(15, 23, 42, 0.92);
+  background-color: rgba(0, 0, 0, 0.92);
 }
 
 /* Custom Scrollbar for better UI */
@@ -344,15 +336,73 @@ code {
   width: 6px;
   height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-slate-300 dark:bg-slate-700;
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* Reusable card design override - matching the shared premium design */
+.app-card,
+.page-shell .bg-white.rounded-2xl,
+.page-shell .bg-white.rounded-xl,
+.page-shell .bg-white.rounded-lg,
+.page-shell .bg-white\/90.rounded-xl,
+.page-shell .bg-white\/90.rounded-2xl,
+.page-shell .bg-white\/80.rounded-xl,
+.page-shell .bg-white\/80.rounded-2xl {
+  border-radius: 1.5rem !important; /* Elegant 24px roundness */
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.03) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.app-card:hover,
+.page-shell .bg-white.rounded-2xl:hover,
+.page-shell .bg-white.rounded-xl:hover,
+.page-shell .bg-white.rounded-lg:hover {
+  transform: translateY(-2.5px) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Dark mode overrides for cards - elegant dark charcoal against solid black */
+.dark .app-card,
+.dark .page-shell .bg-white.rounded-2xl,
+.dark .page-shell .bg-white.rounded-xl,
+.dark .page-shell .bg-white.rounded-lg,
+.dark .page-shell [class*="dark:bg-slate-900"].rounded-2xl,
+.dark .page-shell [class*="dark:bg-slate-900"].rounded-xl,
+.dark .page-shell [class*="dark:bg-slate-900"].rounded-lg,
+.dark .page-shell [class*="dark:bg-slate-900\/90"].rounded-xl,
+.dark .page-shell [class*="dark:bg-slate-900\/90"].rounded-2xl,
+.dark .page-shell [class*="dark:bg-slate-900\/50"].rounded-xl,
+.dark .page-shell [class*="dark:bg-slate-900\/50"].rounded-2xl,
+.dark .page-shell [class*="dark:bg-slate-950"].rounded-2xl,
+.dark .page-shell [class*="dark:bg-slate-950"].rounded-xl {
+  background-color: #161618 !important; /* Deep solid charcoal background */
+  border: 1px solid rgba(255, 255, 255, 0.035) !important;
+  box-shadow: none !important;
+}
+
+.dark .app-card:hover,
+.dark .page-shell .bg-white.rounded-2xl:hover,
+.dark .page-shell .bg-white.rounded-xl:hover,
+.dark .page-shell [class*="dark:bg-slate-900"].rounded-2xl:hover,
+.dark .page-shell [class*="dark:bg-slate-900"].rounded-xl:hover,
+.dark .page-shell [class*="dark:bg-slate-900\/90"].rounded-xl:hover,
+.dark .page-shell [class*="dark:bg-slate-900\/90"].rounded-2xl:hover {
+  transform: translateY(-2.5px) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 @media (max-width: 1023px) {
@@ -372,7 +422,7 @@ code {
 
   .app-shell .page-shell .app-card {
     padding: 1rem;
-    border-radius: 1rem;
+    border-radius: 1.25rem !important;
   }
 
   .app-shell .page-shell table thead th,
@@ -400,7 +450,7 @@ code {
 
   .app-shell .page-shell .app-card {
     padding: 0.875rem;
-    border-radius: 0.9rem;
+    border-radius: 1.125rem !important;
   }
 
   .app-shell .page-shell .app-card button,
